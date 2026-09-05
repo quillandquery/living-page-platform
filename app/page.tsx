@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { STORIES } from "@/content/stories/registry";
+import { listStories } from "@/lib/stories";
 import { StoryFrame } from "@/components/living/StoryFrame";
 import { Speak, Whisper, Shout } from "@/components/living/voices";
 import { Hold } from "@/components/living/Scene";
@@ -10,7 +10,9 @@ import { Doodle } from "@/components/doodles/Doodle";
  * gets out of the way. No grid of article cards. Each story is a
  * doorway: a place, and one line you would say out loud.
  */
-export default function Home() {
+export default async function Home() {
+  const stories = await listStories();
+
   return (
     <main className="frame">
       <StoryFrame veil={false}>
@@ -30,8 +32,12 @@ export default function Home() {
           <span className="archive-sub">things I remember</span>
         </h1>
 
+        {stories.length === 0 ? (
+          <p className="hint">Nothing here yet. <Link href="/studio">The studio</Link> is where a piece starts.</p>
+        ) : null}
+
         <ul className="doorways">
-          {STORIES.map(({ meta }) => (
+          {stories.map((meta) => (
             <li key={meta.slug}>
               <Link href={`/stories/${meta.slug}`} className="doorway" style={{ ["--accent" as string]: meta.accent }}>
                 <span className="place">{meta.place}</span>

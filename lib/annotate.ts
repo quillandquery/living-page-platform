@@ -1,6 +1,10 @@
 import {
   COSTLY_VOICES, DEFAULT_BODY, type BeatSpec, type Body, type Gesture, type Voice,
 } from "./vocabulary";
+// story-blocks, never story-file: the studio runs this in the browser and
+// story-file reaches for gray-matter, which reaches for node:fs
+import { serializeStory } from "./story-blocks.mjs";
+import type { Block } from "./story-blocks.mjs";
 
 /* ══════════════════════════════════════════════════════════════════════
    THE FIRST PASS
@@ -18,6 +22,8 @@ const LEX = {
   doubt: /\b(maybe|perhaps|should|shouldn't|wonder|wondered|suppose|thought|thinking|why|what if|didn't know|no idea)\b/i,
   weight: /\b(never|always|everything|nothing|forever|alone|home|myself|afraid|alive|free|lost|found)\b/i,
   motion: /\b(bus|train|road|drove|driving|walked|walking|ran|left|leaves|went|going|arrive|arrived|journey|ride|flight|flew)\b/i,
+  clock: /(\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(am|pm)\b|\b(dawn|dusk|midnight|noon|o'clock)\b)/i,
+  count: /(\b\d+\b|\b(rupees?|km|kilometres?|miles?|hours?|minutes?|days?|degrees?|metres?)\b)/i,
 };
 
 const hits = (re: RegExp, s: string) => (s.match(new RegExp(re.source, "gi")) ?? []).length;
@@ -97,6 +103,12 @@ function readVoice(text: string, ctx: Ctx): { voice: Voice; margin: number } {
     drift: hits(LEX.water, t) * 1.5 + hits(LEX.dream, t) * 1.5 + (t.split(".").length > 3 ? 1.4 : 0) - (n < 6 ? 1.2 : 0),
     listen: (ctx.isLast ? 3.2 : 0) + hits(LEX.weight, t) * 1.2 + (n <= 9 ? 0.9 : -1.8),
     echo: t.toLowerCase() === ctx.prevText.toLowerCase() && t.length > 0 ? 7 : -6,
+    // gated behind actual evidence. In the prototype this voice fired on
+    // any short line and turned lyric into telemetry; a record needs
+    // something on it to record.
+    ledger: hits(LEX.clock, t) || hits(LEX.count, t)
+      ? hits(LEX.clock, t) * 2.6 + hits(LEX.count, t) * 1.8 + (n <= 8 ? 1.6 : -1.8)
+      : -5,
   };
 
   // rhythm: a voice fades from the ear slowly, and costly voices need room
@@ -143,7 +155,7 @@ export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
   const margins: number[] = [];
 
   segs.forEach((seg, idx) => {
-    if ("pause" in seg) { beats.push({ text: "", voice: "speak", hold: true }); opensScene = true; return; }
+    if ("pause" in seg) { beats.push({ text: "", voice: "speak", hold: true, beats: 2 }); opensScene = true; return; }
     const isLast = idx === segs.length - 1;
     const { voice, margin } = readVoice(seg.text, { recent, opensScene, isLast, prevText });
     const body = readBody(voice, seg.text, recent);
@@ -184,7 +196,7 @@ export function enforceRatio(beats: BeatSpec[], textCount: number, budget: numbe
   if (voiced.length <= allowed) return beats;
 
   // keep the strongest reads: shout/listen carry structure, drift/whisper are cheaper to lose
-  const rank: Record<Voice, number> = { echo: 5, shout: 4, listen: 3, thought: 2, drift: 1, whisper: 1, speak: 0 };
+  const rank: Record<Voice, number> = { echo: 5, shout: 4, ledger: 3.5, listen: 3, thought: 2, drift: 1, whisper: 1, speak: 0 };
   const sorted = [...voiced].sort((a, b) => rank[b.voice] - rank[a.voice]);
   const keep = new Set(sorted.slice(0, allowed));
   return beats.map((b) =>
@@ -194,73 +206,49 @@ export function enforceRatio(beats: BeatSpec[], textCount: number, budget: numbe
   );
 }
 
-/* ── the quality bar (§22) ───────────────────────────────────────────── */
+/* ── the quality bar (§22) ─────────────────────────────────────────────
+   Lives in lib/story-blocks.mjs now, and reads blocks rather than specs,
+   so the studio, the emitter and scripts/check-stories.mjs all report on a
+   piece the same way. Route a draft through `toBlocks` and hand the result
+   to `analyse`.                                                           */
 
-export type Report = {
-  total: number;
-  speakShare: number;
-  voicedShare: number;
-  interactions: number;
-  holds: number;
-  longestRunWithoutHold: number;
-  voicesUsed: Voice[];
-  notes: string[];
-};
-
-export function report(beats: BeatSpec[]): Report {
-  const words = beats.filter((b) => !b.hold);
-  const speak = words.filter((b) => b.voice === "speak").length;
-  const holds = beats.filter((b) => b.hold).length;
-  const interactions = beats.filter((b) => b.doodle).length;
-  const voicesUsed = Array.from(new Set(words.map((b) => b.voice)));
-
-  let run = 0, longest = 0;
-  beats.forEach((b) => { if (b.hold) { longest = Math.max(longest, run); run = 0; } else run++; });
-  longest = Math.max(longest, run);
-
-  const total = words.length || 1;
-  const speakShare = speak / total;
-  const notes: string[] = [];
-  if (speakShare < 0.6) notes.push("More than 40% of the piece is doing something. Let some lines just be sentences.");
-  if (holds === 0) notes.push("No pauses. Silence is an element — put a blank line where the reader should stop.");
-  if (longest > 9) notes.push(`${longest} beats run without a pause. That is a paragraph wearing a costume.`);
-  if (interactions === 0) notes.push("The margin is empty. The doodle is a second narrator — give it one line to answer.");
-  if (interactions / total > 0.35) notes.push("The margin is crowded. A doodle on every other line stops being a surprise.");
-  if (!voicesUsed.includes("shout") && !voicesUsed.includes("listen")) notes.push("Nothing lands. No shout, no listen — is there a moment the piece turns?");
-  if (notes.length === 0) notes.push("Pacing looks right. Read it out loud before you believe me.");
-
-  return { total: words.length, speakShare, voicedShare: 1 - speakShare, interactions, holds, longestRunWithoutHold: longest, voicesUsed, notes };
-}
+export { analyse } from "./story-blocks.mjs";
 
 /* ── emit ─────────────────────────────────────────────────────────────── */
 
-const CAP: Record<Voice, string> = {
-  speak: "Speak", whisper: "Whisper", shout: "Shout",
-  thought: "Thought", drift: "Drift", echo: "Echo", listen: "Listen",
-};
+/**
+ * A machine first pass, in the one shape a story file is made of. The
+ * studio saves these, previews these, and measures these — one road out,
+ * so what you read in the preview is what lands on disk.
+ */
+export function toBlocks(beats: BeatSpec[]): Block[] {
+  return beats.map((b): Block => {
+    if (b.hold) return { kind: "hold", beats: b.beats ?? 2 };
 
-export function toMDX(meta: { slug: string; place: string; date: string; fragment: string; accent: string }, beats: BeatSpec[]): string {
-  const head =
-    `export const meta = {\n` +
-    `  slug: ${JSON.stringify(meta.slug)},\n` +
-    `  place: ${JSON.stringify(meta.place)},\n` +
-    `  date: ${JSON.stringify(meta.date)},\n` +
-    `  fragment: ${JSON.stringify(meta.fragment)},\n` +
-    `  accent: ${JSON.stringify(meta.accent)},\n};\n\n<Scene>\n\n`;
+    // the body a voice already wants is not worth saying out loud
+    const body = b.body && b.body !== DEFAULT_BODY[b.voice] ? b.body : undefined;
+    return {
+      kind: "beat",
+      voice: b.voice,
+      text: b.text,
+      bare: b.voice === "speak" && !b.doodle && !body,
+      body,
+      doodle: b.doodle,
+      side: b.doodle ? b.side : undefined,
+      gesture: b.doodle ? b.gesture : undefined,
+    };
+  });
+}
 
-  const body = beats
-    .map((b) => {
-      if (b.hold) return `<Hold beats={2} />\n`;
-      if (b.voice === "speak" && !b.doodle && (!b.body || b.body === "normal")) return `${b.text}\n`;
-      const attrs = [
-        b.body && b.body !== "normal" && b.body !== DEFAULT_BODY[b.voice] ? `body="${b.body}"` : "",
-        b.doodle ? `doodle="${b.doodle}"` : "",
-        b.side && b.doodle ? `side="${b.side}"` : "",
-        b.gesture && b.doodle ? `gesture="${b.gesture}"` : "",
-      ].filter(Boolean).join(" ");
-      return `<${CAP[b.voice]}${attrs ? " " + attrs : ""}>${b.text}</${CAP[b.voice]}>\n`;
-    })
-    .join("\n");
-
-  return head + body + "\n</Scene>\n";
+export function toMDX(
+  meta: { place: string; date: string; fragment: string; accent: string },
+  beats: BeatSpec[],
+): string {
+  // a story is made of scenes, so a generated one starts with one even
+  // though the first pass has no idea where the others go
+  return serializeStory(meta, [
+    { kind: "raw", text: "<Scene>" },
+    ...toBlocks(beats),
+    { kind: "raw", text: "</Scene>" },
+  ]);
 }

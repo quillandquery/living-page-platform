@@ -43,8 +43,9 @@ optionally answered by one doodle in the margin.
 
 ## Writing a story
 
-A story is an `.mdx` file in `content/stories/`, registered in
-`content/stories/registry.ts`.
+A story is an `.mdx` file in `content/stories/`. There is no registry —
+the directory is the registry, and the filename is the slug. Write the
+file and it is on the site.
 
 **A bare paragraph is already a beat** in the SPEAK voice. That is the
 single most important thing about this setup: prose reads as prose in the
@@ -52,13 +53,12 @@ source file, and only the lines that need a different voice get wrapped.
 The 70/20/10 ratio is therefore the default rather than a discipline.
 
 ```mdx
-export const meta = {
-  slug: "gokarna",
-  place: "GOKARNA",
-  date: "14.03.2026",
-  fragment: "The night bus, and the ten minutes after I got down.",
-  accent: "#2B3ED0",
-};
+---
+place: "GOKARNA"
+date: "14.03.2026"
+fragment: "The night bus, and the ten minutes after I got down."
+accent: "#2B3ED0"
+---
 
 <Scene id="the-sea">
 
@@ -97,6 +97,7 @@ is what makes the site read as one medium instead of a pile of effects.
 | `Drift` | dreams, water, disorientation, time behaving strangely | words separated and nudged off the line |
 | `Echo` | the phrase that will not leave | repeats, shrinking and fading until gone |
 | `Listen` | the last line, or the one before the silence | nearly empty screen, one line |
+| `Ledger` | a time, a fare, a distance, a date — the factual aside | mono, tracked, in the accent, ruled down its left side |
 
 `Shout`, `Echo` and `Listen` stop working if you use them twice in a page.
 

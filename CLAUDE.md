@@ -48,7 +48,7 @@ perform costs a wrapper. Don't undo it.
 
 Four independent axes in `lib/vocabulary.ts`:
 
-- **VOICE** (7) — how the writing sounds: speak, whisper, shout, thought, drift, echo, listen
+- **VOICE** (8) — how the writing sounds: speak, whisper, shout, thought, drift, echo, listen, ledger
 - **BODY** (10) — how the type occupies space
 - **GESTURE** (11) — what the doodle does
 - **MOVE** (6) — what scrolling does; `hold` means nothing happens
@@ -65,6 +65,21 @@ beats back to `speak` when a draft exceeds the budget — the engine loses its
 favourites first. `npm run check` reports the same for hand-written stories.
 
 ## Gotchas
+
+- **`remark-frontmatter` is load-bearing, not cosmetic.** Without it the
+  `---` fence parses as an `<hr>`, and `mdx-components.tsx` maps `hr` to
+  `<Hold beats={2} />` — every story would open on a pause it never asked
+  for.
+- **`lib/story-blocks.mjs` must stay free of node imports.** The studio is a
+  client component and imports it in the browser. Frontmatter *reading*
+  (gray-matter) lives in `story-file.mjs` and stays on the server; writing
+  lives in `story-blocks.mjs` because it only ever emits four known scalars.
+- **The set of stories is fixed at build time.** `app/stories/[slug]/page.tsx`
+  resolves the component through a template-literal `import()`, which the
+  bundler turns into a context module over `content/stories/`. Dropping an
+  `.mdx` onto a running production server does nothing until the next build.
+  That path is relative on purpose — `@/` is not reliably understood as a
+  context-module prefix.
 
 - **Voice and body classes belong on `.words`, never on `.beat`.** `.v-speak`
   carries `max-width: 34ch`; on the beat that collapses the three-track grid
@@ -83,12 +98,20 @@ favourites first. `npm run check` reports the same for hand-written stories.
 ## Adding a story
 
 1. Write the raw piece with no design in your head at all.
-2. `content/stories/<slug>.mdx` — `export const meta`, then `<Scene>` blocks.
-3. Register it in `content/stories/registry.ts`.
-4. `npm run check`, then read it out loud.
+2. `content/stories/<slug>.mdx` — YAML frontmatter, then `<Scene>` blocks.
+3. `npm run check`, then read it out loud.
 
-`/studio` gives a machine first pass. It is wrong often enough that you have
-to argue with it. The final call is the writer's.
+There is no step where you edit TypeScript. **The directory is the registry
+and the filename is the slug** — `lib/stories.ts` reads the content
+directory, so a file that exists is a story that exists.
+
+`/studio` gives a machine first pass and writes the file for you. It also
+opens a story back up: `lib/story-blocks.mjs` parses a file into blocks, and
+anything it cannot model — a `<Scene>`, a heading, a `<Press>`, a `<Mark>`
+inside a line — comes back as an opaque block and is written out untouched.
+That passthrough is what makes save safe on a hand-written piece; don't
+weaken it. The studio is wrong often enough that you have to argue with it.
+The final call is the writer's.
 
 ## Layout
 
@@ -97,8 +120,12 @@ app/              archive · stories/[slug] · studio · globals.css
 components/
   living/         Beat, voices, Scene, Hold, Margin, Marks, StoryFrame
   doodles/        the registry and the renderer
-content/stories/  the writing
-lib/              vocabulary.ts (the four axes) · annotate.ts (first pass, ratio, quality bar)
+  studio/         page.tsx (the workbench) · actions.ts (the only code that writes)
+content/stories/  the writing, and the registry
+lib/              vocabulary.ts (the four axes) · annotate.ts (first pass, ratio)
+                  story-blocks.mjs (the block grammar + quality bar; client-safe)
+                  story-file.mjs (frontmatter; server-only, pulls gray-matter)
+                  stories.ts (discovery; server-only, pulls node:fs)
 mdx-components.tsx
 ```
 

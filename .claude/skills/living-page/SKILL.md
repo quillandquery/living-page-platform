@@ -57,6 +57,7 @@ Four independent axes. Add to them only when a story genuinely cannot be told wi
 | `Drift` | dreams, water, disorientation, time behaving strangely | words separated and nudged off the line |
 | `Echo` | the phrase that will not leave | repeats, shrinking and fading until gone |
 | `Listen` | the last line, or the one before the silence | nearly empty screen, one line |
+| `Ledger` | a time, a fare, a distance, a date — the factual aside | mono, tracked, in the accent, ruled down its left side |
 
 `Shout`, `Echo` and `Listen` stop working if used twice in a page. `Echo` is once a story at most.
 

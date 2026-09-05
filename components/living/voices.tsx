@@ -18,6 +18,13 @@ export const Thought = (p: V) => <Beat voice="thought" {...p} />;
 /** Dreams, water, disorientation, time behaving strangely. */
 export const Drift = (p: V) => <Beat voice="drift" {...p} />;
 
+/**
+ * Times, fares, distances, dates — the factual aside a travel piece is full
+ * of. Set as data rather than prose: the one register where the writing
+ * stops being a voice and becomes a record.
+ */
+export const Ledger = (p: V) => <Beat voice="ledger" {...p} />;
+
 /** The final line, or the one before the silence. Nearly empty screen. */
 export const Listen = (p: V) => <Beat voice="listen" {...p} />;
 

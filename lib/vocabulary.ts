@@ -16,6 +16,7 @@ export const VOICES = [
   "drift",
   "echo",
   "listen",
+  "ledger",
 ] as const;
 export type Voice = (typeof VOICES)[number];
 
@@ -70,6 +71,7 @@ export const DEFAULT_BODY: Record<Voice, Body> = {
   drift: "scattered",
   echo: "offset",
   listen: "centered",
+  ledger: "normal",
 };
 
 export const DEFAULT_MOVE: Record<Voice, Move> = {
@@ -78,6 +80,7 @@ export const DEFAULT_MOVE: Record<Voice, Move> = {
   shout: "grow",
   thought: "enter",
   drift: "move",
+  ledger: "move",
   echo: "disappear",
   listen: "enter",
 };
@@ -99,6 +102,8 @@ export type BeatSpec = {
   side?: "left" | "right";
   /** true when this beat is a deliberate silence rather than words */
   hold?: boolean;
+  /** how long that silence runs. 1 is a breath, 4 is a held pause. */
+  beats?: number;
 };
 
 export type SceneSpec = {
@@ -107,6 +112,7 @@ export type SceneSpec = {
 };
 
 export type StoryMeta = {
+  /** the filename, and the only place a slug is ever decided */
   slug: string;
   place: string;
   date: string;

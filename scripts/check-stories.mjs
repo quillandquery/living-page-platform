@@ -12,15 +12,20 @@
  *   node scripts/check-stories.mjs --hook     read a Claude Code hook payload on
  *                                             stdin and skip unless a story changed
  *
+ * The reading itself lives in lib/story-blocks.mjs, which the studio and the
+ * emitter also use — this file used to keep its own regexes and they were
+ * always going to drift away from the ones in the app.
+ *
  * It counts blocks, not sentences, so treat the numbers as a reading of the
  * shape rather than a measurement. Arguing with it is the point.
  */
 
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { analyse } from "../lib/story-blocks.mjs";
+import { missingMeta, parseStory } from "../lib/story-file.mjs";
 
 const STORIES = "content/stories";
-const VOICES = ["Speak", "Whisper", "Shout", "Thought", "Drift", "Echo", "Listen"];
 const args = new Set(process.argv.slice(2));
 const quiet = args.has("--quiet");
 const strict = args.has("--strict");
@@ -31,72 +36,6 @@ async function stdinPayload() {
   const raw = Buffer.concat(chunks).toString("utf8").trim();
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { return null; }
-}
-
-function analyse(src) {
-  // drop the meta export; everything after it is the piece
-  const body = src.replace(/export\s+const\s+meta\s*=\s*\{[\s\S]*?\n\};?/, "");
-  const blocks = body.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
-
-  let beats = 0, plain = 0, pauses = 0, run = 0, longestRun = 0;
-  const voicesUsed = new Set();
-
-  for (const block of blocks) {
-    if (/^<\/?Scene\b/.test(block) || /^#{1,6}\s/.test(block)) continue;
-
-    if (/^<Hold\b/.test(block) || block === "---") {
-      longestRun = Math.max(longestRun, run);
-      run = 0;
-      pauses++;
-      continue;
-    }
-
-    if (/^<Margin\b/.test(block)) continue; // a doodle beat, not a line
-
-    const tags = [...block.matchAll(new RegExp(`<(${VOICES.join("|")})\\b`, "g"))].map((m) => m[1]);
-    const n = Math.max(1, tags.length);
-    beats += n;
-    run += n;
-    if (tags.length === 0) {
-      plain += 1;
-      voicesUsed.add("speak");
-    } else {
-      for (const t of tags) {
-        voicesUsed.add(t.toLowerCase());
-        if (t === "Speak") plain += 1;
-      }
-    }
-  }
-  longestRun = Math.max(longestRun, run);
-
-  const margin =
-    (body.match(/doodle="/g) ?? []).length +
-    (body.match(/<Press\b/g) ?? []).length +
-    (body.match(/<Drag\b/g) ?? []).length;
-
-  const total = beats || 1;
-  return {
-    beats, plain, pauses, longestRun, margin,
-    plainShare: plain / total,
-    voices: [...voicesUsed],
-  };
-}
-
-function notes(r) {
-  const out = [];
-  if (r.plainShare < 0.6)
-    out.push(`${Math.round((1 - r.plainShare) * 100)}% of the piece is doing something. Let some lines just be sentences.`);
-  if (r.pauses === 0)
-    out.push("No pauses. Silence is an element — put a <Hold /> where the reader should stop.");
-  if (r.longestRun > 9)
-    out.push(`${r.longestRun} beats run without a pause. That is a paragraph wearing a costume.`);
-  if (r.margin === 0)
-    out.push("The margin is empty. The doodle is a second narrator — give it one line to answer.");
-  if (r.margin / (r.beats || 1) > 0.35)
-    out.push("The margin is crowded. A doodle on every other line stops being a surprise.");
-  if (!r.voices.includes("shout") && !r.voices.includes("listen"))
-    out.push("Nothing lands. No shout, no listen — is there a moment the piece turns?");
-  return out;
 }
 
 const payload = args.has("--hook") ? await stdinPayload() : null;
@@ -116,18 +55,31 @@ try {
 let warned = false;
 for (const file of files) {
   const src = await readFile(path.join(STORIES, file), "utf8");
-  const r = analyse(src);
-  const ns = notes(r);
-  if (ns.length) warned = true;
-  if (quiet && !ns.length) continue;
+  const { meta, blocks } = parseStory(src);
+
+  // frontmatter is how a story gets onto the site at all now: a piece
+  // missing any of it is invisible rather than broken, which is worse
+  const missing = missingMeta(meta);
+  if (missing.length) {
+    warned = true;
+    console.log(`\n${file}`);
+    console.log(`  ! frontmatter is missing: ${missing.join(", ")} — this story will not appear on the site`);
+    continue;
+  }
+
+  const r = analyse(blocks);
+  const kept = blocks.filter((b) => b.kind === "raw").length;
+  if (quiet && !r.notes.length) continue;
 
   console.log(`\n${file}`);
   console.log(
-    `  ${r.beats} beats · ${Math.round(r.plainShare * 100)}% plain · ` +
-    `${r.pauses} pauses · longest run ${r.longestRun} · margin on ${r.margin}`,
+    `  ${r.total} beats · ${Math.round(r.speakShare * 100)}% plain · ` +
+    `${r.holds} pauses · longest run ${r.longestRunWithoutHold} · margin on ${r.interactions}`,
   );
-  console.log(`  voices: ${r.voices.join(", ")}`);
-  if (ns.length) for (const n of ns) console.log(`  ! ${n}`);
+  console.log(`  voices: ${r.voicesUsed.join(", ")}${kept ? ` · ${kept} blocks the studio would keep as written` : ""}`);
+
+  const real = r.notes.filter((n) => !n.startsWith("Pacing looks right"));
+  if (real.length) { warned = true; for (const n of real) console.log(`  ! ${n}`); }
   else console.log("  · pacing looks right. Read it out loud before you believe me.");
 }
 if (!quiet) console.log("");

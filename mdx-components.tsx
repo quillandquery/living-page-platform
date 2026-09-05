@@ -1,6 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import { Beat } from "@/components/living/Beat";
-import { Speak, Whisper, Shout, Thought, Drift, Listen, Echo } from "@/components/living/voices";
+import { Speak, Whisper, Shout, Thought, Drift, Listen, Echo, Ledger } from "@/components/living/voices";
 import { Scene, StoryH2, Hold, Margin } from "@/components/living/Scene";
 import { Mark, Press, Drag } from "@/components/living/Marks";
 
@@ -20,7 +20,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     h2: ({ children }) => <StoryH2>{children}</StoryH2>,
     hr: () => <Hold beats={2} />,
     em: ({ children }) => <em>{children}</em>,
-    Beat, Speak, Whisper, Shout, Thought, Drift, Listen, Echo,
+    Beat, Speak, Whisper, Shout, Thought, Drift, Listen, Echo, Ledger,
     Scene, Hold, Margin, Mark, Press, Drag,
     ...components,
   };
