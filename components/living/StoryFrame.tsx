@@ -14,8 +14,8 @@ import React, { useEffect, useRef } from "react";
  * opacity: 0 waiting on an observer.
  */
 export function StoryFrame({
-  children, veil = true, accent,
-}: { children: React.ReactNode; veil?: boolean; accent?: string }) {
+  children, veil = true, accent, arc = true,
+}: { children: React.ReactNode; veil?: boolean; accent?: string; arc?: boolean }) {
   const flow = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,8 +27,27 @@ export function StoryFrame({
     let started = !veil;
     let ticking = false;
 
+    // how deep the reader is, quantised so we are not restyling the
+    // document on every frame. Colour thickens with it.
+    let lastDepth = -1;
+    const setDepth = () => {
+      // the archive is not a piece being read, so it holds one settled tint
+      if (!arc) {
+        if (lastDepth !== 0.5) { lastDepth = 0.5; document.documentElement.style.setProperty("--depth", "0.5"); }
+        return;
+      }
+      const span = document.documentElement.scrollHeight - window.innerHeight;
+      const raw = span > 0 ? window.scrollY / span : 0;
+      const d = Math.round(Math.min(1, Math.max(0, raw)) * 20) / 20;
+      if (d !== lastDepth) {
+        lastDepth = d;
+        document.documentElement.style.setProperty("--depth", String(d));
+      }
+    };
+
     const tick = () => {
       ticking = false;
+      setDepth();
       const vh = window.innerHeight;
       const readAt = veil ? vh * 0.78 : vh * 0.92;
       const nearAt = vh * 1.25;
@@ -70,8 +89,9 @@ export function StoryFrame({
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", queue);
+      document.documentElement.style.removeProperty("--depth");
     };
-  }, [veil]);
+  }, [veil, arc]);
 
   return (
     <div className="flow" ref={flow} style={accent ? ({ ["--accent" as string]: accent } as React.CSSProperties) : undefined}>

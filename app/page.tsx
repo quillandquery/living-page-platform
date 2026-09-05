@@ -15,7 +15,7 @@ export default async function Home() {
 
   return (
     <main className="frame">
-      <StoryFrame veil={false}>
+      <StoryFrame veil={false} arc={false}>
         <Shout body="compressed">I went somewhere.</Shout>
         <Speak>And then I came back with a story.</Speak>
 

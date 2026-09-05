@@ -2,22 +2,49 @@
    THE LIVING PAGE
    A notebook that has been left open too long and started moving.
 
-   Mostly monochrome. One accent per story, set by the story's own meta
-   as --accent, used as narrative punctuation and nothing else.
+   A story sets ONE value — --accent, from its frontmatter — and the whole
+   page is derived from it. The stock is warm grey; the memory tints it.
+   The margin is inked in a second colour, because the doodle is a second
+   narrator and should not be speaking in the same voice as the writing.
+   Nothing here is loud: every surface carries a little, no surface shouts.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root{
-  --paper:      #EFEEEA;
-  --paper-2:    #E6E4DE;
-  --paper-3:    #DAD8D0;
-  --ink:        #17181A;
-  --ink-soft:   #4A4B4E;
-  --mute:       #8B8A85;
-  --rule:       rgba(23,24,26,.13);
-  --rule-2:     rgba(23,24,26,.06);
-  --shade:      rgba(23,24,26,.04);
+  /* the one value a story chooses */
   --accent:     #2B3ED0;
-  --grain:      .045;
+
+  /* the second ink — the margin's voice. Derived so an author still picks
+     one colour; the literal above it is the fallback where relative colour
+     syntax is unsupported. */
+  --counter:    #8C4736;
+  --counter:    oklch(from var(--accent) 0.5 0.115 calc(h + 158));
+
+  /* how far into the piece the reader is, 0 to 1. Set by StoryFrame.
+     Colour thickens as the story goes on and eases off at the end. */
+  --depth:      0;
+
+  /* bases — the only values the dark theme overrides */
+  --stock:      #EEEBE4;
+  --stock-2:    #E6E2DA;
+  --stock-3:    #DAD5CB;
+  --ink-base:   #191819;
+  --soft-base:  #4C4A4A;
+  --mute-base:  #8A857D;
+
+  /* the ground carries the temperature of the place */
+  --paper:      color-mix(in oklab, var(--accent) calc(3.5% + var(--depth) * 3%), var(--stock));
+  --paper-2:    color-mix(in oklab, var(--accent) 6%, var(--stock-2));
+  --paper-3:    color-mix(in oklab, var(--accent) 9%, var(--stock-3));
+
+  /* type is never fully neutral and never fully coloured */
+  --ink:        color-mix(in oklab, var(--accent) 6%, var(--ink-base));
+  --ink-soft:   color-mix(in oklab, var(--accent) 15%, var(--soft-base));
+  --mute:       color-mix(in oklab, var(--accent) 22%, var(--mute-base));
+
+  --rule:       color-mix(in oklab, var(--accent) 22%, transparent);
+  --rule-2:     color-mix(in oklab, var(--accent) 10%, transparent);
+  --shade:      color-mix(in oklab, var(--accent) 7%, transparent);
+  --grain:      .05;
 
   --f-body:  var(--font-body), Georgia, "Times New Roman", serif;
   --f-disp:  var(--font-disp), Georgia, serif;
@@ -34,16 +61,20 @@
 
 @media (prefers-color-scheme: dark){
   :root{
-    --paper:    #131417;
-    --paper-2:  #1A1B1F;
-    --paper-3:  #232429;
-    --ink:      #E6E4DE;
-    --ink-soft: #B6B4AE;
-    --mute:     #7C7D84;
-    --rule:     rgba(230,228,222,.15);
-    --rule-2:   rgba(230,228,222,.07);
-    --shade:    rgba(230,228,222,.045);
-    --grain:    .06;
+    /* only the bases move; every derivation above still holds, so the
+       story's colour tints the dark ground the same way it tints paper */
+    --stock:     #131417;
+    --stock-2:   #1A1B1F;
+    --stock-3:   #232429;
+    --ink-base:  #E6E4DE;
+    --soft-base: #B4B1AC;
+    --mute-base: #7C7D84;
+    --counter:   #E0876B;
+    --counter:   oklch(from var(--accent) 0.74 0.115 calc(h + 158));
+    --rule:      color-mix(in oklab, var(--accent) 34%, transparent);
+    --rule-2:    color-mix(in oklab, var(--accent) 16%, transparent);
+    --shade:     color-mix(in oklab, var(--accent) 12%, transparent);
+    --grain:     .06;
     color-scheme: dark;
   }
 }
@@ -199,6 +230,29 @@ a{ color: inherit; }
 .b-floating   { transform: rotate(-1.4deg); transform-origin: left center; }
 
 .v-ledger{ margin-block: 1.25rem; }
+
+/* ── colour by voice ───────────────────────────────────────────────────
+   Restrained on purpose. The typography still carries the voice; colour
+   only leans on it. Shout takes the second ink, listen deepens toward the
+   story's own colour, drift goes watery, thought warms. Speak stays ink,
+   always — most of the page must read as writing, not as design. */
+
+.v-shout  { color: color-mix(in oklab, var(--counter) 72%, var(--ink)); }
+.v-listen { color: color-mix(in oklab, var(--accent) 36%, var(--ink)); }
+.v-drift  { color: color-mix(in oklab, var(--accent) 32%, var(--ink-soft)); }
+.v-thought{ color: color-mix(in oklab, var(--counter) 26%, var(--ink-soft)); }
+
+/* The margin is inked in the second colour because it is a second
+   narrator, and it gains ink as the reader goes deeper into the piece. */
+.margin .doodle svg{
+  stroke: color-mix(in oklab, var(--counter) calc(64% + var(--depth) * 36%), var(--mute));
+}
+
+/* the place name carries the memory's colour before a word is read */
+.frontispiece .place{ color: color-mix(in oklab, var(--accent) 58%, var(--ink)); }
+.doorway .place{ color: color-mix(in oklab, var(--accent) 62%, var(--ink)); }
+.doorway:hover{ background: color-mix(in oklab, var(--accent) 6%, transparent); }
+.archive-sub{ color: color-mix(in oklab, var(--counter) 40%, var(--mute)); }
 
 /* ── the story frontispiece ──────────────────────────────────────── */
 

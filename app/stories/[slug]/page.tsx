@@ -49,8 +49,15 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const Story = meta ? await loadStoryComponent(slug) : null;
   if (!meta || !Story) notFound();
 
+  // The ground is derived from the story's colour, and the ground is
+  // painted by <body> — an inline style on the flow would never reach it.
+  // Server-rendered so the page arrives already the right temperature
+  // rather than flashing grey first. Validated because it lands in CSS.
+  const accent = /^#[0-9a-fA-F]{3,8}$/.test(meta.accent) ? meta.accent : "#2B3ED0";
+
   return (
     <main className="frame">
+      <style>{`:root{--accent:${accent}}`}</style>
       {/* §17 — a story opens on a visual beat, not a wall of text */}
       <header className="frontispiece">
         <Link href="/" className="back">back</Link>
