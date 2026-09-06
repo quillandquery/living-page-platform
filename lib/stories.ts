@@ -61,6 +61,7 @@ function toMeta(slug: string, raw: Record<string, unknown>): StoryMeta {
     fragment: String(raw.fragment),
     accent: String(raw.accent),
     ...(raw.veil === false ? { veil: false as const } : {}),
+    ...(typeof raw.backdrop === "string" ? { backdrop: raw.backdrop } : {}),
   };
 }
 

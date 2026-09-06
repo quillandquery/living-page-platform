@@ -37,11 +37,11 @@
   --paper-3:    color-mix(in oklab, var(--accent) 9%, var(--stock-3));
 
   /* type is never fully neutral and never fully coloured */
-  --ink:        color-mix(in oklab, var(--accent) 6%, var(--ink-base));
-  --ink-soft:   color-mix(in oklab, var(--accent) 15%, var(--soft-base));
-  --mute:       color-mix(in oklab, var(--accent) 22%, var(--mute-base));
+  --ink:        color-mix(in oklab, var(--accent) 9%, var(--ink-base));
+  --ink-soft:   color-mix(in oklab, var(--accent) 24%, var(--soft-base));
+  --mute:       color-mix(in oklab, var(--accent) 32%, var(--mute-base));
 
-  --rule:       color-mix(in oklab, var(--accent) 22%, transparent);
+  --rule:       color-mix(in oklab, var(--accent) 32%, transparent);
   --rule-2:     color-mix(in oklab, var(--accent) 10%, transparent);
   --shade:      color-mix(in oklab, var(--accent) 7%, transparent);
   --grain:      .05;
@@ -237,10 +237,10 @@ a{ color: inherit; }
    story's own colour, drift goes watery, thought warms. Speak stays ink,
    always — most of the page must read as writing, not as design. */
 
-.v-shout  { color: color-mix(in oklab, var(--counter) 72%, var(--ink)); }
-.v-listen { color: color-mix(in oklab, var(--accent) 36%, var(--ink)); }
-.v-drift  { color: color-mix(in oklab, var(--accent) 32%, var(--ink-soft)); }
-.v-thought{ color: color-mix(in oklab, var(--counter) 26%, var(--ink-soft)); }
+.v-shout  { color: color-mix(in oklab, var(--counter) 86%, var(--ink)); }
+.v-listen { color: color-mix(in oklab, var(--accent) 54%, var(--ink)); }
+.v-drift  { color: color-mix(in oklab, var(--accent) 46%, var(--ink-soft)); }
+.v-thought{ color: color-mix(in oklab, var(--counter) 40%, var(--ink-soft)); }
 
 /* The margin is inked in the second colour because it is a second
    narrator, and it gains ink as the reader goes deeper into the piece. */
@@ -593,4 +593,129 @@ a{ color: inherit; }
   background: var(--paper-2); border: 1px solid var(--rule);
   padding: 1.25rem; max-height: 76vh; overflow: auto; white-space: pre-wrap;
   color: var(--ink-soft);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BACKDROPS
+   The world a story happens in, declared in its frontmatter. Every layer
+   is tied to --depth, so the sky turns from night to dawn as the reader
+   descends, the stars go out, the moon sets and the road keeps coming.
+   Fixed, inert, and hidden from screen readers: the writing is the page.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.backdrop{ position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bd-layer{ position: absolute; inset: 0; display: block; }
+.backdrop svg{ position: absolute; display: block; }
+
+/* the paper tooth, carried over the weather */
+.backdrop::after{
+  content: ""; position: absolute; inset: 0; opacity: var(--grain);
+  background-image: radial-gradient(circle at 1px 1px, var(--ink-base) .5px, transparent 0);
+  background-size: 3px 3px;
+}
+
+/* ── sky ── two skies, cross-faded by reading depth ── */
+.bd-sky{ position: absolute; inset: 0; }
+.bd-sky-night{
+  background: linear-gradient(180deg, #0B0D1A 0%, #131A38 46%, #1E2551 78%, #2A2E63 100%);
+  background: linear-gradient(180deg,
+    oklch(from var(--accent) 0.13 0.085 h) 0%,
+    oklch(from var(--accent) 0.21 0.125 calc(h + 6)) 46%,
+    oklch(from var(--accent) 0.31 0.145 calc(h + 14)) 78%,
+    oklch(from var(--accent) 0.39 0.135 calc(h + 26)) 100%);
+}
+.bd-sky-dawn{
+  opacity: var(--depth);
+  background: linear-gradient(180deg, #232A5E 0%, #4A4E8C 55%, #C97A55 88%, #E8A472 100%);
+  background: linear-gradient(180deg,
+    oklch(from var(--accent) 0.27 0.10 h) 0%,
+    oklch(from var(--accent) 0.44 0.135 calc(h + 20)) 55%,
+    oklch(from var(--counter) 0.65 0.16 h) 88%,
+    oklch(from var(--counter) 0.80 0.14 calc(h + 12)) 100%);
+}
+
+/* ── stars ── thinning toward the horizon, gone by dawn ── */
+.bd-stars{
+  inset: 0; width: 100%; height: 100%;
+  opacity: calc(1 - var(--depth) * 0.94);
+  transform: translateY(calc(var(--depth) * -4vh));
+}
+.bd-stars circle{
+  fill: #FBF7EC; opacity: var(--o, .6);
+  animation: bd-twinkle 5.5s ease-in-out infinite;
+}
+@keyframes bd-twinkle{
+  0%, 100%{ opacity: var(--o, .6); }
+  50%     { opacity: calc(var(--o, .6) * .28); }
+}
+
+/* ── moon and sun ── one sets as you read, one climbs ── */
+.bd-moon{
+  right: 11vw; width: clamp(56px, 8vw, 120px); height: auto;
+  top: calc(24vh - var(--depth) * 15vh);
+  opacity: calc(.9 - var(--depth) * .85);
+}
+.bd-moon path{ fill: #F6F1E3; }
+.bd-sun{
+  left: 13vw; width: clamp(90px, 13vw, 190px); height: auto;
+  top: calc(20vh + var(--depth) * 9vh);
+}
+.bd-sun circle{ fill: oklch(from var(--counter) 0.84 0.16 h); opacity: .42; }
+
+/* ── ridgelines ── two ranges at different parallax ── */
+.bd-ridge{ left: 0; right: 0; bottom: 0; width: 100%; height: 19vh; }
+.bd-ridge-far { fill: #171B34; fill: oklch(from var(--accent) 0.19 0.065 h); opacity: .9;
+  transform: translateY(calc(var(--depth) * 2.5vh)); }
+.bd-ridge-near{ fill: #0C0E1C; fill: oklch(from var(--accent) 0.11 0.045 h);
+  transform: translateY(calc(var(--depth) * -1vh)); }
+
+/* ── road ── the only layer that admits the narrator is moving ── */
+.bd-road{ left: 0; right: 0; bottom: 0; width: 100%; height: 34vh;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 34%, #000 100%);
+          mask-image: linear-gradient(180deg, transparent 0%, #000 34%, #000 100%); }
+.bd-road path{ fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.bd-road path.bd-road-surface{ fill: #0B0D18; fill: oklch(from var(--accent) 0.14 0.05 h); opacity: .9; }
+.bd-road-edge { stroke: #8D95D8; stroke: oklch(from var(--accent) 0.66 0.11 h); stroke-width: 1.8; opacity: .8; }
+.bd-road-verge{ stroke: #D89A76; stroke: oklch(from var(--counter) 0.70 0.13 h); stroke-width: 1; opacity: .28; }
+.bd-road-dash {
+  stroke: #F0C79A; stroke: oklch(from var(--counter) 0.86 0.13 h);
+  stroke-width: 2.4; opacity: .55;
+  stroke-dasharray: 3 6;
+  animation: bd-run 1.5s linear infinite;
+}
+@keyframes bd-run{ to{ stroke-dashoffset: -9; } }
+
+/* ── sea ── */
+.bd-sea{ left: 0; right: 0; bottom: 0; width: 100%; height: 38vh; }
+.bd-sea path{ fill: none; stroke: #6E77C4; stroke: oklch(from var(--accent) 0.55 0.11 h);
+  opacity: .4; vector-effect: non-scaling-stroke; }
+
+/* ── rain ── */
+.bd-rain{ inset: 0; width: 100%; height: 100%; }
+.bd-rain path{ fill: none; stroke: #AFC0D8; stroke: oklch(from var(--accent) 0.78 0.05 h);
+  stroke-width: .22; opacity: var(--o, .3);
+  animation: bd-fall 1.2s linear infinite; }
+@keyframes bd-fall{ from{ transform: translateY(-8%); } to{ transform: translateY(108%); } }
+
+/* ── haze ── the horizon glow, thickening as the piece goes on ── */
+.bd-haze{
+  position: absolute; inset: auto 0 0 0; height: 52vh;
+  background: radial-gradient(ellipse 82% 100% at 50% 100%,
+    oklch(from var(--counter) 0.72 0.16 h / calc(.18 + var(--depth) * .34)) 0%, transparent 72%);
+}
+
+/* ── scrim ── the writing has to stay readable over all of it ── */
+.bd-scrim{
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, transparent 0%, color-mix(in oklab, var(--stock) 40%, transparent) 62%,
+                    color-mix(in oklab, var(--stock) 68%, transparent) 100%),
+    radial-gradient(ellipse 72% 84% at 50% 44%,
+      color-mix(in oklab, var(--stock) 62%, transparent) 0%,
+      color-mix(in oklab, var(--stock) 30%, transparent) 52%,
+      transparent 86%);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .bd-stars circle, .bd-road-dash, .bd-rain path{ animation: none !important; }
 }

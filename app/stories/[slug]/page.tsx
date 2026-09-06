@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getStoryMeta, isSlug, listStories } from "@/lib/stories";
 import { StoryFrame } from "@/components/living/StoryFrame";
 import { Doodle } from "@/components/doodles/Doodle";
+import { Backdrop } from "@/components/living/Backdrop";
+import { getBackdrop, schemeVars } from "@/lib/backdrops";
 
 /**
  * Only the slugs that existed at build time are real. Without this, an
@@ -55,9 +57,17 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   // rather than flashing grey first. Validated because it lands in CSS.
   const accent = /^#[0-9a-fA-F]{3,8}$/.test(meta.accent) ? meta.accent : "#2B3ED0";
 
+  // A backdrop declares the world, and the world overrides the reader's
+  // theme — a piece that happens at 4am is dark whatever the OS says.
+  // Injected at :root so <body> arrives in it too, rather than flashing
+  // the reader's own palette first.
+  const world = getBackdrop(meta.backdrop);
+  const vars = [`--accent:${accent}`, world ? schemeVars(world.scheme) : ""].filter(Boolean).join(";");
+
   return (
     <main className="frame">
-      <style>{`:root{--accent:${accent}}`}</style>
+      <style>{`:root{${vars}}`}</style>
+      <Backdrop name={meta.backdrop} seed={meta.slug} />
       {/* §17 — a story opens on a visual beat, not a wall of text */}
       <header className="frontispiece">
         <Link href="/" className="back">back</Link>

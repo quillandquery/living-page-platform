@@ -122,4 +122,6 @@ export type StoryMeta = {
   accent: string;
   /** turn the veil off for a piece that wants to be seen whole */
   veil?: boolean;
+  /** the world this piece happens in — a name from lib/backdrops.ts */
+  backdrop?: string;
 };
