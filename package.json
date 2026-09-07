@@ -9,17 +9,21 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "check": "node scripts/check-stories.mjs"
+    "check": "node scripts/check-stories.mjs",
+    "seed": "node --env-file=.env.local scripts/seed.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
     "@next/mdx": "^15.5.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.115.0",
     "gray-matter": "^4.0.3",
     "next": "^15.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "remark-frontmatter": "^5.0.0"
+    "remark-frontmatter": "^5.0.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/mdx": "^2.0.13",

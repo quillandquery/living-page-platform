@@ -8,8 +8,8 @@ const hand = Caveat({ subsets: ["latin"], weight: ["400", "500", "600"], variabl
 const mono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Places I've Been",
-  description: "A living travel diary. Not a guide.",
+  title: "The Living Page",
+  description: "A place for travel writing where the sentence decides how it looks, sounds and moves. Write plainly; it does the rest.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

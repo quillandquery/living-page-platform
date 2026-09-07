@@ -719,3 +719,111 @@ a{ color: inherit; }
 @media (prefers-reduced-motion: reduce){
   .bd-stars circle, .bd-road-dash, .bd-rain path{ animation: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE PLATFORM
+   The single-author site became a place many people write. These are the
+   surfaces that were not there before — the front-door nav, the sign-in
+   gate, the writer's desk — built from the same tokens so they read as the
+   same object, not a dashboard bolted onto a diary.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* — top nav: a whisper in the corner, never a header bar — */
+.topnav{
+  position: absolute; top: 1.4rem; right: 1.6rem; z-index: 3;
+  display: flex; gap: 1.1rem; align-items: center;
+}
+.topnav-link{
+  font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mute); text-decoration: none;
+}
+.topnav-link:hover{ color: var(--accent); }
+.topnav-cta{
+  font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--paper); background: var(--ink);
+  padding: .45rem .7rem; border-radius: 2px; text-decoration: none;
+}
+.topnav-cta:hover{ background: var(--accent); }
+
+/* — the doorway now names its writer — */
+.doorway-by{
+  grid-column: 2; font-family: var(--f-mono); font-size: .625rem;
+  letter-spacing: .08em; color: var(--mute); margin-top: .15rem;
+}
+@media (max-width: 720px){ .doorway-by{ grid-column: 1; } }
+.byline{ font-family: var(--f-mono); font-size: .6875rem; color: var(--mute); margin: .4rem 0 0; }
+.byline a{ color: color-mix(in oklab, var(--accent) 55%, var(--ink)); text-decoration: none; }
+.byline a:hover{ color: var(--accent); }
+
+/* — the gate: sign in, sign up, onboarding, settings — */
+.gate{ min-height: 100vh; display: grid; place-items: center; padding: 8vh 1.5rem; }
+.gate-card{
+  width: 100%; max-width: 27rem; display: flex; flex-direction: column; gap: 1.1rem;
+}
+.gate-title{
+  font-family: var(--f-disp); font-weight: 400; font-size: clamp(1.9rem, 5vw, 2.6rem);
+  line-height: 1.05; margin: .3rem 0 0; color: var(--ink);
+}
+.gate-sub{ font-size: .95rem; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+.gate-form{ display: flex; flex-direction: column; gap: .9rem; margin-top: .3rem; }
+.gate-form .lab input, .gate-form .lab select{
+  width: 100%; font-family: var(--f-body); font-size: 1rem; color: var(--ink);
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px;
+  padding: .6rem .7rem;
+}
+.gate-form .act{ font-size: .6875rem; padding: .7rem 1rem; margin-top: .3rem; }
+.gate-alt{ font-size: .875rem; color: var(--mute); margin: .2rem 0 0; }
+.gate-alt a, .gate-sub a{ color: color-mix(in oklab, var(--accent) 60%, var(--ink)); }
+.gate-signout{ margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--rule-2); }
+
+.handle-field{ display: flex; align-items: center; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px; }
+.handle-field .handle-at{ padding-left: .7rem; color: var(--mute); font-family: var(--f-mono); }
+.handle-field input{ border: 0 !important; background: transparent !important; }
+.lab-check{ flex-direction: row; align-items: center; gap: .5rem; text-transform: none; letter-spacing: 0; font-size: .8rem; color: var(--ink-soft); }
+.lab-check input{ width: auto !important; }
+
+/* — the desk: a writer's own pieces — */
+.desk{ max-width: 52rem; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+.desk-bar{
+  display: flex; align-items: center; gap: 1.1rem;
+  padding-bottom: 1rem; border-bottom: 1px solid var(--rule);
+}
+.desk-mark{ font-family: var(--f-hand); font-size: 1.3rem; color: var(--ink); }
+.desk-bar .back, .desk-bar .linklike{ font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .08em; text-transform: uppercase; }
+.desk-head{ display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 3rem 0 1rem; }
+.desk-title{ font-family: var(--f-disp); font-weight: 400; font-size: clamp(2rem, 6vw, 3rem); margin: 0; color: var(--ink); }
+.desk-empty{ margin-top: 2rem; }
+.desk-section{ font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 2.4rem 0 .6rem; }
+.desk-list{ list-style: none; margin: 0; padding: 0; }
+.desk-item{
+  display: grid; grid-template-columns: 12rem 1fr auto; align-items: baseline; gap: 1rem;
+  padding: 1rem .4rem; border-bottom: 1px solid var(--rule-2); text-decoration: none;
+}
+.desk-item:hover{ background: color-mix(in oklab, var(--accent) 5%, transparent); }
+.desk-place{ font-family: var(--f-disp); font-size: 1.35rem; color: color-mix(in oklab, var(--accent) 55%, var(--ink)); }
+.desk-frag{ font-size: .95rem; color: var(--ink-soft); line-height: 1.5; }
+.desk-badge{ font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .45rem; border-radius: 2px; white-space: nowrap; }
+.desk-badge.draft{ color: var(--mute); border: 1px solid var(--rule); }
+.desk-badge.live{ color: var(--accent); }
+@media (max-width: 640px){ .desk-item{ grid-template-columns: 1fr; gap: .3rem; } }
+
+/* — editor extras — */
+.mode-seg{ display: inline-flex; gap: .25rem; border: 1px solid var(--rule); border-radius: 3px; padding: .2rem; width: max-content; }
+.mode-seg button{
+  font-family: var(--f-mono); font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
+  background: transparent; border: 0; color: var(--mute); padding: .35rem .7rem; cursor: pointer; border-radius: 2px;
+}
+.mode-seg button[aria-selected="true"]{ background: var(--ink); color: var(--paper); }
+.studio-slug{ font-family: var(--f-mono); font-size: .625rem; letter-spacing: .06em; color: var(--mute); }
+.studio-slug a{ color: var(--accent); text-decoration: none; }
+.ghost{
+  font-family: var(--f-mono); font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--rule); color: var(--ink-soft);
+  border-radius: 2px; padding: .5rem .7rem; cursor: pointer;
+}
+.ghost:hover{ border-color: var(--accent); color: var(--accent); }
+.danger{ margin-top: auto; padding-top: 1.4rem; }
+.linklike{ background: none; border: 0; color: var(--mute); cursor: pointer; font: inherit; padding: 0; }
+.linklike:hover{ color: var(--accent); }
+.danger-link{ font-family: var(--f-mono); font-size: .625rem; letter-spacing: .1em; text-transform: uppercase; }
+.danger-link:hover{ color: color-mix(in oklab, #c0392b 70%, var(--ink)); }
