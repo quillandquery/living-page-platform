@@ -878,3 +878,31 @@ a{ color: inherit; }
 .mv-smear.arrived   .words{ animation: lp-smear .8s ease both; }
 .mv-wave.arrived   .word{ display:inline-block; animation: lp-wordrise .6s cubic-bezier(.2,.7,.25,1) both; animation-delay: calc(var(--i) * 55ms); }
 .mv-ripple.arrived .word{ display:inline-block; animation: lp-wordrise .7s ease both; animation-delay: calc(var(--i) * 42ms); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MEDIA — the image-forward register (lib/media.ts, resolved on save).
+   A media block rides the same .beat reveal machinery as text: it veils,
+   nears, and arrives on scroll. Full-width, credited, lazy-loaded.
+   ══════════════════════════════════════════════════════════════════════ */
+.beat.media-beat{ display:block; grid-template-columns:none; padding-block:1.6rem; }
+.media{ margin:0; }
+.media img{
+  display:block; width:100%; max-width:62rem; margin-inline:auto;
+  border-radius:12px; box-shadow:0 14px 44px -20px rgba(0,0,0,.55);
+}
+.media figcaption{
+  font-family:var(--f-mono); font-size:.68rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--mute); text-align:center; margin-top:.7rem;
+}
+.media figcaption a{ color:var(--mute); text-decoration:none; border-bottom:1px solid var(--rule-2); }
+
+.flow.veiled .media-beat .media{
+  opacity:0; filter:blur(10px); transform:scale(1.02);
+  transition:opacity 1s ease, filter 1s ease, transform 1s ease;
+}
+.flow.veiled .media-beat.near    .media{ opacity:.3; filter:blur(5px); }
+.flow.veiled .media-beat.arrived .media{ opacity:1; filter:none; transform:none; }
+
+@media (prefers-reduced-motion: reduce){
+  .flow.veiled .media-beat .media{ transition:none !important; opacity:1 !important; filter:none !important; transform:none !important; }
+}

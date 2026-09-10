@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { myProfile } from "@/lib/db";
 import type { Block } from "@/lib/story-blocks.mjs";
+import { resolveImagery } from "@/lib/media";
 
 /**
  * THE STUDIO'S HANDS, on a platform.
@@ -46,6 +47,8 @@ export type SaveInput = {
   veil: boolean;
   source: string;
   blocks: Block[];
+  /** when true, the save resolves photographic imagery into the blocks */
+  imagery?: boolean;
 };
 
 export type SaveResult =
@@ -79,6 +82,13 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   const slug = await uniqueSlug(profile.id, input.id, input.place || "untitled");
   const supabase = await supabaseServer();
 
+  // image-forward register: resolve photos into the blocks. Guarded so a
+  // missing key or a provider hiccup never blocks a save.
+  let blocks = input.blocks;
+  if (input.imagery) {
+    try { blocks = await resolveImagery(input.place, input.source, input.blocks); } catch { blocks = input.blocks; }
+  }
+
   const patch: Record<string, unknown> = {
     slug,
     place: input.place,
@@ -88,7 +98,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     backdrop: input.backdrop,
     veil: input.veil,
     source: input.source,
-    blocks: input.blocks,
+    blocks,
   };
   if (publish === true) { patch.status = "published"; patch.published_at = new Date().toISOString(); }
   if (publish === false) { patch.status = "draft"; }

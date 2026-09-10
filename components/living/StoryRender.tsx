@@ -89,12 +89,30 @@ function renderRaw(text: string, key: number): React.ReactNode {
   return words ? <Beat key={key} voice="speak" seed={key * 7 + 3}>{words}</Beat> : null;
 }
 
+function MediaFigure({ block }: { block: Extract<Block, { kind: "media" }> }) {
+  return (
+    <div className="beat media-beat">
+      <figure className="media">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={block.src} alt={block.alt} loading="lazy" />
+        <figcaption>
+          Photo:{" "}
+          <a href={block.creditUrl} target="_blank" rel="noreferrer noopener">{block.credit}</a>
+          {" / "}
+          <a href={block.link} target="_blank" rel="noreferrer noopener">Pexels</a>
+        </figcaption>
+      </figure>
+    </div>
+  );
+}
+
 export function StoryRender({ blocks }: { blocks: Block[] }) {
   return (
     <>
       {blocks.map((b, i) => {
         if (b.kind === "hold") return <Hold key={i} beats={b.beats} />;
         if (b.kind === "raw") return <React.Fragment key={i}>{renderRaw(b.text, i)}</React.Fragment>;
+        if (b.kind === "media") return <MediaFigure key={i} block={b} />;
         // a beat
         const voice = VOICES.has(b.voice as Voice) ? (b.voice as Voice) : "speak";
         return (

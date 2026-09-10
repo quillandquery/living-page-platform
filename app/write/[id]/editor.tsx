@@ -112,6 +112,7 @@ function LivePreview({ blocks }: { blocks: Block[] }) {
       {blocks.map((b, i) => {
         if (b.kind === "hold") return <Hold key={i} beats={Math.min(b.beats, 2)} />;
         if (b.kind === "raw") return <p key={i} className="blk-kept-line">{b.text}</p>;
+        if (b.kind === "media") return null;
         return (
           <Beat key={i} voice={b.voice as Voice} body={b.body as Body | undefined}
                 gesture={b.gesture as Gesture | undefined} move={b.move as Move | undefined} doodle={b.doodle}
@@ -160,9 +161,12 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
 
+  const imagery =
+    visSel === "illustrated" || visSel === "collage" || visSel === "maximal" ||
+    (visSel === "auto" && density >= 6);
   const input = (): SaveInput => ({
     id: story.id, place, date, fragment, accent,
-    backdrop: world, veil, source: raw, blocks,
+    backdrop: world, veil, source: raw, blocks, imagery,
   });
 
   const run = (fn: (i: SaveInput) => Promise<{ ok: boolean; message?: string }>, verb: string, live?: boolean) =>

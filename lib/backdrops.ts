@@ -98,9 +98,19 @@ export function schemeVars(scheme: "dark" | "light"): string {
     "--ink-base:#EEEBE3",
     "--soft-base:#B7B3AB",
     "--mute-base:#7F818C",
-    "--grain:.055",
+    "--grain:.07",
     "color-scheme:dark",
     "--counter:#E58A6C",
-    "--counter:oklch(from var(--accent) 0.76 0.13 calc(h + 158))",
+    "--counter:oklch(from var(--accent) 0.78 0.18 calc(h + 158))",
+    // A dark world still carries the story's colour, boldly — otherwise a
+    // night piece washes out to grey. The accent reaches the ground, the
+    // rules, and the second-rank type; only the body ink stays near-white.
+    "--paper:color-mix(in oklab, var(--accent) calc(9% + var(--depth) * 7%), var(--stock))",
+    "--paper-2:color-mix(in oklab, var(--accent) 15%, var(--stock-2))",
+    "--paper-3:color-mix(in oklab, var(--accent) 22%, var(--stock-3))",
+    "--ink-soft:color-mix(in oklab, var(--accent) 42%, var(--soft-base))",
+    "--mute:color-mix(in oklab, var(--accent) 48%, var(--mute-base))",
+    "--rule:color-mix(in oklab, var(--accent) 54%, transparent)",
+    "--rule-2:color-mix(in oklab, var(--accent) 24%, transparent)",
   ].join(";");
 }
