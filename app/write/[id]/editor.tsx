@@ -291,7 +291,7 @@ const CSS = `
 .ed-seg button[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
 
 /* the living page preview — a real world behind real voices */
-.ed-live{ position:relative; flex:1; overflow:auto; padding:6vh 2vw;
+.ed-live{ position:relative; flex:1; overflow-y:scroll; overflow-x:hidden; scrollbar-gutter:stable; padding:6vh 2vw;
   background: color-mix(in oklab, var(--accent) 7%, #FBF6EC); }
 .ed-live.dark{ background:#14161B; color:#ECE8DF; }
 .ed-live .backdrop{ position:absolute !important; }
@@ -306,6 +306,13 @@ const CSS = `
 
 .ed-words{ flex:1; overflow:auto; margin:0; padding:3vh max(1rem,2vw); font-family:var(--f-mono); font-size:.9rem; line-height:1.7; color:var(--ink-soft); white-space:pre-wrap; background:var(--paper-2); }
 
+.ed-write, .ed-live, .ed-words{ scrollbar-width:thin; scrollbar-color: rgba(90,80,70,.5) transparent; }
+.ed-write::-webkit-scrollbar, .ed-live::-webkit-scrollbar, .ed-words::-webkit-scrollbar{ width:12px; }
+.ed-write::-webkit-scrollbar-thumb, .ed-live::-webkit-scrollbar-thumb, .ed-words::-webkit-scrollbar-thumb{ background:rgba(90,80,70,.5); border-radius:8px; border:3px solid transparent; background-clip:padding-box; }
+.ed-write::-webkit-scrollbar-thumb:hover, .ed-live::-webkit-scrollbar-thumb:hover, .ed-words::-webkit-scrollbar-thumb:hover{ background:rgba(90,80,70,.78); background-clip:padding-box; }
+.ed-live.dark{ scrollbar-color: rgba(236,232,223,.55) transparent; }
+.ed-live.dark::-webkit-scrollbar-thumb{ background:rgba(236,232,223,.5); border:3px solid transparent; background-clip:padding-box; }
+.ed-live.dark::-webkit-scrollbar-thumb:hover{ background:rgba(236,232,223,.8); background-clip:padding-box; }
 @media (max-width:900px){ .ed-grid{ grid-template-columns:1fr; } .ed-write{ border-right:0; border-bottom:1px solid var(--line); } .ed-live{ min-height:70vh; } }
 @media (prefers-reduced-motion:reduce){ .ed-live .beat{ animation:none; } }
 `;

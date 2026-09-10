@@ -166,10 +166,10 @@ const CSS = `
 .lp-cta-row{ display:flex; gap:.8rem; flex-wrap:wrap; }
 .lp-btn{ display:inline-block; font-family:var(--f-mono); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase;
   padding:.85rem 1.3rem; border-radius:999px; transition:transform .2s cubic-bezier(.2,1.25,.3,1), background .2s; }
-.lp-btn-primary{ background:var(--ink); color:var(--paper); }
-.lp-btn-primary:hover{ background:var(--electric); transform:translateY(-2px); }
-.lp-btn-ghost{ border:1px solid var(--line); color:var(--ink-soft); }
-.lp-btn-ghost:hover{ border-color:var(--electric); color:var(--electric); }
+.lp a.lp-btn-primary{ background:var(--ink); color:var(--paper); }
+.lp a.lp-btn-primary:hover{ background:var(--electric); transform:translateY(-2px); }
+.lp a.lp-btn-ghost{ border:1px solid var(--line); color:var(--ink-soft); }
+.lp a.lp-btn-ghost:hover{ border-color:var(--electric); color:var(--electric); }
 .lp-btn-lg{ font-size:.85rem; padding:1rem 1.6rem; }
 
 /* hero transform panel */
