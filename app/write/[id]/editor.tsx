@@ -197,7 +197,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
                     onChange={(e) => setRaw(e.target.value)} autoFocus />
           {hint ? <p className="ed-hint">{hint}</p> : null}
 
-          <details className="ed-details">
+          <details className="ed-details" open>
             <summary>Details &amp; shaping</summary>
             <div className="ed-details-body">
               <div className="ed-row">
@@ -268,7 +268,7 @@ const CSS = `
 
 .ed-grid{ display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 3.5rem); }
 @media (min-width:900px){ .ed-grid{ height:calc(100vh - 3.6rem); min-height:0; } .ed-write{ overflow-y:auto; } }
-.ed-write{ padding:5vh max(1.2rem,3.5vw); display:flex; flex-direction:column; gap:1.2rem; border-right:1px solid var(--line); }
+.ed-write{ padding:5vh max(1.2rem,3.5vw); display:flex; flex-direction:column; gap:1.2rem; border-right:1px solid var(--line); background:var(--paper); }
 .ed-text{ width:100%; min-height:52vh; resize:vertical; border:0; outline:0; background:transparent; color:var(--ink);
   font-family:var(--f-disp); font-size:1.5rem; line-height:1.6; }
 .ed-text::placeholder{ color:var(--mute); font-family:var(--f-body); font-size:1.2rem; }
