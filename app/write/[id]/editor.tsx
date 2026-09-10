@@ -57,15 +57,24 @@ const MOOD_CUES: [Exclude<Mood, "auto">, RegExp][] = [
   ["restless", /\b(couldn't sleep|awake|restless|racing|can't stop|nervous)\b/i],
 ];
 const WORLD_CUES: [string, RegExp][] = [
-  ["coast", /\b(beach|sea|ocean|coast|shore|sand|wave|surf|salt|tide|swim)\b/i],
-  ["monsoon", /\b(rain|monsoon|storm|downpour|wet|thunder|drizzle|umbrella)\b/i],
-  ["highland", /\b(mountain|hill|ghat|ridge|valley|cliff|peak|fog)\b/i],
-  ["heat", /\b(desert|heat|noon|dust|dry|burn|scorching)\b/i],
+  ["forest", /\b(forest|jungle|trees?|woods|leaves|trail|moss|pine)\b/i],
+  ["monsoon", /\b(monsoon|downpour|thunder|storm|flood|drizzle)\b/i],
+  ["dreamscape", /\b(dream|dreamt|surreal|floating|unreal|imagine)\b/i],
+  ["nightcity", /\b(neon|nightlife|club|streetlight)\b/i],
   ["nightroad", /\b(night|midnight|road|drive|bus|highway|moon|stars|4am|asleep|dark)\b/i],
+  ["coast", /\b(beach|sea|ocean|coast|shore|sand|wave|surf|salt|tide|swim)\b/i],
+  ["window", /\b(window|caf[eé]|coffee|glass|watching|indoors|inside)\b/i],
+  ["cafe", /\b(kitchen|bedroom|home|lamp|bed|tea|apartment|sofa)\b/i],
+  ["meadow", /\b(field|meadow|flowers?|grass|picnic|wildflower|garden|bloom)\b/i],
+  ["highland", /\b(mountain|hill|ghat|ridge|valley|cliff|peak|fog)\b/i],
+  ["heat", /\b(desert|heat|noon|dust|scorching|dune)\b/i],
+  ["dawn", /\b(dawn|sunrise|morning|first light|rooster)\b/i],
+  ["city", /\b(city|street|downtown|traffic|crowd|sidewalk|avenue|market)\b/i],
 ];
 const WORLD_ACCENT: Record<string, string> = {
-  coast: "#1C86C4", monsoon: "#3E8E9E", highland: "#4C6A8A", heat: "#D2691E",
-  nightroad: "#2B3ED0", nightsky: "#2B3ED0",
+  coast: "#1C86C4", forest: "#2E7D4F", highland: "#4C6A8A", meadow: "#C9962B", heat: "#D2691E",
+  dawn: "#E0876B", city: "#3A5BD0", window: "#5B7C99", cafe: "#C77D3A", monsoon: "#3E8E9E",
+  nightcity: "#B65CC0", nightroad: "#2B3ED0", nightsky: "#2B3ED0", dreamscape: "#7A6CE0",
 };
 
 const count = (re: RegExp, s: string) => (s.match(new RegExp(re.source, "gi")) ?? []).length;

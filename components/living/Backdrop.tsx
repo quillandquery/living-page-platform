@@ -120,16 +120,96 @@ function Rain() {
   );
 }
 
+/* A skyline at the horizon, a few windows lit — a city without being any city
+   in particular. */
+function City({ seed }: { seed: string }) {
+  const r = rng(seed + "city");
+  const b = Array.from({ length: 26 }, (_, i) => {
+    const w = 2.6 + r() * 3.4;
+    const h = 6 + r() * 26;
+    return { x: i * 3.9 - 2, w, h, i, lit: r() > 0.55 };
+  });
+  return (
+    <svg className="bd-city" viewBox="0 0 100 44" preserveAspectRatio="none" aria-hidden="true">
+      {b.map((s) => (
+        <g key={s.i}>
+          <rect className="bd-city-block" x={v(s.x)} y={v(44 - s.h)} width={v(s.w)} height={v(s.h)} />
+          {s.lit ? <rect className="bd-city-lit" x={v(s.x + s.w * 0.35)} y={v(44 - s.h + 2)} width={v(s.w * 0.28)} height="1.1" /> : null}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* A forest edge at two depths — standing just inside the treeline. */
+function Trees({ seed }: { seed: string }) {
+  const r = rng(seed + "trees");
+  const row = (n: number, base: number, scale: number) =>
+    Array.from({ length: n }, (_, i) => {
+      const x = (i / (n - 1)) * 104 - 2 + (r() - 0.5) * 4;
+      const h = (10 + r() * 8) * scale;
+      return <path key={i} className="bd-tree" d={`M${v(x)},44 L${v(x)},${v(base - h)} M${v(x - 2.2 * scale)},${v(base - h * 0.55)} L${v(x)},${v(base - h)} L${v(x + 2.2 * scale)},${v(base - h * 0.55)} M${v(x - 1.6 * scale)},${v(base - h * 0.75)} L${v(x)},${v(base - h * 1.05)} L${v(x + 1.6 * scale)},${v(base - h * 0.75)}`} />;
+    });
+  return (
+    <svg className="bd-trees" viewBox="0 0 100 44" preserveAspectRatio="none" aria-hidden="true">
+      <g className="bd-trees-far">{row(11, 40, 0.8)}</g>
+      <g className="bd-trees-near">{row(8, 46, 1.25)}</g>
+    </svg>
+  );
+}
+
+/* Grass and wildflowers that sway along the base. */
+function Field({ seed }: { seed: string }) {
+  const r = rng(seed + "field");
+  const stems = Array.from({ length: 60 }, (_, i) => {
+    const x = (i / 59) * 100 + (r() - 0.5) * 1.4;
+    const h = 3 + r() * 7;
+    return { x, h, bloom: r() > 0.7, d: (r() * 3).toFixed(1), i };
+  });
+  return (
+    <svg className="bd-field" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true">
+      {stems.map((s) => (
+        <g key={s.i} className="bd-stem" style={{ animationDelay: `${s.d}s`, transformOrigin: `${v(s.x)}px 20px` }}>
+          <path d={`M${v(s.x)},20 L${v(s.x)},${v(20 - s.h)}`} />
+          {s.bloom ? <circle cx={v(s.x)} cy={v(20 - s.h)} r="0.7" className="bd-bloom" /> : null}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* An interior frame — the story looks out. Pairs with rain for the classic
+   rainy-window world. */
+function Window() {
+  return (
+    <svg className="bd-window" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <rect className="bd-window-pane" x="8" y="6" width="84" height="88" rx="1.5" />
+      <line className="bd-window-bar" x1="50" y1="6" x2="50" y2="94" />
+      <line className="bd-window-bar" x1="8" y1="50" x2="92" y2="50" />
+    </svg>
+  );
+}
+
+/* A soft moving field of light — the substance of a dream. */
+function Glow() {
+  return <div className="bd-glow" />;
+}
+
 const RENDER: Record<Layer, (p: { seed: string; dawn?: boolean }) => React.ReactNode> = {
-  sky:   ({ dawn }) => <Sky dawn={dawn} />,
-  stars: ({ seed }) => <Stars seed={seed} />,
-  moon:  () => <Moon />,
-  sun:   () => <Sun />,
-  ridge: () => <Ridge />,
-  road:  () => <Road />,
-  sea:   () => <Sea />,
-  rain:  () => <Rain />,
-  haze:  () => <div className="bd-haze" />,
+  sky:    ({ dawn }) => <Sky dawn={dawn} />,
+  stars:  ({ seed }) => <Stars seed={seed} />,
+  moon:   () => <Moon />,
+  sun:    () => <Sun />,
+  ridge:  () => <Ridge />,
+  road:   () => <Road />,
+  sea:    () => <Sea />,
+  rain:   () => <Rain />,
+  haze:   () => <div className="bd-haze" />,
+  trees:  ({ seed }) => <Trees seed={seed} />,
+  city:   ({ seed }) => <City seed={seed} />,
+  window: () => <Window />,
+  field:  ({ seed }) => <Field seed={seed} />,
+  glow:   () => <Glow />,
 };
 
 /**

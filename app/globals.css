@@ -827,3 +827,28 @@ a{ color: inherit; }
 .linklike:hover{ color: var(--accent); }
 .danger-link{ font-family: var(--f-mono); font-size: .625rem; letter-spacing: .1em; text-transform: uppercase; }
 .danger-link:hover{ color: color-mix(in oklab, #c0392b 70%, var(--ink)); }
+
+/* ── expanded worlds: city, trees, field, window, glow ── */
+.bd-city{ left:0; right:0; bottom:0; width:100%; height:30vh; }
+.bd-city-block{ fill: oklch(from var(--accent) 0.5 0.08 h / .5); }
+.bd-city-lit{ fill: oklch(from var(--counter) 0.82 0.16 h / calc(.4 + var(--depth) * .5)); }
+.bd-trees{ left:0; right:0; bottom:0; width:100%; height:26vh; }
+.bd-tree{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.bd-trees-far .bd-tree{ stroke: oklch(from var(--accent) 0.5 0.1 h / .5); stroke-width:1.1; }
+.bd-trees-near .bd-tree{ stroke: oklch(from var(--accent) 0.36 0.11 h / .72); stroke-width:1.5; }
+.bd-field{ left:0; right:0; bottom:0; width:100%; height:16vh; }
+.bd-field path{ fill:none; stroke: oklch(from var(--accent) 0.52 0.12 h / .6); stroke-width:.5; stroke-linecap:round; }
+.bd-bloom{ fill: oklch(from var(--counter) 0.72 0.17 h / .85); }
+.bd-stem{ animation: bd-sway 4.5s ease-in-out infinite; }
+@keyframes bd-sway{ 0%,100%{ transform: rotate(-2.5deg); } 50%{ transform: rotate(2.5deg); } }
+.bd-window{ position:absolute; inset:0; }
+.bd-window-pane{ fill: oklch(from var(--accent) 0.9 0.03 h / .12); stroke: oklch(from var(--accent) 0.45 0.06 h / .5); stroke-width:.5; }
+.bd-window-bar{ stroke: oklch(from var(--accent) 0.45 0.06 h / .5); stroke-width:.5; }
+.bd-glow{ position:absolute; inset:-20%;
+  background:
+    radial-gradient(ellipse 50% 45% at 30% 35%, oklch(from var(--accent) 0.6 0.18 h / .5) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 72% 62%, oklch(from var(--counter) 0.62 0.17 h / .45) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 55% at 50% 90%, oklch(from var(--accent) 0.5 0.14 h / .4) 0%, transparent 66%);
+  filter: blur(8px); animation: bd-drift 26s ease-in-out infinite alternate; }
+@keyframes bd-drift{ 0%{ transform: translate3d(-3%,-2%,0) scale(1.05); } 100%{ transform: translate3d(3%,2%,0) scale(1.12); } }
+@media (prefers-reduced-motion: reduce){ .bd-stem, .bd-glow{ animation:none !important; } }
