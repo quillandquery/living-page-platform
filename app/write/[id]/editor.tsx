@@ -7,7 +7,7 @@ import { Beat } from "@/components/living/Beat";
 import { Hold } from "@/components/living/Scene";
 import { Backdrop } from "@/components/living/Backdrop";
 import { getBackdrop } from "@/lib/backdrops";
-import { type Body, type Gesture, type Voice } from "@/lib/vocabulary";
+import { type Body, type Gesture, type Move, type Voice } from "@/lib/vocabulary";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
@@ -114,7 +114,7 @@ function LivePreview({ blocks }: { blocks: Block[] }) {
         if (b.kind === "raw") return <p key={i} className="blk-kept-line">{b.text}</p>;
         return (
           <Beat key={i} voice={b.voice as Voice} body={b.body as Body | undefined}
-                gesture={b.gesture as Gesture | undefined} doodle={b.doodle}
+                gesture={b.gesture as Gesture | undefined} move={b.move as Move | undefined} doodle={b.doodle}
                 side={b.side === "left" ? "left" : "right"} seed={i * 7 + 3}>
             {b.text}
           </Beat>

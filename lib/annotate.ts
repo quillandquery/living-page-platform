@@ -1,5 +1,6 @@
 import {
-  COSTLY_VOICES, DEFAULT_BODY, type BeatSpec, type Body, type Gesture, type Voice,
+  COSTLY_VOICES, DEFAULT_BODY, DEFAULT_MOVE, MOVE_CANDIDATES,
+  type BeatSpec, type Body, type Gesture, type Move, type Voice,
 } from "./vocabulary";
 // story-blocks, never story-file: the studio runs this in the browser and
 // story-file reaches for gray-matter, which reaches for node:fs
@@ -138,10 +139,29 @@ export type AnnotateOptions = {
   doodleDensity?: number;
   /** 0–1. Share of beats allowed a voice other than speak. §6 says ~0.3. */
   voiceBudget?: number;
+  /** varies motion so two similar drafts don't render identically */
+  seed?: number;
 };
+
+function seedHash(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+const pickMoveFrom = (arr: Move[], seed: number): Move => arr[Math.abs(seed) % arr.length];
+
+/** A move for this beat: meaning first, then a seeded pick from the voice's set. */
+function readMove(voice: Voice, text: string, seed: number): Move {
+  if (hits(LEX.loud, text))                          return pickMoveFrom(["snap", "grow", "stretch"], seed);
+  if (hits(LEX.water, text) || hits(LEX.dream, text)) return pickMoveFrom(["wave", "ripple", "move"], seed);
+  if (hits(LEX.motion, text))                        return pickMoveFrom(["rise", "move"], seed);
+  if (hits(LEX.quiet, text))                         return pickMoveFrom(["smear", "rise", "enter"], seed);
+  return pickMoveFrom(MOVE_CANDIDATES[voice] ?? ["enter"], seed);
+}
 
 export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
   const { splitSentences = true, doodleDensity = 5, voiceBudget = 0.3 } = opts;
+  const base = (opts.seed ?? seedHash(raw)) >>> 0;
   const segs = segment(raw, splitSentences);
   const textCount = segs.filter((s) => !("pause" in s)).length;
 
@@ -173,7 +193,8 @@ export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
     if (doodle) { side = lastSide === "right" ? "left" : "right"; lastSide = side; sinceDoodle = 0; }
     else sinceDoodle++;
 
-    beats.push({ text: seg.text, voice, body, gesture, doodle, side });
+    const move = readMove(voice, seg.text, base + i * 2654435761);
+    beats.push({ text: seg.text, voice, body, gesture, doodle, side, move });
     margins.push(voice === "speak" ? Infinity : margin);
     recent.unshift(voice);
     if (recent.length > 5) recent.pop();
@@ -231,11 +252,12 @@ export function toBlocks(beats: BeatSpec[]): Block[] {
       kind: "beat",
       voice: b.voice,
       text: b.text,
-      bare: b.voice === "speak" && !b.doodle && !body,
+      bare: b.voice === "speak" && !b.doodle && !body && (!b.move || b.move === DEFAULT_MOVE[b.voice]),
       body,
       doodle: b.doodle,
       side: b.doodle ? b.side : undefined,
       gesture: b.doodle ? b.gesture : undefined,
+      move: b.move && b.move !== DEFAULT_MOVE[b.voice] ? b.move : undefined,
     };
   });
 }

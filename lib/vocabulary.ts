@@ -58,6 +58,13 @@ export const MOVES = [
   "move",
   "transform",
   "disappear",
+  "fall",
+  "rise",
+  "snap",
+  "stretch",
+  "smear",
+  "wave",
+  "ripple",
   "hold",
 ] as const;
 export type Move = (typeof MOVES)[number];
@@ -83,6 +90,22 @@ export const DEFAULT_MOVE: Record<Voice, Move> = {
   ledger: "move",
   echo: "disappear",
   listen: "enter",
+};
+
+/**
+ * The moves a voice may pick from. The engine chooses one (seeded off the
+ * draft, and nudged by meaning) so two similar drafts do not render the
+ * same way. `hold` is never in a set — silence is chosen, not stumbled into.
+ */
+export const MOVE_CANDIDATES: Record<Voice, Move[]> = {
+  speak:   ["enter", "rise", "fall", "wave"],
+  whisper: ["enter", "rise", "smear"],
+  shout:   ["grow", "snap", "stretch"],
+  thought: ["enter", "smear", "wave"],
+  drift:   ["move", "ripple", "wave"],
+  echo:    ["disappear", "fall"],
+  listen:  ["enter", "stretch", "rise"],
+  ledger:  ["move", "enter"],
 };
 
 /**

@@ -17,7 +17,10 @@
      one colour; the literal above it is the fallback where relative colour
      syntax is unsupported. */
   --counter:    #8C4736;
-  --counter:    oklch(from var(--accent) 0.5 0.115 calc(h + 158));
+  --counter:    oklch(from var(--accent) 0.5 0.16 calc(h + 158));
+
+  /* a saturated hit of the story's colour, for the lines that shout */
+  --pop:        oklch(from var(--accent) 0.62 0.2 h);
 
   /* how far into the piece the reader is, 0 to 1. Set by StoryFrame.
      Colour thickens as the story goes on and eases off at the end. */
@@ -32,18 +35,18 @@
   --mute-base:  #8A857D;
 
   /* the ground carries the temperature of the place */
-  --paper:      color-mix(in oklab, var(--accent) calc(3.5% + var(--depth) * 3%), var(--stock));
-  --paper-2:    color-mix(in oklab, var(--accent) 6%, var(--stock-2));
-  --paper-3:    color-mix(in oklab, var(--accent) 9%, var(--stock-3));
+  --paper:      color-mix(in oklab, var(--accent) calc(6% + var(--depth) * 5%), var(--stock));
+  --paper-2:    color-mix(in oklab, var(--accent) 10%, var(--stock-2));
+  --paper-3:    color-mix(in oklab, var(--accent) 15%, var(--stock-3));
 
   /* type is never fully neutral and never fully coloured */
-  --ink:        color-mix(in oklab, var(--accent) 9%, var(--ink-base));
-  --ink-soft:   color-mix(in oklab, var(--accent) 24%, var(--soft-base));
-  --mute:       color-mix(in oklab, var(--accent) 32%, var(--mute-base));
+  --ink:        color-mix(in oklab, var(--accent) 13%, var(--ink-base));
+  --ink-soft:   color-mix(in oklab, var(--accent) 34%, var(--soft-base));
+  --mute:       color-mix(in oklab, var(--accent) 42%, var(--mute-base));
 
-  --rule:       color-mix(in oklab, var(--accent) 32%, transparent);
-  --rule-2:     color-mix(in oklab, var(--accent) 10%, transparent);
-  --shade:      color-mix(in oklab, var(--accent) 7%, transparent);
+  --rule:       color-mix(in oklab, var(--accent) 46%, transparent);
+  --rule-2:     color-mix(in oklab, var(--accent) 18%, transparent);
+  --shade:      color-mix(in oklab, var(--accent) 12%, transparent);
   --grain:      .05;
 
   --f-body:  var(--font-body), Georgia, "Times New Roman", serif;
@@ -70,7 +73,7 @@
     --soft-base: #B4B1AC;
     --mute-base: #7C7D84;
     --counter:   #E0876B;
-    --counter:   oklch(from var(--accent) 0.74 0.115 calc(h + 158));
+    --counter:   oklch(from var(--accent) 0.74 0.16 calc(h + 158));
     --rule:      color-mix(in oklab, var(--accent) 34%, transparent);
     --rule-2:    color-mix(in oklab, var(--accent) 16%, transparent);
     --shade:     color-mix(in oklab, var(--accent) 12%, transparent);
@@ -128,7 +131,7 @@ a{ color: inherit; }
   grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure)) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: center;
-  padding-block: .55rem;
+  padding-block: .385rem;
 }
 .beat > .words{ grid-column: 2; }
 .beat > .margin{ align-self: center; pointer-events: none; }
@@ -162,6 +165,7 @@ a{ color: inherit; }
   font-family: var(--f-disp);
   font-size: clamp(2.5rem, 7.5vw, 5.5rem);
   line-height: .95;
+  color: var(--pop);
   letter-spacing: -.025em;
   text-wrap: balance;
   max-width: 14ch;
@@ -852,3 +856,25 @@ a{ color: inherit; }
   filter: blur(8px); animation: bd-drift 26s ease-in-out infinite alternate; }
 @keyframes bd-drift{ 0%{ transform: translate3d(-3%,-2%,0) scale(1.05); } 100%{ transform: translate3d(3%,2%,0) scale(1.12); } }
 @media (prefers-reduced-motion: reduce){ .bd-stem, .bd-glow{ animation:none !important; } }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PHASE 1 — MORE MOVES. The engine assigns one per beat (lib/annotate.ts),
+   seeded off the draft, so two stories move differently. Whole-line moves
+   animate .words; wave/ripple animate each .word on a stagger. Reduced
+   motion is already neutralised by the block above.
+   ══════════════════════════════════════════════════════════════════════ */
+@keyframes lp-fall    { from{ opacity:0; transform: translateY(-.7em) rotate(-1deg); } to{ opacity:1; transform:none; } }
+@keyframes lp-rise    { from{ opacity:0; transform: translateY(.9em); } to{ opacity:1; transform:none; } }
+@keyframes lp-snap    { 0%{ opacity:0; transform: scale(1.14); } 60%{ opacity:1; transform: scale(.985); } 100%{ transform:none; } }
+@keyframes lp-stretch { from{ opacity:0; letter-spacing:.42em; transform: scaleX(.9); } to{ opacity:1; letter-spacing:normal; transform:none; } }
+@keyframes lp-smear   { from{ opacity:0; filter: blur(7px); transform: translateX(-.6em); } to{ opacity:1; filter:none; transform:none; } }
+@keyframes lp-wordrise{ 0%{ opacity:0; transform: translateY(.85em); } 60%{ opacity:1; } 100%{ transform:none; } }
+
+.mv-fall.arrived    .words{ animation: lp-fall .72s cubic-bezier(.2,.8,.2,1) both; }
+.mv-rise.arrived    .words{ animation: lp-rise .85s cubic-bezier(.2,.7,.25,1) both; }
+.mv-snap.arrived    .words{ animation: lp-snap .5s  cubic-bezier(.2,1.5,.3,1) both; }
+.mv-stretch.arrived .words{ animation: lp-stretch .95s cubic-bezier(.2,.7,.25,1) both; }
+.mv-smear.arrived   .words{ animation: lp-smear .8s ease both; }
+.mv-wave.arrived   .word{ display:inline-block; animation: lp-wordrise .6s cubic-bezier(.2,.7,.25,1) both; animation-delay: calc(var(--i) * 55ms); }
+.mv-ripple.arrived .word{ display:inline-block; animation: lp-wordrise .7s ease both; animation-delay: calc(var(--i) * 42ms); }
