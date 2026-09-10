@@ -195,6 +195,34 @@ function Glow() {
   return <div className="bd-glow" />;
 }
 
+/* A drifting field of motes — dust in a sunbeam, embers, pollen, slow snow.
+   Seeded off the story, so every piece has its own weather of specks. */
+function Motes({ seed }: { seed: string }) {
+  const r = rng(seed + "motes");
+  const motes = Array.from({ length: 34 }, (_, i) => ({
+    x: r() * 100, y: r() * 100, s: 0.15 + r() * 0.55,
+    o: 0.12 + r() * 0.5, d: (r() * 9).toFixed(1), dur: (7 + r() * 10).toFixed(1),
+    dx: (r() * 8 - 4).toFixed(1), i,
+  }));
+  return (
+    <svg className="bd-motes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      {motes.map((m) => (
+        <circle key={m.i} cx={v(m.x)} cy={v(m.y)} r={v(m.s)}
+          style={{ ["--o" as string]: m.o, ["--dx" as string]: `${m.dx}px`, animationDelay: `${m.d}s`, animationDuration: `${m.dur}s` }} />
+      ))}
+    </svg>
+  );
+}
+
+/* A soft off-centre bloom of light, placed by the story's seed, so no two
+   pieces are lit from the same spot. */
+function Bloom({ seed }: { seed: string }) {
+  const r = rng(seed + "bloom");
+  const bx = (18 + r() * 64).toFixed(0);
+  const by = (14 + r() * 42).toFixed(0);
+  return <div className="bd-bloom-field" style={{ ["--bx" as string]: `${bx}%`, ["--by" as string]: `${by}%` }} />;
+}
+
 const RENDER: Record<Layer, (p: { seed: string; dawn?: boolean }) => React.ReactNode> = {
   sky:    ({ dawn }) => <Sky dawn={dawn} />,
   stars:  ({ seed }) => <Stars seed={seed} />,
@@ -222,6 +250,8 @@ export function Backdrop({ name, seed }: { name?: string; seed: string }) {
   return (
     <div className={`backdrop bd-${name}`} aria-hidden="true">
       {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
+      <Bloom seed={seed} />
+      <Motes seed={seed} />
       <div className="bd-scrim" />
     </div>
   );

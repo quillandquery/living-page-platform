@@ -109,7 +109,7 @@ export function StoryRender({ blocks }: { blocks: Block[] }) {
       {blocks.map((b, i) => {
         if (b.kind === "hold") return <Hold key={i} beats={b.beats} />;
         if (b.kind === "raw") return <React.Fragment key={i}>{renderRaw(b.text, i)}</React.Fragment>;
-        if (b.kind === "media") return <MediaFigure key={i} block={b} />;
+        if (b.kind === "media") return null; // AI imagery disabled — pending a curated approach
         // a beat
         const voice = VOICES.has(b.voice as Voice) ? (b.voice as Voice) : "speak";
         return (

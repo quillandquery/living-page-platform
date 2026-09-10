@@ -20,8 +20,9 @@ export type MediaResult = {
 
 // One look for the whole product, so a story's images read as one hand.
 const STYLE =
-  "flat editorial illustration, storybook, soft muted palette, textured grain, " +
-  "minimal shapes, gentle, tasteful, no text, no watermark";
+  "bold flat editorial illustration, warm vivid colour, clean vector shapes, " +
+  "expressive characters, storybook, subtle paper grain, high contrast, " +
+  "no text, no watermark";
 
 function seedOf(s: string): number {
   let h = 2166136261;

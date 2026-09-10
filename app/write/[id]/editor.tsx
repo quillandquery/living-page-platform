@@ -161,9 +161,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
 
-  const imagery =
-    visSel === "illustrated" || visSel === "collage" || visSel === "maximal" ||
-    (visSel === "auto" && density >= 6);
+  const imagery = false; // AI imagery paused — see media strategy
   const input = (): SaveInput => ({
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,
