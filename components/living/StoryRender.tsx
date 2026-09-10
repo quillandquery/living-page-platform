@@ -96,10 +96,7 @@ function MediaFigure({ block }: { block: Extract<Block, { kind: "media" }> }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={block.src} alt={block.alt} loading="lazy" />
         <figcaption>
-          Photo:{" "}
-          <a href={block.creditUrl} target="_blank" rel="noreferrer noopener">{block.credit}</a>
-          {" / "}
-          <a href={block.link} target="_blank" rel="noreferrer noopener">Pexels</a>
+          <a href={block.link} target="_blank" rel="noreferrer noopener">{block.credit}</a>
         </figcaption>
       </figure>
     </div>

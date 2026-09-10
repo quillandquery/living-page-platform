@@ -889,6 +889,7 @@ a{ color: inherit; }
 .media img{
   display:block; width:100%; max-width:62rem; margin-inline:auto;
   border-radius:12px; box-shadow:0 14px 44px -20px rgba(0,0,0,.55);
+  aspect-ratio:16/9; object-fit:cover; background:var(--paper-2);
 }
 .media figcaption{
   font-family:var(--f-mono); font-size:.68rem; letter-spacing:.14em;
