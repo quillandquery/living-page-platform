@@ -47,6 +47,7 @@ export default function Make() {
           </button>
         ))}
       </div>
+      {pending ? <div className="mk-loading">Opening your desk…</div> : null}
     </main>
   );
 }
@@ -73,4 +74,7 @@ const CSS = `
 .mk-cta{ margin-top:.4rem; font-family:var(--f-mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase;
   background:var(--ink); color:var(--paper); border-radius:999px; padding:.7rem 1.1rem; }
 @media (max-width:680px){ .mk-grid{ grid-template-columns:1fr; } }
+.mk-loading{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in oklab, var(--paper) 80%, transparent); backdrop-filter:blur(3px);
+  font-family:var(--f-mono); font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); }
 `;

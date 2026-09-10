@@ -74,7 +74,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   const profile = await myProfile();
   if (!profile) return { ok: false, message: "Sign in to save." };
 
-  const missing = (["place", "date", "fragment"] as const).filter((k) => !input[k]?.trim());
+  const missing = (["place", "fragment"] as const).filter((k) => !input[k]?.trim());
   if (publish && missing.length) {
     return { ok: false, message: `A published piece needs: ${missing.join(", ")}.` };
   }

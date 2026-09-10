@@ -267,12 +267,13 @@ const CSS = `
 .ed-pub:hover{ background:var(--electric); }
 
 .ed-grid{ display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 3.5rem); }
+@media (min-width:900px){ .ed-grid{ height:calc(100vh - 3.6rem); min-height:0; } .ed-write{ overflow-y:auto; } }
 .ed-write{ padding:5vh max(1.2rem,3.5vw); display:flex; flex-direction:column; gap:1.2rem; border-right:1px solid var(--line); }
 .ed-text{ width:100%; min-height:52vh; resize:vertical; border:0; outline:0; background:transparent; color:var(--ink);
   font-family:var(--f-disp); font-size:1.5rem; line-height:1.6; }
 .ed-text::placeholder{ color:var(--mute); font-family:var(--f-body); font-size:1.2rem; }
 .ed-hint{ font-family:var(--f-mono); font-size:.7rem; letter-spacing:.04em; color:var(--mute); margin:0; }
-.ed-details{ margin-top:auto; border-top:1px solid var(--line); padding-top:1rem; }
+.ed-details{ margin-top:1.4rem; border-top:1px solid var(--line); padding-top:1rem; }
 .ed-details summary{ font-family:var(--f-mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); cursor:pointer; }
 .ed-details-body{ display:flex; flex-direction:column; gap:.8rem; padding-top:1.1rem; }
 .ed-row{ display:flex; gap:.7rem; flex-wrap:wrap; }
