@@ -17,6 +17,8 @@ export type BeatProps = {
   doodle2?: string;
   seed?: number;
   className?: string;
+  /** override the ink colour of this beat — "accent", "accent2", or a css colour */
+  ink?: string;
 };
 
 /** deterministic scatter so a rebuild doesn't reshuffle the page */
@@ -57,7 +59,7 @@ function wordify(node: React.ReactNode, scatter: boolean, key = "w"): React.Reac
  * the site is made of these.
  */
 export function Beat({
-  children, voice = "speak", body, move, gesture, doodle, becomes, doodle2, side = "right", seed = 7, className,
+  children, voice = "speak", body, move, gesture, doodle, becomes, doodle2, side = "right", seed = 7, className, ink,
 }: BeatProps) {
   const b = body ?? DEFAULT_BODY[voice];
   const m = move ?? DEFAULT_MOVE[voice];
@@ -80,7 +82,7 @@ export function Beat({
           <Doodle name={left} seed={seed} becomes={side === "left" ? becomes : undefined} />
         </span>
       ) : null}
-      <div className={wordClasses}>{wordify(children, scatter)}</div>
+      <div className={wordClasses} style={ink ? ({ color: ink === "accent" ? "var(--accent)" : ink === "accent2" ? "var(--accent2)" : ink } as React.CSSProperties) : undefined}>{wordify(children, scatter)}</div>
       {right ? (
         <span className="margin right">
           <Doodle name={right} seed={seed + 5} becomes={side === "right" ? becomes : undefined} />

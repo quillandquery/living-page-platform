@@ -248,11 +248,11 @@ export function Backdrop({ name, seed }: { name?: string; seed: string }) {
   const b = getBackdrop(name);
   if (!b) return null;
   return (
-    <div className={`backdrop bd-${name}`} aria-hidden="true">
+    <div className={`backdrop bd-${name} bd-${b.scheme}`} aria-hidden="true">
       {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
       <Bloom seed={seed} />
       <Motes seed={seed} />
-      <div className="bd-scrim" />
+      <div className={`bd-scrim ${b.scheme === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
     </div>
   );
 }

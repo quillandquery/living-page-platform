@@ -1,18 +1,16 @@
 /**
  * WORLDS
  *
- * A story happens somewhere. A world is not wallpaper and not a background
- * picker — it is a small bundle of art direction: a set of drawn layers, a
- * light scheme, a suggested accent, and the words that pull a story toward it.
- * The engine (the editor's Auto inference) chooses one from the writing; the
- * writer never has to. There is no "none".
+ * A story happens somewhere. A world is a bundle of art direction: layers,
+ * a light scheme, an ENERGY level, a primary accent, a secondary accent, and
+ * a paper tint. The engine chooses one from the writing; the writer never has
+ * to. There is no "none".
  *
- * Every layer is tied to `--depth`, the reading-progress value the veil and
- * the ground already use, so scrolling a piece moves through its weather.
- *
- * Bright-biased on purpose: most stories are not told at 4am. Add a world by
- * composing layers, not by inventing effects — the constraint is what keeps
- * the site one medium instead of a pile of backgrounds.
+ * `worldVars()` turns a world into the CSS custom properties the reader
+ * injects at `:root` for a story — so a bright coast reads bright, a monsoon
+ * reads dark, and five worlds side by side read as five different places while
+ * still being recognisably Living Pages. The story's world always wins over
+ * the reader's OS theme.
  */
 
 export const LAYERS = [
@@ -21,54 +19,76 @@ export const LAYERS = [
 ] as const;
 export type Layer = (typeof LAYERS)[number];
 
+export type Energy = "quiet" | "warm" | "vivid" | "electric";
+
 export type Backdrop = {
   label: string;
   /** the world overrides the reader's theme */
   scheme: "dark" | "light";
+  /** how much colour the world pushes into the page */
+  energy: Energy;
   layers: Layer[];
   /** the sky warms toward the horizon as the piece goes on */
   dawn?: boolean;
-  /** the colour this world leans toward unless the mood overrides it */
+  /** the primary colour — the water, the ink of emphasis */
   accent: string;
+  /** a second colour — the sun, the sand, the warm margin */
+  secondaryAccent?: string;
+  /** the ground this world is printed on */
+  paperTint?: string;
   /** words that pull the engine toward this world */
   cues: string[];
 };
 
 export const BACKDROPS: Record<string, Backdrop> = {
   // — daylight & nature —
-  coast:     { label: "sunlit coast", scheme: "light", layers: ["sky", "sun", "haze", "sea"], accent: "#1C86C4",
+  coast:     { label: "sunlit coast", scheme: "light", energy: "vivid", accent: "#00A6D6", secondaryAccent: "#FFB23E", paperTint: "#F7F1D8",
+    layers: ["sky", "sun", "haze", "sea"],
     cues: ["beach", "sea", "ocean", "coast", "shore", "sand", "wave", "surf", "salt", "tide", "swim"] },
-  forest:    { label: "forest", scheme: "light", layers: ["sky", "haze", "trees"], accent: "#2E7D4F",
+  forest:    { label: "forest", scheme: "light", energy: "vivid", accent: "#1F9E5A", secondaryAccent: "#B6D14B", paperTint: "#EDF2DB",
+    layers: ["sky", "haze", "trees"],
     cues: ["forest", "jungle", "tree", "trees", "woods", "leaves", "trail", "moss", "pine", "green"] },
-  highland:  { label: "highland", scheme: "light", layers: ["sky", "haze", "ridge"], accent: "#4C6A8A",
+  highland:  { label: "highland", scheme: "light", energy: "warm", accent: "#4C6A8A", secondaryAccent: "#AFC0CE", paperTint: "#EBEFF2",
+    layers: ["sky", "haze", "ridge"],
     cues: ["mountain", "hill", "ghat", "ridge", "valley", "cliff", "peak", "highland", "altitude"] },
-  meadow:    { label: "wildflower field", scheme: "light", layers: ["sky", "sun", "field"], accent: "#C9962B",
+  meadow:    { label: "wildflower field", scheme: "light", energy: "vivid", accent: "#E4A81F", secondaryAccent: "#3FA05C", paperTint: "#F3F0D6",
+    layers: ["sky", "sun", "field"],
     cues: ["field", "meadow", "flowers", "grass", "picnic", "wildflower", "garden", "bloom"] },
-  heat:      { label: "desert heat", scheme: "light", layers: ["sky", "sun", "haze"], accent: "#D2691E",
+  heat:      { label: "desert heat", scheme: "light", energy: "electric", accent: "#FF7A1A", secondaryAccent: "#FF4D5E", paperTint: "#FBF0DA",
+    layers: ["sky", "sun", "haze"],
     cues: ["desert", "heat", "hot", "noon", "dust", "dry", "dune", "scorching", "shimmer"] },
-  dawn:      { label: "dawn", scheme: "light", layers: ["sky", "sun", "haze", "field"], dawn: true, accent: "#E0876B",
+  dawn:      { label: "dawn", scheme: "light", energy: "vivid", dawn: true, accent: "#E8734F", secondaryAccent: "#E86FA0", paperTint: "#F7E7DC",
+    layers: ["sky", "sun", "haze", "field"],
     cues: ["dawn", "sunrise", "morning", "early", "first light", "rooster"] },
 
   // — travel & interior —
-  city:      { label: "city", scheme: "light", layers: ["sky", "haze", "city"], accent: "#3A5BD0",
+  city:      { label: "city", scheme: "light", energy: "warm", accent: "#3A5BD0", secondaryAccent: "#7183A6", paperTint: "#ECEDF3",
+    layers: ["sky", "haze", "city"],
     cues: ["city", "street", "downtown", "traffic", "crowd", "sidewalk", "avenue", "market", "old town"] },
-  window:    { label: "rainy window", scheme: "light", layers: ["window", "rain"], accent: "#5B7C99",
+  window:    { label: "rainy window", scheme: "light", energy: "quiet", accent: "#5B7C99", secondaryAccent: "#93A8B8", paperTint: "#ECEEEF",
+    layers: ["window", "rain"],
     cues: ["window", "café", "cafe", "coffee", "train window", "indoors", "inside", "glass", "watching"] },
-  cafe:      { label: "warm interior", scheme: "light", layers: ["window", "glow"], accent: "#C77D3A",
+  cafe:      { label: "warm interior", scheme: "light", energy: "warm", accent: "#C77D3A", secondaryAccent: "#B98A55", paperTint: "#F3E9D6",
+    layers: ["window", "glow"],
     cues: ["kitchen", "bedroom", "home", "lamp", "warm", "bed", "tea", "apartment", "sofa", "room"] },
 
   // — weather & night —
-  monsoon:   { label: "monsoon", scheme: "dark", layers: ["sky", "haze", "rain"], accent: "#3E8E9E",
+  monsoon:   { label: "monsoon", scheme: "dark", energy: "warm", accent: "#3E9BAB", secondaryAccent: "#7FB0B8",
+    layers: ["sky", "haze", "rain"],
     cues: ["rain", "monsoon", "storm", "downpour", "wet", "thunder", "drizzle", "umbrella", "flood"] },
-  nightcity: { label: "neon city", scheme: "dark", layers: ["sky", "stars", "city"], accent: "#B65CC0",
+  nightcity: { label: "neon city", scheme: "dark", energy: "electric", accent: "#C25AD0", secondaryAccent: "#31C8D8",
+    layers: ["sky", "stars", "city"],
     cues: ["neon", "nightlife", "bar", "club", "late night", "streetlight", "midnight city"] },
-  nightroad: { label: "night road", scheme: "dark", layers: ["sky", "stars", "moon", "ridge", "road"], dawn: true, accent: "#2B3ED0",
+  nightroad: { label: "night road", scheme: "dark", energy: "warm", dawn: true, accent: "#2B3ED0", secondaryAccent: "#E58A6C",
+    layers: ["sky", "stars", "moon", "ridge", "road"],
     cues: ["night", "midnight", "road", "drive", "bus", "highway", "stars", "moon", "4am", "asleep", "dark"] },
-  nightsky:  { label: "night sky", scheme: "dark", layers: ["sky", "stars", "moon"], dawn: true, accent: "#2B3ED0",
+  nightsky:  { label: "night sky", scheme: "dark", energy: "quiet", dawn: true, accent: "#3145C0", secondaryAccent: "#8AA6E6",
+    layers: ["sky", "stars", "moon"],
     cues: ["sky", "stars", "constellation", "quiet night", "rooftop at night"] },
 
   // — surreal —
-  dreamscape:{ label: "dreamscape", scheme: "dark", layers: ["glow", "stars", "field"], accent: "#7A6CE0",
+  dreamscape:{ label: "dreamscape", scheme: "dark", energy: "vivid", accent: "#7A6CE0", secondaryAccent: "#E86FA0",
+    layers: ["glow", "stars", "field"],
     cues: ["dream", "dreamt", "surreal", "floating", "memory", "unreal", "blur", "imagine"] },
 };
 
@@ -83,34 +103,56 @@ export const getBackdrop = (name?: string): Backdrop | null => {
 export const worldAccent = (name?: string): string | null =>
   (name && BACKDROPS[name]?.accent) || null;
 
+/** How much of the accent bleeds into paper and ink, per energy level. */
+const ENERGY: Record<Energy, { p: number; p2: number; p3: number; ink: number; soft: number; mute: number }> = {
+  quiet:    { p: 5,  p2: 8,  p3: 12, ink: 9,  soft: 28, mute: 38 },
+  warm:     { p: 8,  p2: 12, p3: 16, ink: 13, soft: 34, mute: 42 },
+  vivid:    { p: 14, p2: 20, p3: 26, ink: 16, soft: 40, mute: 48 },
+  electric: { p: 20, p2: 28, p3: 34, ink: 20, soft: 46, mute: 54 },
+};
+
 /**
- * The token overrides a dark world needs, as a CSS declaration string.
- * Injected at :root by the reader so the whole document — body included —
- * arrives in the story's world rather than flashing the reader's theme first.
- * Only the BASES move; every derivation in globals.css still holds.
+ * A world → the full set of CSS custom properties for a story, injected at
+ * `:root` by the reader. The story's world is authoritative: it sets the
+ * scheme, the ground (paperTint), how vivid the colour is (energy), the
+ * primary `--accent` (passed in, from the story), and the secondary
+ * `--accent2` / `--counter` (the world's second colour). Every derivation in
+ * globals.css keeps holding — this only moves the bases and the mix ratios.
+ */
+export function worldVars(b: Backdrop | null, accent: string): string {
+  const dark = b?.scheme === "dark";
+  const e = ENERGY[b?.energy ?? "warm"];
+  const stock  = b?.paperTint ?? (dark ? "#0E1015" : "#EEEBE4");
+  const stock2 = dark ? "#161922" : "#E6E2DA";
+  const stock3 = dark ? "#20242F" : "#DAD5CB";
+  const inkB   = dark ? "#EEEBE3" : "#191819";
+  const softB  = dark ? "#B7B3AB" : "#4C4A4A";
+  const muteB  = dark ? "#7F818C" : "#8A857D";
+  const sec = b?.secondaryAccent;
+  return [
+    `--accent:${accent}`,
+    `--accent2:${sec ?? "var(--counter)"}`,
+    sec ? `--counter:${sec}` : "",
+    `--stock:${stock}`, `--stock-2:${stock2}`, `--stock-3:${stock3}`,
+    `--ink-base:${inkB}`, `--soft-base:${softB}`, `--mute-base:${muteB}`,
+    `--grain:${dark ? ".055" : ".035"}`,
+    `color-scheme:${dark ? "dark" : "light"}`,
+    `--paper:color-mix(in oklab, var(--accent) calc(${e.p}% + var(--depth) * 5%), var(--stock))`,
+    `--paper-2:color-mix(in oklab, var(--accent) ${e.p2}%, var(--stock-2))`,
+    `--paper-3:color-mix(in oklab, var(--accent) ${e.p3}%, var(--stock-3))`,
+    `--ink:color-mix(in oklab, var(--accent) ${e.ink}%, var(--ink-base))`,
+    `--ink-soft:color-mix(in oklab, var(--accent) ${e.soft}%, var(--soft-base))`,
+    `--mute:color-mix(in oklab, var(--accent) ${e.mute}%, var(--mute-base))`,
+    `--rule:color-mix(in oklab, var(--accent) 40%, transparent)`,
+    `--rule-2:color-mix(in oklab, var(--accent) 16%, transparent)`,
+    `--shade:color-mix(in oklab, var(--accent) 12%, transparent)`,
+  ].filter(Boolean).join(";");
+}
+
+/**
+ * Legacy scheme-only vars (kept for compatibility). The reader now uses
+ * worldVars(); this remains for any caller that only knows a scheme.
  */
 export function schemeVars(scheme: "dark" | "light"): string {
-  if (scheme === "light") return "";
-  return [
-    "--stock:#0E1015",
-    "--stock-2:#161922",
-    "--stock-3:#20242F",
-    "--ink-base:#EEEBE3",
-    "--soft-base:#B7B3AB",
-    "--mute-base:#7F818C",
-    "--grain:.07",
-    "color-scheme:dark",
-    "--counter:#E58A6C",
-    "--counter:oklch(from var(--accent) 0.78 0.18 calc(h + 158))",
-    // A dark world still carries the story's colour, boldly — otherwise a
-    // night piece washes out to grey. The accent reaches the ground, the
-    // rules, and the second-rank type; only the body ink stays near-white.
-    "--paper:color-mix(in oklab, var(--accent) calc(9% + var(--depth) * 7%), var(--stock))",
-    "--paper-2:color-mix(in oklab, var(--accent) 15%, var(--stock-2))",
-    "--paper-3:color-mix(in oklab, var(--accent) 22%, var(--stock-3))",
-    "--ink-soft:color-mix(in oklab, var(--accent) 42%, var(--soft-base))",
-    "--mute:color-mix(in oklab, var(--accent) 48%, var(--mute-base))",
-    "--rule:color-mix(in oklab, var(--accent) 54%, transparent)",
-    "--rule-2:color-mix(in oklab, var(--accent) 24%, transparent)",
-  ].join(";");
+  return worldVars(scheme === "dark" ? { scheme: "dark", energy: "warm" } as Backdrop : null, "var(--accent)");
 }

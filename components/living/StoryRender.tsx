@@ -121,6 +121,7 @@ export function StoryRender({ blocks }: { blocks: Block[] }) {
             move={b.move as Move | undefined}
             doodle={b.doodle}
             becomes={b.becomes}
+            ink={b.ink}
             side={b.side === "left" ? "left" : "right"}
             seed={i * 7 + 3}
           >

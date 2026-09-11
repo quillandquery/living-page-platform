@@ -63,7 +63,7 @@
 }
 
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not(:has(.story-reading)){
     /* only the bases move; every derivation above still holds, so the
        story's colour tints the dark ground the same way it tints paper */
     --stock:     #131417;
@@ -709,8 +709,9 @@ a{ color: inherit; }
 }
 
 /* ── scrim ── the writing has to stay readable over all of it ── */
-.bd-scrim{
-  position: absolute; inset: 0;
+.bd-scrim{ position: absolute; inset: 0; }
+/* a dark world needs a heavy cinematic scrim so white type reads over it */
+.bd-scrim-dark{
   background:
     linear-gradient(180deg, transparent 0%, color-mix(in oklab, var(--stock) 40%, transparent) 62%,
                     color-mix(in oklab, var(--stock) 68%, transparent) 100%),
@@ -719,6 +720,28 @@ a{ color: inherit; }
       color-mix(in oklab, var(--stock) 30%, transparent) 52%,
       transparent 86%);
 }
+/* a light world only needs the faintest lift — the ground already carries it */
+.bd-scrim-light{
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.04), rgba(255,255,255,0.00) 45%, rgba(255,255,255,0.03));
+}
+
+/* ── light worlds render as daylight ──────────────────────────────────
+   The layer art is tuned night-first (a coast should not be painted with
+   a midnight sky). For a light world the sky lifts into day, tinted by the
+   world's own accent, and the sun, sea and haze come up to meet it. */
+.bd-light .bd-sky-night{
+  background: linear-gradient(180deg,
+    oklch(from var(--accent) 0.95 0.045 h) 0%,
+    oklch(from var(--accent) 0.90 0.075 calc(h + 4)) 44%,
+    oklch(from var(--accent) 0.84 0.10 calc(h + 10)) 78%,
+    oklch(from var(--accent) 0.80 0.11 calc(h + 18)) 100%);
+}
+.bd-light .bd-sun circle{ opacity: .62; }
+.bd-light .bd-sea path{ opacity: .55; }
+.bd-light .bd-haze{ opacity: .95; }
+.bd-light .bd-ridge-far{ fill: oklch(from var(--accent) 0.66 0.09 h); opacity: .55; }
+.bd-light .bd-ridge-near{ fill: oklch(from var(--accent) 0.52 0.10 h); opacity: .72; }
 
 @media (prefers-reduced-motion: reduce){
   .bd-stars circle, .bd-road-dash, .bd-rain path{ animation: none !important; }

@@ -3,7 +3,7 @@ import { StoryFrame } from "./StoryFrame";
 import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
 import { Doodle } from "@/components/doodles/Doodle";
-import { getBackdrop, schemeVars } from "@/lib/backdrops";
+import { getBackdrop, worldVars } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 
 /**
@@ -37,10 +37,10 @@ export function StoryView({
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
-  const vars = [`--accent:${safeAccent}`, world ? schemeVars(world.scheme) : ""].filter(Boolean).join(";");
+  const vars = worldVars(world, safeAccent);
 
   return (
-    <main className="frame">
+    <main className="frame story-reading">
       <style>{`:root{${vars}}`}</style>
       <Backdrop name={backdrop ?? undefined} seed={seed} />
 

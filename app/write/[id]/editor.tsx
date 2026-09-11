@@ -98,10 +98,11 @@ function dramatize(blocks: Block[]): Block[] {
   const voiced = beats.filter((b) => b.voice !== "speak").length;
   // opening → a quiet declaration
   if (beats[0].voice === "speak") beats[0].voice = "listen";
+  beats[0].ink = "accent";  // the opening carries the world's primary colour
   // if still almost all plain, let one short punchy line shout
   if (voiced <= 1) {
     const punch = beats.slice(1).find((b) => b.voice === "speak" && b.text.split(/\s+/).length <= 9 && /[.!?]$/.test(b.text));
-    if (punch) punch.voice = "shout";
+    if (punch) { punch.voice = "shout"; punch.ink = "accent2"; }
   }
   return out;
 }
@@ -116,7 +117,7 @@ function LivePreview({ blocks }: { blocks: Block[] }) {
         return (
           <Beat key={i} voice={b.voice as Voice} body={b.body as Body | undefined}
                 gesture={b.gesture as Gesture | undefined} move={b.move as Move | undefined} doodle={b.doodle}
-                side={b.side === "left" ? "left" : "right"} seed={i * 7 + 3}>
+                ink={b.ink} side={b.side === "left" ? "left" : "right"} seed={i * 7 + 3}>
             {b.text}
           </Beat>
         );
