@@ -30,10 +30,15 @@ export type StoryViewData = {
   /** the studio preview turns the frontispiece and chrome off */
   chrome?: boolean;
   seed?: string;
+  /** the rabbit hole at the end of the piece — omitted in the studio preview */
+  more?: {
+    same: { handle: string; slug: string; place: string } | null;
+    surprise: { handle: string; slug: string; place: string } | null;
+  };
 };
 
 export function StoryView({
-  place, date, fragment, accent, backdrop, veil = true, blocks, author, chrome = true, seed = "preview",
+  place, date, fragment, accent, backdrop, veil = true, blocks, author, chrome = true, seed = "preview", more,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
@@ -60,6 +65,25 @@ export function StoryView({
       <StoryFrame veil={veil} accent={safeAccent}>
         <StoryRender blocks={blocks} />
       </StoryFrame>
+
+      {chrome && more && (more.same || more.surprise) ? (
+        <section className="keep-going">
+          <p className="keep-going-h">Keep going.</p>
+          <div className="keep-going-links">
+            {more.same ? (
+              <Link href={`/@${more.same.handle}/${more.same.slug}`} className="keep-going-link">
+                Same feeling → <span className="keep-going-place">{more.same.place}</span>
+              </Link>
+            ) : null}
+            {more.surprise ? (
+              <Link href={`/@${more.surprise.handle}/${more.surprise.slug}`} className="keep-going-link">
+                Surprise me → <span className="keep-going-place">{more.surprise.place}</span>
+              </Link>
+            ) : null}
+            <Link href="/wander" className="keep-going-link">Back to Wander →</Link>
+          </div>
+        </section>
+      ) : null}
 
       {chrome ? (
         <footer className="colophon">

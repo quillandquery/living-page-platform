@@ -397,6 +397,21 @@ a{ color: inherit; }
 @keyframes lp-fade-out{ from{ opacity:1; } to{ opacity:0; } }
 @keyframes lp-fade-in { from{ opacity:0; } to{ opacity:1; } }
 
+/* ── keep going: the rabbit hole at the end of a piece ──────────────── */
+
+.keep-going{ margin-top: 18vh; padding: 2rem 0; border-top: 1px solid var(--rule); text-align: center; }
+.keep-going-h{
+  font-family: var(--f-disp); font-weight: 400; font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin: 0 0 1.4rem;
+}
+.keep-going-links{ display: flex; gap: 1rem 1.6rem; justify-content: center; flex-wrap: wrap; }
+.keep-going-link{
+  font-family: var(--f-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--mute); text-decoration: none;
+}
+.keep-going-link:hover{ color: var(--accent); }
+.keep-going-place{ color: color-mix(in oklab, var(--accent) 55%, var(--ink)); }
+
 /* ── frontispiece & colophon ───────────────────────────────────────── */
 
 .frontispiece{

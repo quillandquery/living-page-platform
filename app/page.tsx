@@ -69,7 +69,7 @@ export default function Home() {
       <nav className="lp-nav">
         <span className="lp-logo">Living Page</span>
         <span className="lp-nav-r">
-          <Link href="/explore">Explore stories</Link>
+          <Link href="/wander">Wander</Link>
           <Link href="/login">Sign in</Link>
         </span>
       </nav>
@@ -82,7 +82,7 @@ export default function Home() {
           <p className="lp-sub">Write it normally. We&rsquo;ll make it come alive.</p>
           <div className="lp-cta-row">
             <Link href="/make" className="lp-btn lp-btn-primary">Make something</Link>
-            <Link href="/explore" className="lp-btn lp-btn-ghost">Explore stories</Link>
+            <Link href="/wander" className="lp-btn lp-btn-ghost">Wander</Link>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export default function Home() {
         <h2 className="lp-sec-h">Or just read something.</h2>
         <div className="lp-examples">
           {EXAMPLES.map((e) => (
-            <Link key={e.place} href="/explore" className="lp-example" style={{ ["--a" as string]: e.accent }}>
+            <Link key={e.place} href="/wander" className="lp-example" style={{ ["--a" as string]: e.accent }}>
               <span className="ex-place">{e.place}</span>
               <span className="ex-line">{e.line}</span>
             </Link>
@@ -134,7 +134,7 @@ export default function Home() {
         <p className="lp-close-kick">Got a story?</p>
         <p className="lp-close-h">Tell it.</p>
         <Link href="/make" className="lp-btn lp-btn-primary lp-btn-lg">Make your first page →</Link>
-        <Link href="/explore" className="lp-close-alt">Read something beautiful →</Link>
+        <Link href="/wander" className="lp-close-alt">Read something beautiful →</Link>
       </section>
 
       <footer className="lp-foot">Living Page</footer>

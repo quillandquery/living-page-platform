@@ -32,7 +32,7 @@ export default function Make() {
       <style>{CSS}</style>
       <nav className="mk-nav">
         <Link href="/" className="mk-logo">Living Page</Link>
-        <Link href="/explore" className="mk-back">Explore stories</Link>
+        <Link href="/wander" className="mk-back">Wander</Link>
       </nav>
       <div className="mk-head">
         <h1 className="mk-h1">What do you want to tell?</h1>

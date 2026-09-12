@@ -68,6 +68,20 @@ export async function publishedStory(handle: string, slug: string): Promise<Stor
   return (data as StoryWithAuthor) ?? null;
 }
 
+/** Every published story except one — for "keep going" / Wander, where the
+ * reader shouldn't be handed the piece they just finished. */
+export async function otherPublishedStories(excludeId: string, limit = 200): Promise<StoryWithAuthor[]> {
+  const supabase = await supabaseServer();
+  const { data } = await supabase
+    .from("stories")
+    .select(STORY_SELECT)
+    .eq("status", "published")
+    .neq("id", excludeId)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+  return (data as StoryWithAuthor[]) ?? [];
+}
+
 /** A writer's published collection, for their public page. */
 export async function writerStories(handle: string): Promise<{ author: Profile; stories: StoryRow[] } | null> {
   const author = await profileByHandle(handle);
