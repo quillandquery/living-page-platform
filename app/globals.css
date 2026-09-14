@@ -1165,6 +1165,10 @@ a{ color: inherit; }
 
 .mood-doors{ display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
 .mood-door{
+  /* same trick as --counter/--pop above: a bold, saturated hit of the
+     site's own --accent, just rotated round the wheel per door — so this
+     reads as more of the same design system, not a different palette. */
+  --door-color: oklch(from var(--accent) 0.62 0.2 calc(h + var(--door-hue, 0)));
   position: relative; display: flex; flex-direction: column; gap: .3rem;
   min-width: 9.5rem; padding: 1.1rem 1.2rem; text-align: left;
   background: var(--paper-2); border: 1px solid var(--rule-2);
@@ -1186,6 +1190,7 @@ a{ color: inherit; }
 
 .time-doors{ display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; }
 .time-door{
+  --door-color: oklch(from var(--accent) 0.62 0.2 calc(h + var(--door-hue, 0)));
   display: flex; flex-direction: column; gap: .15rem; padding: .75rem 1.1rem;
   background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 999px;
   cursor: pointer; transition: all .18s ease; font: inherit;
