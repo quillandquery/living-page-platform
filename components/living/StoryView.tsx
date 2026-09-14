@@ -2,9 +2,13 @@ import Link from "next/link";
 import { StoryFrame } from "./StoryFrame";
 import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
+import { Artwork } from "./Artwork";
+import { Signature } from "./Signature";
 import { Doodle } from "@/components/doodles/Doodle";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
+import type { StoryArtDirection } from "@/lib/art-direction/types";
+import { isCompleteArtDirection } from "@/lib/art-direction/types";
 
 /**
  * THE READING SHELL.
@@ -30,6 +34,9 @@ export type StoryViewData = {
   /** the studio preview turns the frontispiece and chrome off */
   chrome?: boolean;
   seed?: string;
+  /** Story Visual System 2.0 — absent or `{}` for a row saved before it
+   *  existed; the shell then renders exactly as it always has. */
+  artDirection?: Partial<StoryArtDirection> | null;
   /** the rabbit hole at the end of the piece — omitted in the studio preview */
   more?: {
     same: { handle: string; slug: string; place: string; theme?: string | null; href?: string } | null;
@@ -39,15 +46,30 @@ export type StoryViewData = {
 
 export function StoryView({
   place, date, fragment, accent, backdrop, veil = true, blocks, author, chrome = true, seed = "preview", more,
+  artDirection,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
   const vars = worldVars(world, safeAccent);
 
+  const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
+  const shellClass = [
+    "frame", "story-reading",
+    ad ? `material-${ad.material.key}` : "",
+    ad ? `comp-${ad.composition.key}` : "",
+    ad?.typography.handwrittenBias ? "typo-handwritten" : "",
+    ad?.typography.framed ? "typo-framed" : "",
+    ad && ad.typography.rotateBias ? "typo-rotate" : "",
+  ].filter(Boolean).join(" ");
+  const materialVars = ad ? `--material-grain:${ad.material.grain};--material-contrast:${ad.material.contrast};--art-rotate:${ad.typography.rotateBias}deg;` : "";
+
   return (
-    <main className="frame story-reading">
-      <style>{`:root{${vars}}`}</style>
-      <Backdrop name={backdrop ?? undefined} seed={seed} />
+    <main className={shellClass}>
+      <style>{`:root{${vars};${materialVars}}`}</style>
+      <Backdrop name={ad?.environment.key ?? (backdrop ?? undefined)} seed={seed} ambient={ad?.ambientMotion} />
+      {ad ? <div className="material-layer" /> : null}
+      {ad ? <Artwork pieces={ad.artwork} seed={seed} /> : null}
+      {ad ? <Signature signature={ad.signature} seed={world?.scheme === "dark" ? 11 : 5} treatment={ad.artStyle.artworkTreatment} side={ad.composition.key === "postcard" ? "left" : "right"} /> : null}
 
       {chrome ? (
         <header className="frontispiece">

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { getBackdrop, type Layer } from "@/lib/backdrops";
 
 /* Deterministic from the slug, so a star field is the same star field on
@@ -195,6 +196,54 @@ function Glow() {
   return <div className="bd-glow" />;
 }
 
+/* Rising, drifting — the ambient motion of being underwater. */
+function Bubbles({ seed }: { seed: string }) {
+  const r = rng(seed + "bubbles");
+  const bubbles = Array.from({ length: 26 }, (_, i) => ({
+    x: r() * 100, s: 0.4 + r() * 1.4, d: (r() * 8).toFixed(1), dur: (6 + r() * 8).toFixed(1), i,
+  }));
+  return (
+    <svg className="bd-bubbles" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      {bubbles.map((b) => (
+        <circle key={b.i} cx={v(b.x)} cy="104" r={v(b.s)}
+          style={{ animationDelay: `${b.d}s`, animationDuration: `${b.dur}s` }} />
+      ))}
+    </svg>
+  );
+}
+
+/* Shafts of light falling through deep water. */
+function Raylight({ seed }: { seed: string }) {
+  const r = rng(seed + "raylight");
+  const rays = Array.from({ length: 5 }, (_, i) => ({
+    x: 10 + r() * 80, w: 4 + r() * 8, o: 0.08 + r() * 0.1, i,
+  }));
+  return (
+    <svg className="bd-raylight" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      {rays.map((rr) => (
+        <polygon key={rr.i} points={`${rr.x - rr.w / 2},0 ${rr.x + rr.w / 2},0 ${rr.x + rr.w * 2},100 ${rr.x - rr.w * 2},100`}
+          style={{ ["--o" as string]: rr.o }} />
+      ))}
+    </svg>
+  );
+}
+
+/* Heat coming off the road — a noon desert admits it is too hot to look at. */
+function Shimmer() {
+  return <div className="bd-shimmer" />;
+}
+
+/* A curtain silhouette on either side — the palace pulls back to let the
+   scene happen. */
+function Drape() {
+  return (
+    <svg className="bd-drape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path className="bd-drape-l" d="M0,0 L14,0 Q22,45 12,100 L0,100 Z" />
+      <path className="bd-drape-r" d="M100,0 L86,0 Q78,45 88,100 L100,100 Z" />
+    </svg>
+  );
+}
+
 /* A drifting field of motes — dust in a sunbeam, embers, pollen, slow snow.
    Seeded off the story, so every piece has its own weather of specks. */
 function Motes({ seed }: { seed: string }) {
@@ -223,6 +272,45 @@ function Bloom({ seed }: { seed: string }) {
   return <div className="bd-bloom-field" style={{ ["--bx" as string]: `${bx}%`, ["--by" as string]: `${by}%` }} />;
 }
 
+/* Headlights sweeping past — a night street admits traffic even when the
+   writing never mentions a single car. */
+function Headlights({ seed }: { seed: string }) {
+  const r = rng(seed + "headlights");
+  const sweeps = Array.from({ length: 4 }, (_, i) => ({
+    y: 55 + r() * 38, d: (r() * 9).toFixed(1), dur: (3.5 + r() * 3).toFixed(1), i,
+  }));
+  return (
+    <div className="bd-headlights" aria-hidden="true">
+      {sweeps.map((s) => (
+        <span key={s.i} className="bd-headlight" style={{ top: `${v(s.y)}%`, animationDelay: `${s.d}s`, animationDuration: `${s.dur}s` }} />
+      ))}
+    </div>
+  );
+}
+
+/* Loose paper drifting — the scrapbook / collage ambient motif, independent
+   of which environment it happens to be layered over. */
+function PaperDrift({ seed }: { seed: string }) {
+  const r = rng(seed + "paperdrift");
+  const bits = Array.from({ length: 10 }, (_, i) => ({
+    x: r() * 100, y: r() * 100, rot: (r() * 40 - 20).toFixed(0), d: (r() * 10).toFixed(1), dur: (10 + r() * 8).toFixed(1), i,
+  }));
+  return (
+    <div className="bd-paperdrift" aria-hidden="true">
+      {bits.map((p) => (
+        <span key={p.i} className="bd-paper-bit"
+          style={{ left: `${v(p.x)}%`, top: `${v(p.y)}%`, ["--rot" as string]: `${p.rot}deg`, animationDelay: `${p.d}s`, animationDuration: `${p.dur}s` }} />
+      ))}
+    </div>
+  );
+}
+
+/** The named ambient motifs a Backdrop may be asked to layer on, independent
+ *  of the environment's own fixed layers (§12/§13 of the visual-system PRD:
+ *  motion is chosen per story, not baked into the world). */
+export const AMBIENT_MOTIFS = ["motes", "bloom", "headlights", "paperdrift"] as const;
+export type AmbientMotif = (typeof AMBIENT_MOTIFS)[number];
+
 const RENDER: Record<Layer, (p: { seed: string; dawn?: boolean }) => React.ReactNode> = {
   sky:    ({ dawn }) => <Sky dawn={dawn} />,
   stars:  ({ seed }) => <Stars seed={seed} />,
@@ -238,20 +326,40 @@ const RENDER: Record<Layer, (p: { seed: string; dawn?: boolean }) => React.React
   window: () => <Window />,
   field:  ({ seed }) => <Field seed={seed} />,
   glow:   () => <Glow />,
+  bubbles:  ({ seed }) => <Bubbles seed={seed} />,
+  raylight: ({ seed }) => <Raylight seed={seed} />,
+  shimmer:  () => <Shimmer />,
+  drape:    () => <Drape />,
 };
 
 /**
  * Fixed behind everything, inert to the pointer, invisible to screen
  * readers. The writing is the page; this is the weather it happens in.
  */
-export function Backdrop({ name, seed }: { name?: string; seed: string }) {
+const AMBIENT_RENDER: Record<AmbientMotif, (seed: string) => React.ReactNode> = {
+  motes: (seed) => <Motes seed={seed} />,
+  bloom: (seed) => <Bloom seed={seed} />,
+  headlights: (seed) => <Headlights seed={seed} />,
+  paperdrift: (seed) => <PaperDrift seed={seed} />,
+};
+
+export function Backdrop({
+  name, seed, ambient,
+}: {
+  name?: string;
+  seed: string;
+  /** Which ambient motifs to layer on. Omitted (not `[]`) falls back to the
+   *  old universal bloom+motes, for stories with no stored art direction —
+   *  see `lib/art-direction/ambient-motion.ts` for the semantic picker. */
+  ambient?: readonly AmbientMotif[];
+}) {
   const b = getBackdrop(name);
   if (!b) return null;
+  const motifs = ambient ?? (["bloom", "motes"] as const);
   return (
     <div className={`backdrop bd-${name} bd-${b.scheme}`} aria-hidden="true">
       {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
-      <Bloom seed={seed} />
-      <Motes seed={seed} />
+      {motifs.map((m) => <Fragment key={m}>{AMBIENT_RENDER[m](seed)}</Fragment>)}
       <div className={`bd-scrim ${b.scheme === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
     </div>
   );

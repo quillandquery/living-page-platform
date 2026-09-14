@@ -39,6 +39,11 @@ export function strokePaths(strokes: Stroke[], seed: number, wobble = 2.6) {
   });
 }
 
+/** How the art style wants this piece of artwork rendered. `line` is the
+ *  original hand-drawn stroke; `filled` reads as a coloured illustration —
+ *  same generated points, no new asset. */
+export type ArtworkTreatment = "line" | "filled";
+
 type Props = {
   name: string;
   seed?: number;
@@ -49,16 +54,18 @@ type Props = {
   width?: number;
   wobble?: number;
   className?: string;
+  treatment?: ArtworkTreatment;
 };
 
-export function Doodle({ name, seed = 7, becomes, size = 112, ink = "currentColor", width = 1.6, wobble = 2.6, className }: Props) {
+export function Doodle({ name, seed = 7, becomes, size = 112, ink = "currentColor", width = 1.6, wobble = 2.6, className, treatment = "line" }: Props) {
   const make = DOODLES[name];
   if (!make) return null;
   const paths = strokePaths(make(), seed, wobble);
   const after = becomes && DOODLES[becomes] ? strokePaths(DOODLES[becomes](), seed + 31, wobble) : null;
+  const classes = ["doodle", treatment === "filled" ? "doodle-filled" : "", className ?? ""].filter(Boolean).join(" ");
 
   return (
-    <span className={`doodle${className ? ` ${className}` : ""}`} style={{ width: size, display: "block" }}>
+    <span className={classes} style={{ width: size, display: "block" }}>
       <svg viewBox="-6 -6 112 112" aria-hidden="true" stroke={ink} strokeWidth={width}>
         <g className={after ? "becoming-from" : undefined}>
           {paths.map((p, i) => (

@@ -297,6 +297,19 @@ a{ color: inherit; }
 .doodle .stk{ stroke-dasharray: var(--len); }
 @media (max-width: 900px){ .doodle{ opacity: .55; } }
 
+/* ── ARTWORK treatment: filled — a coloured-illustration read on the same
+   generated points, not a new asset (§28 of the visual-system PRD). ── */
+.doodle-filled path, .doodle-filled circle{
+  fill: color-mix(in oklab, currentColor 55%, var(--accent2, var(--accent)) 45%);
+  fill-opacity: .3; stroke-opacity: .8;
+}
+.doodle-filled .stk{ stroke-dasharray: none; }
+@keyframes lp-fillreveal{ from{ opacity:0; transform: scale(.9); } to{ opacity:1; transform:none; } }
+.beat.arrived .doodle-filled .stk{
+  animation: lp-fillreveal .9s cubic-bezier(.3,.7,.3,1) both;
+  animation-delay: calc(var(--s) * 120ms + 150ms);
+}
+
 /* ── inline marks ──────────────────────────────────────────────────── */
 
 .mark{ position: relative; display: inline-block; cursor: help; }
@@ -1289,3 +1302,205 @@ a{ color: inherit; }
   .wander-connector-line{ animation: none; opacity: .4; }
   .seed, .seed:not(.arrived){ transition: opacity .3s ease; transform: none !important; }
 }
+   STORY VISUAL SYSTEM 2.0 — new environment layers (bubbles, raylight,
+   shimmer, drape) and new ambient-only motifs (headlights, paperdrift).
+   Same discipline as the layers above: seeded, fixed, screen-reader-hidden,
+   neutralised under prefers-reduced-motion.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* — underwater — */
+.bd-bubbles{ inset:0; width:100%; height:100%; }
+.bd-bubbles circle{
+  fill: none; stroke: oklch(from var(--counter) 0.86 0.1 h / .55); stroke-width:.6;
+  animation-name: bd-bubble-rise; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+@keyframes bd-bubble-rise{
+  0%{ transform: translateY(0) translateX(0); opacity:0; }
+  10%{ opacity:.7; }
+  90%{ opacity:.5; }
+  100%{ transform: translateY(-118vh) translateX(3vw); opacity:0; }
+}
+.bd-raylight{ inset:0; width:100%; height:100%; mix-blend-mode:screen; }
+.bd-raylight polygon{
+  fill: oklch(from var(--counter) 0.9 0.08 h / var(--o, .12));
+  animation: bd-raysway 9s ease-in-out infinite alternate;
+}
+@keyframes bd-raysway{ from{ transform: skewX(-4deg); } to{ transform: skewX(4deg); } }
+
+/* — desert heat — */
+.bd-shimmer{
+  position:absolute; inset:auto 0 0 0; height:30vh;
+  background: repeating-linear-gradient(0deg,
+    oklch(from var(--accent) 0.85 0.1 h / .05) 0px,
+    transparent 3px, transparent 7px);
+  filter: blur(1.5px);
+  animation: bd-shimmerwave 2.4s ease-in-out infinite;
+  transform: translateY(calc(var(--depth) * -4vh));
+}
+@keyframes bd-shimmerwave{ 0%,100%{ transform: scaleY(1) translateY(calc(var(--depth) * -4vh)); } 50%{ transform: scaleY(1.06) translateY(calc(var(--depth) * -4vh - 1vh)); } }
+
+/* — palace — */
+.bd-drape{ inset:0; width:100%; height:100%; }
+.bd-drape path{ fill: oklch(from var(--accent) 0.28 0.09 h / .82); }
+.bd-drape-l, .bd-drape-r{ transition: transform 1.4s ease; }
+
+/* — night street: cars that are never mentioned in the text — */
+.bd-headlights{ position:absolute; inset:0; overflow:hidden; }
+.bd-headlight{
+  position:absolute; left:-18vw; width:16vw; height:2px; border-radius:2px;
+  background: linear-gradient(90deg, transparent, oklch(from var(--counter) 0.88 0.14 h / .8), transparent);
+  animation-name: bd-headlight-pass; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+}
+@keyframes bd-headlight-pass{
+  0%{ transform: translateX(0); opacity:0; }
+  10%{ opacity:.9; }
+  90%{ opacity:.7; }
+  100%{ transform: translateX(134vw); opacity:0; }
+}
+
+/* — scrapbook / collage ambient — */
+.bd-paperdrift{ position:absolute; inset:0; overflow:hidden; }
+.bd-paper-bit{
+  position:absolute; width:1.4vw; height:1.9vw; min-width:14px; min-height:19px;
+  background: color-mix(in oklab, var(--paper) 70%, var(--counter) 10%);
+  border: 1px solid var(--rule-2);
+  transform: rotate(var(--rot, 0deg));
+  animation-name: bd-paper-drift; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+  opacity: .5;
+}
+@keyframes bd-paper-drift{
+  0%,100%{ transform: rotate(var(--rot,0deg)) translateY(0); }
+  50%{ transform: rotate(calc(var(--rot,0deg) + 6deg)) translateY(-1.4vh); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .bd-bubbles circle, .bd-raylight polygon, .bd-shimmer, .bd-headlight, .bd-paper-bit{ animation: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ARTWORK LAYER — placed by composition (§9/§10), not confined to the
+   per-beat margin. Rendered before .flow in the DOM, so behind-text pieces
+   paint under the writing without an explicit stacking hack (both are
+   `position`ed → CSS stacking already puts DOM order first). Low-opacity by
+   default: readability first (§36).
+   ══════════════════════════════════════════════════════════════════════ */
+.artwork-layer{ position: relative; z-index: 0; }
+.artwork-layer .art-margin,
+.artwork-layer .art-corner{ position: fixed; opacity: .5; pointer-events: none; }
+.artwork-layer .art-margin-left { left: max(1vw, calc(50vw - var(--frame) / 2 - 6.5rem)); top: calc(22vh + var(--depth) * 50vh); }
+.artwork-layer .art-margin-right{ right: max(1vw, calc(50vw - var(--frame) / 2 - 6.5rem)); top: calc(30vh + var(--depth) * 42vh); }
+.artwork-layer .art-corner-tl{ left: 2vw;  top: 10vh; }
+.artwork-layer .art-corner-tr{ right: 2vw; top: 10vh; }
+.artwork-layer .art-corner-bl{ left: 2vw;  bottom: 6vh; }
+.artwork-layer .art-corner-br{ right: 2vw; bottom: 6vh; }
+.artwork-layer .art-behind{
+  position: absolute; opacity: .16;
+  left: calc(10% + (var(--ai, 0) * 17%) % 70%); top: calc(8vh + (var(--ai, 0) * 260px));
+}
+.artwork-layer .art-bleed{
+  position: absolute; opacity: .12; left: 50%; top: 4vh;
+  transform: translateX(-50%); width: min(70vw, 620px);
+}
+.artwork-layer .art-bleed .doodle{ width: 100%; }
+@media (max-width: 1100px){
+  .artwork-layer .art-margin{ display: none; }
+  .artwork-layer .art-corner{ opacity: .32; transform: scale(.7); }
+}
+@media (max-width: 640px){
+  .artwork-layer .art-corner-tl, .artwork-layer .art-corner-bl{ display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PERSISTENT SIGNATURE (§16) — one element, bound to --depth, that travels
+   down the page and plays out its narrative arc.
+   ══════════════════════════════════════════════════════════════════════ */
+.signature-layer{ position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.signature{ position: absolute; opacity: .8; filter: drop-shadow(0 6px 16px rgba(0,0,0,.18)); }
+.signature-left  .signature{ left: 2.5vw; }
+.signature-right .signature{ right: 2.5vw; }
+.signature-layer .signature:not(.signature-a):not(.signature-b){
+  top: calc(8vh + var(--depth) * 74vh);
+  transition: top .25s linear;
+}
+.signature-arc-grows   .signature{ transform: scale(calc(.62 + var(--depth) * .7)); }
+.signature-arc-shrinks .signature{ transform: scale(calc(1.3 - var(--depth) * .68)); }
+.signature-arc-fades   .signature{ opacity: calc(.82 - var(--depth) * .78); }
+.signature-arc-steady  .signature{ opacity: .62; }
+
+.signature-a, .signature-b{ top: calc(46vh + var(--depth) * 6vh); transition: transform .3s linear, opacity .3s linear; }
+.signature-left  .signature-a{ left: calc(50% - 9vw); } .signature-left  .signature-b{ left: calc(50% + 9vw); }
+.signature-right .signature-a{ left: calc(50% - 9vw); } .signature-right .signature-b{ left: calc(50% + 9vw); }
+.signature-arc-separates .signature-a{ transform: translateX(calc(var(--depth) * -7vw)); }
+.signature-arc-separates .signature-b{ transform: translateX(calc(var(--depth) * 7vw)); }
+.signature-arc-converges .signature-a{ transform: translateX(calc((1 - var(--depth)) * -7vw)); }
+.signature-arc-converges .signature-b{ transform: translateX(calc((1 - var(--depth)) * 7vw)); }
+@media (max-width: 900px){ .signature-layer{ display: none; } }
+@media (prefers-reduced-motion: reduce){
+  .signature-layer .signature{ transition: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MATERIAL — what the page is printed on (§14). Procedural, CSS-only
+   texture; no images. `StoryView` sets --material-grain / --material-contrast
+   from `lib/art-direction/materials.ts`.
+   ══════════════════════════════════════════════════════════════════════ */
+.material-layer{ position: fixed; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: multiply; }
+:root[data-scheme="dark"] .material-layer{ mix-blend-mode: overlay; }
+.material-paper .material-layer{
+  background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.015) 0px, transparent 1px, transparent 2px);
+  opacity: calc(var(--material-grain, .4) * .5);
+}
+.material-faded-print .material-layer{
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.10) 100%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.02) 0px, transparent 1px, transparent 3px);
+  opacity: var(--material-grain, .65);
+}
+.material-newsprint .material-layer{
+  background-image: radial-gradient(rgba(0,0,0,.12) 1px, transparent 1.4px);
+  background-size: 3px 3px;
+  opacity: calc(var(--material-grain, .7) * .55);
+}
+.material-canvas .material-layer{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.02) 0px, transparent 2px, transparent 4px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.02) 0px, transparent 2px, transparent 4px);
+  opacity: calc(var(--material-grain, .5) * .6);
+}
+.material-screenprint-grain .material-layer{
+  background-image: radial-gradient(rgba(0,0,0,.16) 1.1px, transparent 1.6px);
+  background-size: 2.4px 2.4px;
+  opacity: calc(var(--material-grain, .55) * .7);
+}
+.material-film-grain .material-layer{
+  background-image: radial-gradient(rgba(255,255,255,.14) .6px, transparent 1px);
+  background-size: 2px 2px;
+  opacity: calc(var(--material-grain, .8) * .5);
+}
+@media print, (prefers-reduced-motion: reduce){ }
+
+/* ══════════════════════════════════════════════════════════════════════
+   COMPOSITION — where the visual world lives on the page (§15).
+   ══════════════════════════════════════════════════════════════════════ */
+.comp-postcard .frontispiece,
+.comp-postcard .colophon{
+  border: 1px solid var(--rule); border-radius: 3px;
+}
+.comp-postcard .flow{ position: relative; }
+.comp-postcard .flow::before{
+  content: ""; position: absolute; inset: 0 .4rem; pointer-events: none;
+  border-left: 1px dashed var(--rule-2); border-right: 1px dashed var(--rule-2);
+  opacity: .5;
+}
+.comp-scrapbook .art-margin, .comp-scrapbook .art-corner{ transform: rotate(calc((var(--ai, 0) - 1) * 6deg)); }
+.comp-journey .beat{ max-width: none; }
+.comp-journey .v-speak{ max-width: 42ch; }
+.comp-collision .art-behind{ opacity: .22; }
+.comp-floating .art-bleed{ animation: bd-drift 30s ease-in-out infinite alternate; }
+.comp-diorama .art-margin-left{ top: 20vh; } .comp-diorama .art-margin-right{ top: 55vh; }
+.comp-chaotic-collage .art-corner{ opacity: .6; }
+
+/* ── typography, art-direction aware (§27) ── */
+.typo-handwritten .v-listen, .typo-handwritten .frontispiece .place{ font-style: italic; }
+.typo-framed .frontispiece{ padding: 1.1rem 1.4rem; border: 1px solid var(--rule); border-radius: 4px; }
+.typo-rotate .margin .doodle{ transform: rotate(var(--art-rotate, 0deg)); }
