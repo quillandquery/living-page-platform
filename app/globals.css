@@ -1001,8 +1001,25 @@ a{ color: inherit; }
   --rule: #E7DFCE; --rule-2: color-mix(in oklab, #E7DFCE 55%, transparent);
   --accent: #2D6BF0; --counter: #F0492E;
   --sun: #FFC53D; --tomato: #F0492E; --electric: #2D6BF0; --grass: #1F9E5A; --coral: #FF5C7A; --lilac: #9B7EDE;
-  position: relative; padding-bottom: 8vh; overflow-x: clip;
+  /* paint the ground itself (as Home's .lp does) — the fixed body
+     background resolves --paper at :root, which .wander can't override
+     from inside, so Wander must lay down its own cream. */
+  position: relative; z-index: 1; min-height: 100vh;
+  background: var(--paper);
+  padding-bottom: 8vh; overflow-x: clip;
 }
+
+/* ── shared chrome: the same wordmark + nav every other page carries,
+   so Wander reads as the same site as the front door ─────────────────── */
+.wander-nav{
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.3rem max(1rem,4vw); max-width: 82rem; margin: 0 auto;
+  position: relative; z-index: 2;
+}
+.wander-logo{ font-family: var(--f-hand); font-size: 1.4rem; color: var(--ink); text-decoration: none; }
+.wander-nav-r{ display: flex; gap: 1.4rem; font-family: var(--f-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+.wander-nav-r a{ color: var(--mute); text-decoration: none; }
+.wander-nav-r a:hover{ color: var(--electric); }
 
 .wander-hero{ max-width: 70rem; margin: 0 auto; padding: 9vh max(1.25rem,4vw) 5vh; text-align: center; }
 .wander-title{

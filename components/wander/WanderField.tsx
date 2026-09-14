@@ -185,6 +185,14 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
 
   return (
     <div className={`wander${scrambling ? " is-scrambling" : ""}`} ref={fieldRef}>
+      <nav className="wander-nav">
+        <Link href="/" className="wander-logo">Living Page</Link>
+        <span className="wander-nav-r">
+          <Link href="/make">Make</Link>
+          <Link href="/login">Sign in</Link>
+        </span>
+      </nav>
+
       <header className="wander-hero">
         <h1 className="wander-title">Wander</h1>
         <p className="wander-tag">You don&rsquo;t have to know what you&rsquo;re looking for.</p>
