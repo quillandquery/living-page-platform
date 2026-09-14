@@ -249,50 +249,30 @@ export function buildSeed(story: StoryWithAuthor): StorySeed {
   };
 }
 
-/* ── FRAGMENTATION — a story is not one tile; it can shed several objects
-   into the field. A quiet piece stays a single sparse object (contrast is
-   the point). A denser piece casts extra fragments — a giant charged word,
-   a torn line, a floating thought — each a different visual object, same
-   accent/world/href, so few stories fill a real wall without inventing
-   anything: every fragment is a slice of the story's own hook. ── */
-
-/** how many objects a story of this tier casts (density builds toward burst) */
-const FRAGMENTS: Record<SeedTier, number> = { quiet: 1, mid: 2, burst: 4 };
-
-/** the alternate forms a fragment can take, kept distinct from its base */
-const FRAGMENT_FORMS: SeedForm[] = ["giant-word", "paper-scrap", "floating-thought", "typographic", "micro-scene"];
-
-/** a short slice of the hook, so a fragment isn't the whole sentence again */
-function sliceHook(hook: string, i: number): string {
-  const sentences = hook.split(/(?<=[.!?…])\s+/).filter(Boolean);
-  if (sentences.length > 1) return sentences[i % sentences.length];
-  const words = hook.trim().split(/\s+/);
-  if (words.length <= 5) return hook;
-  const mid = Math.ceil(words.length / 2);
-  return i % 2 ? words.slice(mid).join(" ") : words.slice(0, mid).join(" ");
-}
+/* ── FRAGMENTATION — a story can cast ONE extra object into the field: a
+   single giant pulled word, and only when its hook is long enough that the
+   word is a genuine highlight rather than a near-repeat of the whole hook.
+   Deliberately restrained — a story shown three times as three slices reads
+   as clutter, not a collage. Most stories stay a single object; the long
+   ones get one keyword beside them, same accent/world/href. ── */
 
 function fragmentsOf(base: StorySeed): StorySeed[] {
-  const n = FRAGMENTS[base.tier];
-  if (n <= 1) return [base];
-  const out: StorySeed[] = [base];
-  const h = hash(base.id);
-  for (let i = 1; i < n; i++) {
-    // a form different from the base and from siblings
-    let form = FRAGMENT_FORMS[(h + i * 7) % FRAGMENT_FORMS.length];
-    if (form === base.form) form = FRAGMENT_FORMS[(h + i * 7 + 1) % FRAGMENT_FORMS.length];
-    const scale = form === "giant-word" ? 1.15 + ((h >>> i) % 30) / 100
-                : form === "floating-thought" ? 0.8 + ((h >>> i) % 20) / 100
-                : 0.9 + ((h >>> i) % 35) / 100;
-    out.push({
-      ...base,
-      key: `${base.id}-f${i}`,
-      form,
-      scale,
-      hook: sliceHook(base.hook, i),
-    });
+  const hookWords = base.hook.trim().split(/\s+/).filter(Boolean).length;
+  const charged = base.chargedWord.trim().toLowerCase();
+  const wholeHook = base.hook.trim().toLowerCase().replace(/[^a-z0-9]+$/i, "");
+  // no highlight when: quiet piece, short hook, base is already a giant word,
+  // or the "word" is basically the whole hook (nothing gained by repeating it)
+  if (base.tier === "quiet" || hookWords < 7 || base.form === "giant-word" || charged === wholeHook || charged.length < 3) {
+    return [base];
   }
-  return out;
+  const h = hash(base.id);
+  const giant: StorySeed = {
+    ...base,
+    key: `${base.id}-f1`,
+    form: "giant-word",
+    scale: 1.0 + ((h >>> 1) % 12) / 100, // 1.00–1.11, kept small enough to fit its column
+  };
+  return [base, giant];
 }
 
 /** The whole field: every published/seed story, fragmented into objects. */
