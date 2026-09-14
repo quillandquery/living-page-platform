@@ -63,7 +63,7 @@
 }
 
 @media (prefers-color-scheme: dark){
-  :root:not(:has(.story-reading)){
+  :root:not(:has(.story-reading)):not(:has(.wander)){
     /* only the bases move; every derivation above still holds, so the
        story's colour tints the dark ground the same way it tints paper */
     --stock:     #131417;
@@ -1018,6 +1018,10 @@ a{ color: inherit; }
 .band-quiet{ gap: 3rem 2rem; grid-auto-rows: 6rem; }
 .band-mid{ gap: 2rem 1.5rem; }
 .band-burst{ gap: 1.25rem 1rem; grid-auto-rows: 6rem; }
+.wander-band-empty{
+  grid-column: 1 / -1; text-align: center; padding: 1.5rem 1rem;
+  font-family: var(--f-mono); font-size: .72rem; letter-spacing: .04em; color: var(--mute);
+}
 
 /* ── the seed itself ──────────────────────────────────────────────── */
 .seed{
@@ -1074,15 +1078,23 @@ a{ color: inherit; }
    reads as its own object rather than a flat card */
 .tier-mid::before, .tier-burst::before{
   content: ""; position: absolute; inset: -.9rem; z-index: -1; border-radius: 20px;
-  background: var(--paper-2); opacity: .92;
+  background: color-mix(in oklab, var(--accent) 18%, var(--paper-2));
+  opacity: .94;
 }
 
-/* ── form: floating thought — quiet, sparse, just the words ─────────── */
-.seed-inner-float{ position: relative; padding: .5rem .25rem; }
+/* ── form: floating thought — quiet, but a fragment, not a stray ────── */
+.seed-inner-float{
+  position: relative; padding: .6rem .9rem .6rem 1.1rem;
+  border-left: 3px solid color-mix(in oklab, var(--accent) 55%, transparent);
+}
 .seed-inner-float .beat{ display: flex; flex-direction: column; gap: .5rem; }
 .seed-inner-float .margin{ align-self: flex-start; opacity: .8; }
 .seed-inner-float .margin.right{ align-self: flex-end; }
 .seed-inner-float .doodle{ width: 3.2rem !important; }
+.seed-float-tag{
+  display: block; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .1em;
+  text-transform: uppercase; color: color-mix(in oklab, var(--accent) 60%, var(--mute)); margin-bottom: .5rem;
+}
 
 /* ── form: giant word ─────────────────────────────────────────────── */
 .seed-inner-giant{ display: flex; flex-direction: column; gap: .3rem; padding: .5rem .25rem; }
@@ -1155,17 +1167,22 @@ a{ color: inherit; }
 .mood-door{
   position: relative; display: flex; flex-direction: column; gap: .3rem;
   min-width: 9.5rem; padding: 1.1rem 1.2rem; text-align: left;
-  background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 14px;
+  background: var(--paper-2); border: 1px solid var(--rule-2);
+  border-top: 3px solid var(--door-color, var(--rule));
+  border-radius: 14px;
   cursor: pointer; transform: rotate(calc((var(--i, 0) - 3) * .8deg));
   transition: transform .25s cubic-bezier(.2,1.2,.3,1), border-color .2s, background .2s;
   font: inherit;
 }
-.mood-door:hover, .mood-door:focus-visible{ transform: rotate(0deg) translateY(-3px); border-color: var(--accent); }
-.mood-door.is-active{ background: var(--ink); border-color: var(--ink); }
-.mood-door.is-active .mood-door-label, .mood-door.is-active .mood-door-sub{ color: var(--paper); }
-.mood-door-label{ font-family: var(--f-disp); font-size: 1.05rem; }
+.mood-door:hover, .mood-door:focus-visible{ transform: rotate(0deg) translateY(-3px); border-color: var(--door-color, var(--accent)); }
+.mood-door.is-active{
+  background: color-mix(in oklab, var(--door-color, var(--ink)) 82%, var(--ink));
+  border-color: var(--door-color, var(--ink));
+}
+.mood-door.is-active .mood-door-label, .mood-door.is-active .mood-door-sub{ color: #fff; }
+.mood-door-label{ font-family: var(--f-disp); font-size: 1.05rem; color: color-mix(in oklab, var(--door-color, var(--accent)) 60%, var(--ink)); }
 .mood-door-sub{ font-family: var(--f-mono); font-size: .62rem; letter-spacing: .04em; color: var(--mute); }
-.mood-door-idk{ background: transparent; border-style: dashed; }
+.mood-door-idk{ background: transparent; border-style: dashed; border-top-style: dashed; }
 
 .time-doors{ display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; }
 .time-door{
@@ -1173,9 +1190,9 @@ a{ color: inherit; }
   background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 999px;
   cursor: pointer; transition: all .18s ease; font: inherit;
 }
-.time-door:hover{ border-color: var(--accent); }
-.time-door.is-active{ background: var(--accent); border-color: var(--accent); }
-.time-door.is-active .time-door-label, .time-door.is-active .time-door-sub{ color: var(--paper); }
+.time-door:hover{ border-color: var(--door-color, var(--accent)); }
+.time-door.is-active{ background: var(--door-color, var(--accent)); border-color: var(--door-color, var(--accent)); }
+.time-door.is-active .time-door-label, .time-door.is-active .time-door-sub{ color: #fff; }
 .time-door-label{ font-family: var(--f-mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
 .time-door-sub{ font-family: var(--f-hand); font-size: .85rem; color: var(--mute); }
 

@@ -148,6 +148,7 @@ function SeedBody({ seed, index }: { seed: Seed; index: number }) {
     default:
       return (
         <div className="seed-inner seed-inner-float">
+          <span className="seed-float-tag">{seed.place}</span>
           <Beat voice={seed.dominantVoice} doodle={seed.doodle} side={index % 2 ? "left" : "right"} seed={hash(seed.id)}>
             {seed.hook}
           </Beat>

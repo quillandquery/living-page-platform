@@ -18,21 +18,21 @@ import type { StorySeed as Seed } from "@/lib/discover";
 type MoodKey = "laugh" | "somewhere" | "feel" | "think" | "weird" | "heartbreak";
 type TimeKey = "all" | "quick" | "five" | "ten" | "long";
 
-const MOODS: { key: MoodKey; label: string; sub: string; test: (s: Seed) => boolean }[] = [
-  { key: "laugh", label: "Make me laugh", sub: "loud, fast, a little absurd", test: (s) => s.dominantVoice === "shout" || s.energy === "electric" },
-  { key: "somewhere", label: "Take me somewhere", sub: "a place, a road, a dateline", test: (s) => s.themes.includes("in transit") || s.form === "postcard" },
-  { key: "feel", label: "Make me feel something", sub: "quiet, close, unresolved", test: (s) => (["whisper", "listen", "thought"] as const).includes(s.dominantVoice as any) },
-  { key: "think", label: "Give me something to think about", sub: "circling a question", test: (s) => s.dominantVoice === "thought" || s.dominantVoice === "drift" },
-  { key: "weird", label: "Show me something weird", sub: "too many things at once", test: (s) => s.form === "collage" || s.form === "typographic" },
-  { key: "heartbreak", label: "Break my heart a little", sub: "leaving, alone, still waiting", test: (s) => s.themes.some((t) => ["loss", "leaving", "alone", "waiting"].includes(t)) },
+const MOODS: { key: MoodKey; label: string; sub: string; color: string; test: (s: Seed) => boolean }[] = [
+  { key: "laugh", label: "Make me laugh", sub: "loud, fast, a little absurd", color: "#FF7A1A", test: (s) => s.dominantVoice === "shout" || s.energy === "electric" },
+  { key: "somewhere", label: "Take me somewhere", sub: "a place, a road, a dateline", color: "#00A6D6", test: (s) => s.themes.includes("in transit") || s.form === "postcard" },
+  { key: "feel", label: "Make me feel something", sub: "quiet, close, unresolved", color: "#C25AD0", test: (s) => (["whisper", "listen", "thought"] as const).includes(s.dominantVoice as any) },
+  { key: "think", label: "Give me something to think about", sub: "circling a question", color: "#3A5BD0", test: (s) => s.dominantVoice === "thought" || s.dominantVoice === "drift" },
+  { key: "weird", label: "Show me something weird", sub: "too many things at once", color: "#1F9E5A", test: (s) => s.form === "collage" || s.form === "typographic" },
+  { key: "heartbreak", label: "Break my heart a little", sub: "leaving, alone, still waiting", color: "#E8734F", test: (s) => s.themes.some((t) => ["loss", "leaving", "alone", "waiting"].includes(t)) },
 ];
 
-const TIME: { key: TimeKey; label: string; sub: string; test: (s: number) => boolean }[] = [
-  { key: "all", label: "Everything", sub: "no rush", test: () => true },
-  { key: "quick", label: "90 sec", sub: "a tiny stumble", test: (s) => s <= 90 },
-  { key: "five", label: "5 min", sub: "a little detour", test: (s) => s > 90 && s <= 300 },
-  { key: "ten", label: "10 min", sub: "let's wander", test: (s) => s > 300 && s <= 600 },
-  { key: "long", label: "All night", sub: "bad idea. perfect.", test: (s) => s > 600 },
+const TIME: { key: TimeKey; label: string; sub: string; color: string; test: (s: number) => boolean }[] = [
+  { key: "all", label: "Everything", sub: "no rush", color: "", test: () => true },
+  { key: "quick", label: "90 sec", sub: "a tiny stumble", color: "#1F9E5A", test: (s) => s <= 90 },
+  { key: "five", label: "5 min", sub: "a little detour", color: "#00A6D6", test: (s) => s > 90 && s <= 300 },
+  { key: "ten", label: "10 min", sub: "let's wander", color: "#E4A81F", test: (s) => s > 300 && s <= 600 },
+  { key: "long", label: "All night", sub: "bad idea. perfect.", color: "#7A6CE0", test: (s) => s > 600 },
 ];
 
 function useReducedMotion() {
@@ -132,7 +132,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [seeds]);
+  }, [seeds, mood, timeKey]);
 
   // scroll is an input: one number, everything else reads it in CSS
   useEffect(() => {
@@ -167,13 +167,18 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
     }, 520);
   };
 
-  const band = (list: Seed[], name: string, ref?: RefObject<HTMLDivElement | null>) => (
-    <section className={`wander-field band-${name}`} data-band={name} ref={ref}>
-      {list.map((s, i) => (
-        <StorySeed key={s.id} seed={s} index={i} hidden={!isVisible(s)} spotlit={s.id === spotlightId} />
-      ))}
-    </section>
-  );
+  const band = (list: Seed[], name: string, ref?: RefObject<HTMLDivElement | null>) => {
+    const visible = list.filter(isVisible);
+    return (
+      <section className={`wander-field band-${name}${mood || timeKey !== "all" ? " is-filtered" : ""}`} data-band={name} ref={ref}>
+        {visible.length === 0 ? (
+          <p className="wander-band-empty">Nothing here matches — try another mood or window.</p>
+        ) : (
+          visible.map((s, i) => <StorySeed key={s.id} seed={s} index={i} spotlit={s.id === spotlightId} />)
+        )}
+      </section>
+    );
+  };
 
   return (
     <div className={`wander${scrambling ? " is-scrambling" : ""}`} ref={fieldRef}>
@@ -196,7 +201,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
                   key={m.key}
                   type="button"
                   className={`mood-door${mood === m.key ? " is-active" : ""}`}
-                  style={{ ["--i" as string]: i } as CSSProperties}
+                  style={{ ["--i" as string]: i, ["--door-color" as string]: m.color } as CSSProperties}
                   onClick={() => setMood(mood === m.key ? null : m.key)}
                 >
                   <span className="mood-door-label">{m.label}</span>
@@ -220,6 +225,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
                   key={t.key}
                   type="button"
                   className={`time-door${timeKey === t.key ? " is-active" : ""}`}
+                  style={{ ["--door-color" as string]: t.color } as CSSProperties}
                   onClick={() => setTimeKey(timeKey === t.key ? "all" : t.key)}
                 >
                   <span className="time-door-label">{t.label}</span>
