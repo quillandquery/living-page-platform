@@ -34,11 +34,18 @@ export function pickArtwork(
   treatment: ArtworkTreatment,
   seed: number,
   count = 4,
+  /** when the writer's chosen visual density calls for more pieces than the
+   *  story actually named, repeat the strongest real signal (or the
+   *  environment fallback, if the story named nothing) rather than invent
+   *  unrelated decoration — a recurring motif still traces to a reason (§38),
+   *  it just repeats more insistently at higher density. */
+  pad = false,
 ): ArtworkPiece[] {
-  const names = objects.slice(0, count).map((s) => s.key);
-  if (names.length === 0) {
-    const fallback = ENVIRONMENT_FALLBACK_ARTWORK[environment] ?? "spiral";
-    names.push(fallback);
+  const real = objects.slice(0, count).map((s) => s.key);
+  const usedFallback = real.length === 0;
+  const names = real.length ? [...real] : [ENVIRONMENT_FALLBACK_ARTWORK[environment] ?? "spiral"];
+  if (pad) {
+    while (names.length < count) names.push(names[0]);
   }
 
   const pool = composition.placements;
@@ -54,11 +61,8 @@ export function pickArtwork(
       }
     }
     used.add(placement);
-    return {
-      doodle,
-      placement,
-      treatment,
-      reason: i === 0 && objects.length === 0 ? "compositional" : "semantic",
-    } satisfies ArtworkPiece;
+    const reason: ArtworkPiece["reason"] =
+      i === 0 ? (usedFallback ? "compositional" : "semantic") : i < real.length ? "semantic" : "stylistic";
+    return { doodle, placement, treatment, reason } satisfies ArtworkPiece;
   });
 }

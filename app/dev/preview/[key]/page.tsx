@@ -12,16 +12,18 @@ import { annotate, toBlocks } from "@/lib/annotate";
  * reason `describeArtDirection` exists (§45).
  */
 export default async function DevPreviewStory(
-  { params, searchParams }: { params: Promise<{ key: string }>; searchParams: Promise<{ debug?: string }> },
+  { params, searchParams }: { params: Promise<{ key: string }>; searchParams: Promise<{ debug?: string; intensity?: string }> },
 ) {
   if (process.env.NODE_ENV === "production") notFound();
   const { key } = await params;
-  const { debug } = await searchParams;
+  const { debug, intensity } = await searchParams;
   const story = TEST_STORIES.find((s) => s.key === key);
   if (!story) notFound();
 
   const profile = extractStoryProfile(story.text);
-  const artDirection = generateArtDirection(story.text, profile);
+  const artDirection = generateArtDirection(story.text, profile, {
+    visualIntensity: intensity as "minimal" | "illustrated" | "collage" | "maximal" | undefined,
+  });
   const blocks = toBlocks(annotate(story.text, {
     doodleDensity: artDirection.atmosphere.spatialOpenness === "dense" ? 8 : artDirection.atmosphere.spatialOpenness === "sparse" ? 3 : 6,
     voiceBudget: 0.4,

@@ -110,8 +110,9 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
     return generateArtDirection(raw, profile, {
       environmentOverride: worldSel === "auto" ? undefined : worldSel,
       moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
+      visualIntensity: visSel === "auto" ? undefined : visSel,
     });
-  }, [raw, worldSel, moodSel]);
+  }, [raw, worldSel, moodSel, visSel]);
 
   const mood = artDirection.atmosphere.mood as Mood;
   const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];

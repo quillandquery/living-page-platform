@@ -75,12 +75,32 @@ function seededPick<T>(scored: { item: T; score: number }[], seed: number, band 
   return pool[Math.abs(seed) % pool.length].item;
 }
 
+/** the writer-facing Visuals dial (§14) — how much of the page the artwork
+ *  is allowed to occupy. It steers artwork count/treatment and which of the
+ *  art style's own compositions gets picked (sparser vs. denser), but it
+ *  never invents artwork the story didn't earn (§38) and never overrides
+ *  what the mood decided about motion — "maximal" is a louder page, not a
+ *  busier one regardless of what the writing calls for. */
+export type VisualIntensity = "minimal" | "illustrated" | "collage" | "maximal";
+const INTENSITY_ARTWORK_COUNT: Record<VisualIntensity, number> = {
+  minimal: 1, illustrated: 2, collage: 3, maximal: 4,
+};
+const INTENSITY_TREATMENT: Partial<Record<VisualIntensity, import("@/components/doodles/Doodle").ArtworkTreatment>> = {
+  minimal: "line", collage: "filled", maximal: "filled",
+};
+
 export function generateArtDirection(
   raw: string,
   profile: SemanticStoryProfile,
-  opts: { seed?: number; environmentOverride?: string; moodOverride?: import("./atmosphere").MoodKey } = {},
+  opts: {
+    seed?: number;
+    environmentOverride?: string;
+    moodOverride?: import("./atmosphere").MoodKey;
+    visualIntensity?: VisualIntensity;
+  } = {},
 ): StoryArtDirection {
   const seed = (opts.seed ?? seedHash(raw)) >>> 0;
+  const intensity = opts.visualIntensity;
 
   // — environment —
   const envScored = scoreEnvironments(raw, profile);
@@ -96,13 +116,24 @@ export function generateArtDirection(
   const styleScored = scoreArtStyles(raw, mood);
   const artStyleSpec = seededPick(styleScored.map((s) => ({ item: s.key, score: s.score })), seed >>> 3, 0.75);
 
-  // — composition —
-  const compKey = artStyleSpec.compositions[Math.abs(seed >>> 5) % artStyleSpec.compositions.length];
-  const composition = COMPOSITIONS[compKey];
+  // — composition — auto still lets the seed pick between the style's two
+  // options; a manual intensity picks the sparser or denser of the two
+  // instead, so "minimal" and "maximal" are visibly, not just numerically,
+  // different pages even within the same art style.
+  const compChoices = artStyleSpec.compositions
+    .map((k) => COMPOSITIONS[k])
+    .sort((a, b) => a.placements.length - b.placements.length);
+  const composition = !intensity
+    ? COMPOSITIONS[artStyleSpec.compositions[Math.abs(seed >>> 5) % artStyleSpec.compositions.length]]
+    : intensity === "minimal" ? compChoices[0]
+    : intensity === "maximal" || intensity === "collage" ? compChoices[compChoices.length - 1]
+    : compChoices[Math.abs(seed >>> 5) % compChoices.length];
 
   // — artwork —
+  const artworkTreatment = (intensity && INTENSITY_TREATMENT[intensity]) || artStyleSpec.artworkTreatment;
+  const artworkCount = intensity ? INTENSITY_ARTWORK_COUNT[intensity] : 4;
   const artwork = pickArtwork(
-    profile.objects, envKey, composition, artStyleSpec.artworkTreatment, seed >>> 7,
+    profile.objects, envKey, composition, artworkTreatment, seed >>> 7, artworkCount, !!intensity,
   );
 
   // — ambient motion —
@@ -120,7 +151,7 @@ export function generateArtDirection(
   return {
     environment: { key: envKey, label: backdrop.label, viewpoint: backdrop.viewpoint },
     atmosphere,
-    artStyle: { key: artStyleSpec.key, label: artStyleSpec.label, artworkTreatment: artStyleSpec.artworkTreatment, strokeWidth: artStyleSpec.strokeWidth },
+    artStyle: { key: artStyleSpec.key, label: artStyleSpec.label, artworkTreatment, strokeWidth: artStyleSpec.strokeWidth },
     artwork,
     ambientMotion,
     material,
