@@ -154,7 +154,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
     return () => { window.removeEventListener("scroll", onScroll); document.documentElement.style.removeProperty("--wander-progress"); };
   }, []);
 
-  const burstIds = useMemo(() => burst.filter(isVisible).slice(0, 4).map((s) => s.id), [burst, mood, timeKey]);
+  const burstIds = useMemo(() => burst.filter(isVisible).slice(0, 6).map((s) => s.key), [burst, mood, timeKey]);
 
   const surprise = () => {
     const pool = seeds.filter(isVisible);
@@ -162,10 +162,10 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
     setScrambling(true);
     window.setTimeout(() => {
       const pick = pool[Math.floor(Math.random() * pool.length)];
-      setSpotlightId(pick.id);
+      setSpotlightId(pick.key);
       setScrambling(false);
       requestAnimationFrame(() => {
-        document.querySelector(`[data-id="${pick.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        document.querySelector(`[data-id="${pick.key}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }, 520);
   };
@@ -177,7 +177,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
         {visible.length === 0 ? (
           <p className="wander-band-empty">Nothing here matches — try another mood or window.</p>
         ) : (
-          visible.map((s, i) => <StorySeed key={s.id} seed={s} index={i} spotlit={s.id === spotlightId} />)
+          visible.map((s, i) => <StorySeed key={s.key} seed={s} index={i} spotlit={s.key === spotlightId} />)
         )}
       </section>
     );

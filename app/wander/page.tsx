@@ -1,5 +1,6 @@
 import { publishedFeed } from "@/lib/db";
-import { buildSeeds } from "@/lib/discover";
+import { buildField } from "@/lib/discover";
+import { SAMPLE_STORIES } from "@/lib/wander-samples";
 import { WanderField } from "@/components/wander/WanderField";
 
 export const metadata = {
@@ -14,7 +15,11 @@ export const metadata = {
  * separate tagging system, so nothing here is invented.
  */
 export default async function WanderPage() {
-  const stories = await publishedFeed(150);
-  const seeds = buildSeeds(stories);
+  const published = await publishedFeed(150);
+  // Real stories lead; seed stories fill the field so Wander is a gallery,
+  // not a ghost town, until enough people have published. Both flow through
+  // the same fragmentation — one story can cast several objects.
+  const stories = [...published, ...SAMPLE_STORIES];
+  const seeds = buildField(stories);
   return <WanderField seeds={seeds} />;
 }

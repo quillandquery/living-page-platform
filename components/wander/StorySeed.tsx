@@ -16,16 +16,6 @@ import type { StorySeed as Seed } from "@/lib/discover";
  * Living Page, not a preview of one.
  */
 
-const SPAN: Record<Seed["form"], { col: number; row: number }> = {
-  "floating-thought": { col: 3, row: 1 },
-  "giant-word": { col: 4, row: 1 },
-  "paper-scrap": { col: 3, row: 1 },
-  "postcard": { col: 4, row: 2 },
-  "micro-scene": { col: 4, row: 2 },
-  "typographic": { col: 5, row: 2 },
-  "collage": { col: 5, row: 3 },
-};
-
 function hash(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -43,17 +33,15 @@ function splitHook(hook: string): [string, string] {
 }
 
 export function StorySeed({ seed, index, hidden, spotlit }: { seed: Seed; index: number; hidden?: boolean; spotlit?: boolean }) {
-  const span = SPAN[seed.form];
-  const h = hash(seed.id);
+  const h = hash(seed.key);
   const rot = ((h % 700) / 100 - 3.5) * (seed.form === "floating-thought" || seed.form === "giant-word" ? 0.4 : 1);
   const drift = (h >> 8) % 100;
 
   const style: CSSProperties & Record<string, string | number> = {
-    gridColumn: `span ${span.col}`,
-    gridRow: `span ${span.row}`,
     ["--rot"]: `${rot.toFixed(1)}deg`,
     ["--drift"]: drift,
     ["--accent"]: seed.accent,
+    ["--scale"]: seed.scale,
   };
 
   return (
@@ -61,14 +49,14 @@ export function StorySeed({ seed, index, hidden, spotlit }: { seed: Seed; index:
       {/* every seed gets its own accent-derived colours (ink/counter/mute),
           scoped locally — mid/burst tiers additionally get the wash
           background via .tier-mid/.tier-burst::before in globals.css */}
-      <style>{`.seed-${seed.id}{${seed.worldCss}}`}</style>
+      <style>{`.seed-${seed.key}{${seed.worldCss}}`}</style>
       <Link
-        href={`/@${seed.handle}/${seed.slug}`}
+        href={seed.href}
         data-seed-link
-        data-id={seed.id}
+        data-id={seed.key}
         data-form={seed.form}
         data-tier={seed.tier}
-        className={`seed seed-${seed.form} tier-${seed.tier} seed-${seed.id}${hidden ? " seed-hidden" : ""}${spotlit ? " spotlit" : ""}`}
+        className={`seed seed-${seed.form} tier-${seed.tier} seed-${seed.key}${hidden ? " seed-hidden" : ""}${spotlit ? " spotlit" : ""}`}
         style={style}
       >
         <SeedBody seed={seed} index={index} />

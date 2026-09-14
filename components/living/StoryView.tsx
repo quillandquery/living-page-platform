@@ -26,14 +26,14 @@ export type StoryViewData = {
   veil?: boolean;
   blocks: Block[];
   /** shown as a byline when a story is read on the platform */
-  author?: { handle: string; display_name: string } | null;
+  author?: { handle: string; display_name: string; href?: string } | null;
   /** the studio preview turns the frontispiece and chrome off */
   chrome?: boolean;
   seed?: string;
   /** the rabbit hole at the end of the piece — omitted in the studio preview */
   more?: {
-    same: { handle: string; slug: string; place: string; theme?: string | null } | null;
-    surprise: { handle: string; slug: string; place: string } | null;
+    same: { handle: string; slug: string; place: string; theme?: string | null; href?: string } | null;
+    surprise: { handle: string; slug: string; place: string; href?: string } | null;
   };
 };
 
@@ -56,7 +56,7 @@ export function StoryView({
           <p className="stamp">{date}</p>
           {author ? (
             <p className="byline">
-              by <Link href={`/@${author.handle}`}>{author.display_name || `@${author.handle}`}</Link>
+              by <Link href={author.href ?? `/@${author.handle}`}>{author.display_name || `@${author.handle}`}</Link>
             </p>
           ) : null}
         </header>
@@ -71,12 +71,12 @@ export function StoryView({
           <p className="keep-going-h">Keep going.</p>
           <div className="keep-going-links">
             {more.same ? (
-              <Link href={`/@${more.same.handle}/${more.same.slug}`} className="keep-going-link">
+              <Link href={more.same.href ?? `/@${more.same.handle}/${more.same.slug}`} className="keep-going-link">
                 {more.same.theme ? <>You may also fall into: {more.same.theme}</> : "Same feeling"} → <span className="keep-going-place">{more.same.place}</span>
               </Link>
             ) : null}
             {more.surprise ? (
-              <Link href={`/@${more.surprise.handle}/${more.surprise.slug}`} className="keep-going-link">
+              <Link href={more.surprise.href ?? `/@${more.surprise.handle}/${more.surprise.slug}`} className="keep-going-link">
                 Surprise me → <span className="keep-going-place">{more.surprise.place}</span>
               </Link>
             ) : null}
@@ -89,7 +89,7 @@ export function StoryView({
         <footer className="colophon">
           <span className="stamp">
             {place} · {date}
-            {author ? <> · <Link href={`/@${author.handle}`} className="back">@{author.handle}</Link></> : null}
+            {author ? <> · <Link href={author.href ?? `/@${author.handle}`} className="back">@{author.handle}</Link></> : null}
           </span>
           <span className="colophon-doodle"><Doodle name="spiral" seed={19} size={54} ink="var(--rule)" /></span>
           <Link href="/" className="back">the rest of them</Link>

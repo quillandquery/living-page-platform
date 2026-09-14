@@ -31,7 +31,16 @@ export type SeedForm =
 export type SeedTier = "quiet" | "mid" | "burst";
 
 export type StorySeed = {
+  /** unique per FIELD OBJECT (a story can cast several) */
+  key: string;
+  /** the story this object belongs to */
   id: string;
+  /** where clicking it goes — a real @handle piece, or a seed story */
+  href: string;
+  /** a curated seed story, not a person's — addressed under /wander/s/ */
+  isSample: boolean;
+  /** relative size of this object in the field, ~0.8–1.6 */
+  scale: number;
   slug: string;
   handle: string;
   authorName: string;
@@ -207,8 +216,13 @@ export function buildSeed(story: StoryWithAuthor): StorySeed {
     id: story.id,
   });
 
+  const isSample = story.id.startsWith("sample-");
   return {
+    key: story.id,
     id: story.id,
+    href: isSample ? `/wander/s/${story.slug}` : `/@${story.author.handle}/${story.slug}`,
+    isSample,
+    scale: 1,
     slug: story.slug,
     handle: story.author.handle,
     authorName: story.author.display_name || `@${story.author.handle}`,
@@ -235,6 +249,58 @@ export function buildSeed(story: StoryWithAuthor): StorySeed {
   };
 }
 
+/* ── FRAGMENTATION — a story is not one tile; it can shed several objects
+   into the field. A quiet piece stays a single sparse object (contrast is
+   the point). A denser piece casts extra fragments — a giant charged word,
+   a torn line, a floating thought — each a different visual object, same
+   accent/world/href, so few stories fill a real wall without inventing
+   anything: every fragment is a slice of the story's own hook. ── */
+
+/** how many objects a story of this tier casts (density builds toward burst) */
+const FRAGMENTS: Record<SeedTier, number> = { quiet: 1, mid: 2, burst: 4 };
+
+/** the alternate forms a fragment can take, kept distinct from its base */
+const FRAGMENT_FORMS: SeedForm[] = ["giant-word", "paper-scrap", "floating-thought", "typographic", "micro-scene"];
+
+/** a short slice of the hook, so a fragment isn't the whole sentence again */
+function sliceHook(hook: string, i: number): string {
+  const sentences = hook.split(/(?<=[.!?…])\s+/).filter(Boolean);
+  if (sentences.length > 1) return sentences[i % sentences.length];
+  const words = hook.trim().split(/\s+/);
+  if (words.length <= 5) return hook;
+  const mid = Math.ceil(words.length / 2);
+  return i % 2 ? words.slice(mid).join(" ") : words.slice(0, mid).join(" ");
+}
+
+function fragmentsOf(base: StorySeed): StorySeed[] {
+  const n = FRAGMENTS[base.tier];
+  if (n <= 1) return [base];
+  const out: StorySeed[] = [base];
+  const h = hash(base.id);
+  for (let i = 1; i < n; i++) {
+    // a form different from the base and from siblings
+    let form = FRAGMENT_FORMS[(h + i * 7) % FRAGMENT_FORMS.length];
+    if (form === base.form) form = FRAGMENT_FORMS[(h + i * 7 + 1) % FRAGMENT_FORMS.length];
+    const scale = form === "giant-word" ? 1.15 + ((h >>> i) % 30) / 100
+                : form === "floating-thought" ? 0.8 + ((h >>> i) % 20) / 100
+                : 0.9 + ((h >>> i) % 35) / 100;
+    out.push({
+      ...base,
+      key: `${base.id}-f${i}`,
+      form,
+      scale,
+      hook: sliceHook(base.hook, i),
+    });
+  }
+  return out;
+}
+
+/** The whole field: every published/seed story, fragmented into objects. */
+export function buildField(stories: StoryWithAuthor[]): StorySeed[] {
+  return stories.flatMap((s) => fragmentsOf(buildSeed(s)));
+}
+
+/** Back-compat: one object per story, unfragmented. */
 export function buildSeeds(stories: StoryWithAuthor[]): StorySeed[] {
   return stories.map(buildSeed);
 }

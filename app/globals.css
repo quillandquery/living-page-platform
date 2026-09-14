@@ -1038,13 +1038,21 @@ a{ color: inherit; }
   position: relative;
   max-width: 82rem; margin: 0 auto;
   padding: 3vh max(1.25rem,4vw);
-  display: grid; grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: 6.5rem; gap: 1.5rem 1.25rem;
-  align-items: start;
+  /* a scattered wall, not an aligned grid: objects pack irregularly,
+     each keeps its own tilt and scale, so five forms of five sizes read
+     as a field you stumble through, not a row of cards. */
+  column-gap: 2.4rem;
 }
-.band-quiet{ gap: 3rem 2rem; grid-auto-rows: 6rem; }
-.band-mid{ gap: 2rem 1.5rem; }
-.band-burst{ gap: 1.25rem 1rem; grid-auto-rows: 6rem; }
+.wander-field > .seed{
+  width: 100%; break-inside: avoid; -webkit-column-break-inside: avoid;
+  margin: 0 0 2.4rem;
+}
+/* density is the choreography: the opening breathes, the end is a crush */
+.band-quiet{ column-count: 2; column-gap: 5rem; max-width: 60rem; }
+.band-quiet > .seed{ margin-bottom: 4.5rem; }
+.band-mid{ column-count: 3; }
+.band-burst{ column-count: 4; column-gap: 1.6rem; }
+.band-burst > .seed{ margin-bottom: 1.6rem; }
 .wander-band-empty{
   grid-column: 1 / -1; text-align: center; padding: 1.5rem 1rem;
   font-family: var(--f-mono); font-size: .72rem; letter-spacing: .04em; color: var(--mute);
@@ -1100,14 +1108,9 @@ a{ color: inherit; }
 .seed .beat{ transition: transform .3s ease; }
 .seed:hover .beat, .seed:focus-visible .beat{ transform: translateY(-2px); }
 
-/* a mid/burst seed is a small window into its own world — the wash sits
-   behind whatever the form draws, so a torn-paper or postcard shape still
-   reads as its own object rather than a flat card */
-.tier-mid::before, .tier-burst::before{
-  content: ""; position: absolute; inset: -.9rem; z-index: -1; border-radius: 20px;
-  background: color-mix(in oklab, var(--accent) 18%, var(--paper-2));
-  opacity: .94;
-}
+/* NO blanket wash. An object is an object — a word, a torn scrap, a line,
+   a little scene — sitting on the page, not a coloured rectangle. Only the
+   forms that literally are paper carry a ground (scrap/postcard/collage). */
 
 /* ── form: floating thought — quiet, but a fragment, not a stray ────── */
 .seed-inner-float{
@@ -1118,6 +1121,8 @@ a{ color: inherit; }
 .seed-inner-float .margin{ align-self: flex-start; opacity: .8; }
 .seed-inner-float .margin.right{ align-self: flex-end; }
 .seed-inner-float .doodle{ width: 3.2rem !important; }
+/* the floating form already prints its place as a tag — no double label */
+.seed-floating-thought .seed-place{ display: none; }
 .seed-float-tag{
   display: block; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .1em;
   text-transform: uppercase; color: color-mix(in oklab, var(--accent) 60%, var(--mute)); margin-bottom: .5rem;
@@ -1127,8 +1132,8 @@ a{ color: inherit; }
 .seed-inner-giant{ display: flex; flex-direction: column; gap: .3rem; padding: .5rem .25rem; }
 .seed-charged{
   font-family: var(--f-disp); font-weight: 400; text-transform: uppercase;
-  font-size: clamp(2.3rem, 6vw, 4rem); line-height: .92; letter-spacing: -.01em;
-  color: color-mix(in oklab, var(--accent) 70%, var(--ink)); margin: 0;
+  font-size: calc(clamp(2.3rem, 6vw, 4rem) * var(--scale, 1)); line-height: .92; letter-spacing: -.01em;
+  color: color-mix(in oklab, var(--accent) 78%, var(--ink)); margin: 0;
 }
 .seed-charged-rest{
   font-family: var(--f-mono); font-size: .7rem; letter-spacing: .03em;
@@ -1168,11 +1173,15 @@ a{ color: inherit; }
 
 /* ── form: typographic collage — two voices, one hook ────────────── */
 .seed-inner-typo{ display: flex; flex-direction: column; gap: .8rem; padding: .5rem .25rem; }
-.seed-inner-typo .beat:first-child .words{ font-size: clamp(1.25rem, 2.6vw, 1.9rem); }
+.seed-inner-typo .beat:first-child .words{ font-size: calc(clamp(1.25rem, 2.6vw, 1.9rem) * var(--scale, 1)); }
 .seed-typo-second .words{ opacity: .78; }
 
 /* ── form: maximalist collage ─────────────────────────────────────── */
-.seed-inner-collage{ position: relative; padding: 1.7rem 1.5rem 2rem; min-height: 9rem; }
+.seed-inner-collage{
+  position: relative; padding: 1.7rem 1.5rem 2rem; min-height: 9rem;
+  background: color-mix(in oklab, var(--accent) 16%, var(--paper-2));
+  border-radius: 18px;
+}
 .seed-collage-doodle{ position: absolute; opacity: .9; }
 .seed-collage-doodle.a{ top: -.6rem; right: -.4rem; }
 .seed-collage-doodle.b{ bottom: -.8rem; left: -.6rem; }
@@ -1258,13 +1267,21 @@ a{ color: inherit; }
    it has no room for, and the peek content is always visible since
    there's no hover on touch. ── */
 @media (max-width: 860px){
-  .wander-field{ grid-template-columns: repeat(2, 1fr) !important; grid-auto-rows: auto !important; gap: 2rem 1rem !important; padding-inline: 1rem; }
-  .seed{ grid-column: span 2 !important; grid-row: auto !important; transform: none !important; }
+  .wander-field{ column-gap: 1.1rem !important; padding-inline: 1rem; }
+  .band-quiet{ column-count: 1 !important; max-width: none; }
+  .band-mid, .band-burst{ column-count: 2 !important; }
+  .wander-field > .seed{ margin-bottom: 1.6rem !important; }
+  .band-quiet > .seed{ margin-bottom: 2.2rem !important; }
+  .seed{ transform: none !important; }
   .seed:not(.arrived){ transform: translateY(1em) !important; }
   .seed.spotlit{ transform: scale(1.02) !important; }
   .seed-peek{ opacity: 1; transform: none; }
   .mood-door{ min-width: 0; flex: 1 1 40%; transform: none !important; }
   .wander-connectors{ display: none; }
+}
+@media (min-width: 1200px){
+  .band-mid{ column-count: 4; }
+  .band-burst{ column-count: 5; }
 }
 @media (prefers-reduced-motion: reduce){
   .wander-title{ animation: none; }
