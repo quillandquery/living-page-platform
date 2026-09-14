@@ -1,6 +1,6 @@
 import { publishedFeed } from "@/lib/db";
-import { estimateReadTime } from "@/lib/read-time";
-import { WanderCanvas, type WanderSeed } from "@/components/wander/WanderCanvas";
+import { buildSeeds } from "@/lib/discover";
+import { WanderField } from "@/components/wander/WanderField";
 
 export const metadata = {
   title: "Wander — The Living Page",
@@ -9,26 +9,12 @@ export const metadata = {
 
 /**
  * `/wander` — the reader's own surface. Home explains the medium; Wander
- * helps you find something to read. See PART 2 of the reader-experience
- * brief this was built from.
+ * helps you find something to read. Every Story Seed here is derived from
+ * the story's own blocks, world and words (lib/discover.ts) — there is no
+ * separate tagging system, so nothing here is invented.
  */
 export default async function WanderPage() {
-  const stories = await publishedFeed(200);
-
-  const seeds: WanderSeed[] = stories.map((s) => {
-    const rt = estimateReadTime(s.blocks);
-    return {
-      id: s.id,
-      slug: s.slug,
-      handle: s.author.handle,
-      authorName: s.author.display_name || `@${s.author.handle}`,
-      place: s.place,
-      fragment: s.fragment,
-      accent: /^#[0-9a-fA-F]{3,8}$/.test(s.accent) ? s.accent : "#2D6BF0",
-      readSeconds: rt.seconds,
-      readLabel: rt.label,
-    };
-  });
-
-  return <WanderCanvas seeds={seeds} />;
+  const stories = await publishedFeed(150);
+  const seeds = buildSeeds(stories);
+  return <WanderField seeds={seeds} />;
 }

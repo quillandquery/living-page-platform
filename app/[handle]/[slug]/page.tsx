@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { StoryView } from "@/components/living/StoryView";
 import { publishedStory, otherPublishedStories } from "@/lib/db";
+import { themesOf } from "@/lib/discover";
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
 
@@ -26,13 +27,22 @@ export default async function StoryReaderPage(
   if (!story) notFound();
 
   // The rabbit hole at the end of the piece (PART 3 / "after the story"):
-  // one honest "same feeling" pick — the nearest thing to it we can claim
-  // without a real tagging system is another story sharing its accent
-  // colour — and one genuinely random "surprise me". No fabricated theme
-  // graph; both come straight out of what's actually published.
+  // a real thematic pick where the words support one — themesOf() is a
+  // small local keyword lexicon read off the hook + place, the same kind
+  // of deterministic pass lib/annotate.ts already runs, not an LLM and
+  // not a tag a writer set — falling back to a same-accent pick when no
+  // theme overlaps, and one genuinely random "surprise me" either way.
   const others = await otherPublishedStories(story.id);
-  const sameAccent = others.filter((o) => o.accent === story.accent);
-  const same = sameAccent.length ? sameAccent[Math.floor(Math.random() * sameAccent.length)] : null;
+  const myThemes = themesOf(`${story.fragment} ${story.place}`);
+  const themeMatches = myThemes.length
+    ? others
+        .map((o) => ({ story: o, themes: themesOf(`${o.fragment} ${o.place}`) }))
+        .filter((m) => m.themes.some((t) => myThemes.includes(t)))
+    : [];
+  const themePick = themeMatches.length ? themeMatches[Math.floor(Math.random() * themeMatches.length)] : null;
+  const matchedTheme = themePick ? themePick.themes.find((t) => myThemes.includes(t)) ?? null : null;
+  const sameAccent = !themePick ? others.filter((o) => o.accent === story.accent) : [];
+  const same = themePick?.story ?? (sameAccent.length ? sameAccent[Math.floor(Math.random() * sameAccent.length)] : null);
   const surprisePool = others.filter((o) => o.id !== same?.id);
   const surprise = surprisePool.length ? surprisePool[Math.floor(Math.random() * surprisePool.length)] : null;
 
@@ -48,7 +58,7 @@ export default async function StoryReaderPage(
       author={{ handle: story.author.handle, display_name: story.author.display_name }}
       seed={story.id}
       more={{
-        same: same ? { handle: same.author.handle, slug: same.slug, place: same.place } : null,
+        same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, theme: matchedTheme } : null,
         surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place } : null,
       }}
     />

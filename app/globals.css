@@ -981,3 +981,250 @@ a{ color: inherit; }
 @media (prefers-reduced-motion: reduce){
   .bd-bloom-field, .bd-motes circle{ animation: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   WANDER — a field, not a feed.
+
+   Uses this file's own --accent/--paper/--ink system as its base (the
+   page itself is a Living Page, not a separate palette). Each Story Seed
+   scopes its own --accent locally; a mid/burst-tier seed additionally
+   carries a full worldVars() block (injected inline, see StorySeed.tsx)
+   so it reads as a small window into that story's actual world.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.wander{ position: relative; padding-bottom: 8vh; overflow-x: clip; }
+
+.wander-hero{ max-width: 70rem; margin: 0 auto; padding: 9vh max(1.25rem,4vw) 5vh; text-align: center; }
+.wander-title{
+  font-family: var(--f-disp); font-weight: 400; font-size: clamp(3.2rem, 10vw, 6.5rem);
+  margin: 0; letter-spacing: -.02em; color: var(--ink);
+  animation: wd-breathe 7s ease-in-out infinite;
+}
+.wander-tag{ font-family: var(--f-hand); font-size: 1.3rem; color: var(--ink-soft); margin: .6rem 0 0; }
+@keyframes wd-breathe{ 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.015); } }
+
+.wander-empty{ max-width: 36rem; margin: 0 auto; padding: 6vh max(1.25rem,4vw); text-align: center; color: var(--mute); }
+.wander-empty a{ color: var(--accent); }
+
+/* ── the field ─────────────────────────────────────────────────────── */
+.wander-field{
+  position: relative;
+  max-width: 82rem; margin: 0 auto;
+  padding: 3vh max(1.25rem,4vw);
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 6.5rem; gap: 1.5rem 1.25rem;
+  align-items: start;
+}
+.band-quiet{ gap: 3rem 2rem; grid-auto-rows: 6rem; }
+.band-mid{ gap: 2rem 1.5rem; }
+.band-burst{ gap: 1.25rem 1rem; grid-auto-rows: 6rem; }
+
+/* ── the seed itself ──────────────────────────────────────────────── */
+.seed{
+  position: relative; display: block; text-decoration: none; color: inherit;
+  transform: rotate(var(--rot, 0deg));
+  transition: opacity .5s ease, transform .5s cubic-bezier(.2,.8,.3,1);
+  opacity: 0;
+}
+.seed.arrived{ opacity: 1; }
+.seed:not(.arrived){ transform: rotate(var(--rot, 0deg)) translateY(1.4em) scale(.97); }
+.seed.seed-hidden{ opacity: 0; pointer-events: none; transform: rotate(var(--rot, 0deg)) scale(.85); }
+.seed.spotlit{
+  z-index: 5; transform: rotate(0deg) scale(1.05) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 55%, transparent), 0 22px 50px rgba(0,0,0,.16);
+}
+
+@keyframes wd-jitter{
+  0%{ transform: rotate(var(--rot,0deg)); }
+  20%{ transform: rotate(calc(var(--rot,0deg) + 6deg)) translate(3px,-2px); }
+  40%{ transform: rotate(calc(var(--rot,0deg) - 5deg)) translate(-3px,2px); }
+  60%{ transform: rotate(calc(var(--rot,0deg) + 4deg)) translate(2px,3px); }
+  80%{ transform: rotate(calc(var(--rot,0deg) - 3deg)) translate(-2px,-2px); }
+  100%{ transform: rotate(var(--rot,0deg)); }
+}
+.wander.is-scrambling .seed:not(.seed-hidden){
+  animation: wd-jitter .5s ease-in-out;
+  animation-delay: calc(var(--drift, 0) * 0.6ms);
+}
+
+/* a beat inside a seed is not a full reading column — reset its layout,
+   keep its voice colours, its word-arrival animation and its doodle
+   gestures (all keyed off .beat/.mv-*/.g-*/.arrived, unchanged) */
+.seed .beat{ display: block; padding-block: 0; }
+.seed .words{ max-width: 100%; }
+
+.seed-peek{
+  display: flex; flex-direction: column; gap: .15rem; margin-top: .6rem;
+  opacity: 0; transform: translateY(.3rem); transition: opacity .2s ease, transform .2s ease;
+  font-family: var(--f-mono);
+}
+.seed:hover .seed-peek, .seed:focus-visible .seed-peek{ opacity: 1; transform: none; }
+.seed-place{ font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in oklab, var(--accent) 65%, var(--ink)); }
+.seed-meta{ font-size: .62rem; color: var(--mute); }
+.seed-cta{ font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+
+/* cursor is contextual: a seed notices on hover/focus, nothing more */
+.seed .doodle{ transition: transform .35s cubic-bezier(.2,.8,.3,1); }
+.seed:hover .doodle, .seed:focus-visible .doodle{ transform: scale(1.08) rotate(-2deg); }
+.seed .beat{ transition: transform .3s ease; }
+.seed:hover .beat, .seed:focus-visible .beat{ transform: translateY(-2px); }
+
+/* a mid/burst seed is a small window into its own world — the wash sits
+   behind whatever the form draws, so a torn-paper or postcard shape still
+   reads as its own object rather than a flat card */
+.tier-mid::before, .tier-burst::before{
+  content: ""; position: absolute; inset: -.9rem; z-index: -1; border-radius: 20px;
+  background: var(--paper-2); opacity: .92;
+}
+
+/* ── form: floating thought — quiet, sparse, just the words ─────────── */
+.seed-inner-float{ position: relative; padding: .5rem .25rem; }
+.seed-inner-float .beat{ display: flex; flex-direction: column; gap: .5rem; }
+.seed-inner-float .margin{ align-self: flex-start; opacity: .8; }
+.seed-inner-float .margin.right{ align-self: flex-end; }
+.seed-inner-float .doodle{ width: 3.2rem !important; }
+
+/* ── form: giant word ─────────────────────────────────────────────── */
+.seed-inner-giant{ display: flex; flex-direction: column; gap: .3rem; padding: .5rem .25rem; }
+.seed-charged{
+  font-family: var(--f-disp); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(2.3rem, 6vw, 4rem); line-height: .92; letter-spacing: -.01em;
+  color: color-mix(in oklab, var(--accent) 70%, var(--ink)); margin: 0;
+}
+.seed-charged-rest{
+  font-family: var(--f-mono); font-size: .7rem; letter-spacing: .03em;
+  color: var(--mute); margin: .5rem 0 0; max-width: 26ch;
+}
+
+/* ── form: paper scrap — torn-edge fragment ──────────────────────── */
+.seed-inner-scrap{
+  position: relative; background: var(--paper-2);
+  padding: 1.3rem 1.2rem 1.5rem;
+  clip-path: polygon(2% 4%, 22% 0%, 48% 3%, 71% 0%, 98% 5%, 96% 40%, 100% 70%, 94% 100%, 63% 97%, 34% 100%, 6% 96%, 3% 62%);
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+.seed-scrap-stamp{
+  display: block; font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mute); margin-bottom: .5rem;
+}
+
+/* ── form: postcard ───────────────────────────────────────────────── */
+.seed-inner-postcard{
+  background: var(--paper-2); border: 1px dashed var(--rule);
+  border-radius: 4px; padding: 1.1rem 1.2rem 1.3rem; position: relative;
+}
+.seed-postcard-top{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: .6rem; }
+.seed-postcard-place{ font-family: var(--f-mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in oklab, var(--accent) 60%, var(--ink)); }
+.seed-postcard-stamp{ border: 1px solid var(--rule); padding: .25rem; border-radius: 2px; opacity: .85; flex: none; }
+.seed-postcard-date{ display: block; margin-top: .8rem; font-family: var(--f-hand); font-size: .95rem; color: var(--mute); }
+
+/* ── form: micro scene ────────────────────────────────────────────── */
+.seed-inner-scene{ display: flex; flex-direction: column; gap: .9rem; }
+.seed-scene-stage{ position: relative; height: 4.5rem; }
+.seed-scene-doodle{ position: absolute; }
+.seed-scene-doodle.a{ left: 0; bottom: 0; }
+.seed-scene-doodle.b{ right: 8%; top: 0; }
+.seed:hover .seed-scene-doodle.a, .seed:focus-visible .seed-scene-doodle.a{ transform: translateY(-4px); }
+.seed:hover .seed-scene-doodle.b, .seed:focus-visible .seed-scene-doodle.b{ transform: translateX(4px) rotate(4deg); }
+
+/* ── form: typographic collage — two voices, one hook ────────────── */
+.seed-inner-typo{ display: flex; flex-direction: column; gap: .8rem; padding: .5rem .25rem; }
+.seed-inner-typo .beat:first-child .words{ font-size: clamp(1.25rem, 2.6vw, 1.9rem); }
+.seed-typo-second .words{ opacity: .78; }
+
+/* ── form: maximalist collage ─────────────────────────────────────── */
+.seed-inner-collage{ position: relative; padding: 1.7rem 1.5rem 2rem; min-height: 9rem; }
+.seed-collage-doodle{ position: absolute; opacity: .9; }
+.seed-collage-doodle.a{ top: -.6rem; right: -.4rem; }
+.seed-collage-doodle.b{ bottom: -.8rem; left: -.6rem; }
+.seed-collage-stamp{
+  position: absolute; top: .6rem; left: .8rem; font-family: var(--f-mono); font-size: .6rem;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--mute); transform: rotate(-3deg);
+}
+.seed-collage-theme{
+  position: absolute; bottom: .7rem; right: .9rem; font-family: var(--f-hand); font-size: 1rem;
+  color: color-mix(in oklab, var(--accent) 70%, var(--ink)); transform: rotate(2deg);
+}
+.seed-inner-collage .beat{ margin-top: 1.6rem; }
+
+/* ── mood + time clusters — doors, not filter pills ──────────────── */
+.mood-cluster, .time-cluster{ max-width: 64rem; margin: 4vh auto 2vh; padding: 2vh max(1.25rem,4vw); text-align: center; }
+.mood-kick, .time-kick{ font-family: var(--f-disp); font-size: clamp(1.5rem, 3.4vw, 2.1rem); margin: 0 0 1.6rem; color: var(--ink); }
+
+.mood-doors{ display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+.mood-door{
+  position: relative; display: flex; flex-direction: column; gap: .3rem;
+  min-width: 9.5rem; padding: 1.1rem 1.2rem; text-align: left;
+  background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 14px;
+  cursor: pointer; transform: rotate(calc((var(--i, 0) - 3) * .8deg));
+  transition: transform .25s cubic-bezier(.2,1.2,.3,1), border-color .2s, background .2s;
+  font: inherit;
+}
+.mood-door:hover, .mood-door:focus-visible{ transform: rotate(0deg) translateY(-3px); border-color: var(--accent); }
+.mood-door.is-active{ background: var(--ink); border-color: var(--ink); }
+.mood-door.is-active .mood-door-label, .mood-door.is-active .mood-door-sub{ color: var(--paper); }
+.mood-door-label{ font-family: var(--f-disp); font-size: 1.05rem; }
+.mood-door-sub{ font-family: var(--f-mono); font-size: .62rem; letter-spacing: .04em; color: var(--mute); }
+.mood-door-idk{ background: transparent; border-style: dashed; }
+
+.time-doors{ display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; }
+.time-door{
+  display: flex; flex-direction: column; gap: .15rem; padding: .75rem 1.1rem;
+  background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 999px;
+  cursor: pointer; transition: all .18s ease; font: inherit;
+}
+.time-door:hover{ border-color: var(--accent); }
+.time-door.is-active{ background: var(--accent); border-color: var(--accent); }
+.time-door.is-active .time-door-label, .time-door.is-active .time-door-sub{ color: var(--paper); }
+.time-door-label{ font-family: var(--f-mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+.time-door-sub{ font-family: var(--f-hand); font-size: .85rem; color: var(--mute); }
+
+/* ── surprise me, collage connectors, the loop back to writing ──── */
+.wander-surprise-wrap{ text-align: center; padding: 4vh max(1.25rem,4vw); }
+.wander-surprise{
+  font-family: var(--f-mono); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--paper); background: var(--ink); border: 0; border-radius: 999px;
+  padding: 1rem 1.8rem; cursor: pointer; transition: background .2s, transform .2s;
+}
+.wander-surprise:hover{ background: var(--accent); transform: translateY(-2px); }
+
+.wander-connectors{ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
+.wander-connector-line{
+  fill: none; stroke: var(--rule); stroke-width: 1.4; stroke-dasharray: 6 6;
+  opacity: .55; animation: wd-connector-in 1.4s ease both;
+  animation-delay: calc(var(--i, 0) * .18s);
+}
+@keyframes wd-connector-in{ from{ stroke-dashoffset: 200; opacity: 0; } to{ stroke-dashoffset: 0; opacity: .55; } }
+
+.wander-loop{ text-align: center; padding: 10vh max(1.25rem,4vw) 6vh; border-top: 1px solid var(--rule-2); max-width: 40rem; margin: 0 auto; }
+.wander-loop-kick{ font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin: 0; }
+.wander-loop-h{ font-family: var(--f-disp); font-size: clamp(1.8rem, 4vw, 2.6rem); margin: .3rem 0 1.6rem; }
+.wander-loop-cta{
+  font-family: var(--f-mono); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--paper); background: var(--ink); padding: .9rem 1.5rem; border-radius: 999px; text-decoration: none;
+  transition: background .2s, transform .2s; display: inline-block;
+}
+.wander-loop-cta:hover{ background: var(--accent); transform: translateY(-2px); }
+
+.wander-foot{ text-align: center; padding: 3rem; font-family: var(--f-hand); font-size: 1.2rem; color: var(--mute); }
+
+/* ── responsive: a flowing column, not a shrunk desktop grid ────────
+   Heavy scroll-parallax and the collage connectors are desktop-only; a
+   seed still floats and settles, it just doesn't span an asymmetric grid
+   it has no room for, and the peek content is always visible since
+   there's no hover on touch. ── */
+@media (max-width: 860px){
+  .wander-field{ grid-template-columns: repeat(2, 1fr) !important; grid-auto-rows: auto !important; gap: 2rem 1rem !important; padding-inline: 1rem; }
+  .seed{ grid-column: span 2 !important; grid-row: auto !important; transform: none !important; }
+  .seed:not(.arrived){ transform: translateY(1em) !important; }
+  .seed.spotlit{ transform: scale(1.02) !important; }
+  .seed-peek{ opacity: 1; transform: none; }
+  .mood-door{ min-width: 0; flex: 1 1 40%; transform: none !important; }
+  .wander-connectors{ display: none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .wander-title{ animation: none; }
+  .wander.is-scrambling .seed{ animation: none !important; }
+  .wander-connector-line{ animation: none; opacity: .4; }
+  .seed, .seed:not(.arrived){ transition: opacity .3s ease; transform: none !important; }
+}

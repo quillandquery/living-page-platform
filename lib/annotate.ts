@@ -14,7 +14,7 @@ import type { Block } from "./story-blocks.mjs";
    faster than facing a blank page, and the final call stays yours.
    ══════════════════════════════════════════════════════════════════════ */
 
-const LEX = {
+export const LEX = {
   loud: /\b(shout|shouted|scream|screamed|roar|crash|bang|horn|siren|thunder|suddenly|slammed|exploded|enormous|huge|massive)\b/i,
   quiet: /\b(silence|silent|quiet|still|hush|slow|breath|asleep|sleeping|whisper|nobody|nothing|no one|alone|empty|waiting|soft)\b/i,
   water: /\b(sea|ocean|water|wave|waves|rain|monsoon|river|swim|swam|salt|tide|underwater|dive|dived|current|shore)\b/i,
@@ -27,9 +27,9 @@ const LEX = {
   count: /(\b\d+\b|\b(rupees?|km|kilometres?|miles?|hours?|minutes?|days?|degrees?|metres?)\b)/i,
 };
 
-const hits = (re: RegExp, s: string) => (s.match(new RegExp(re.source, "gi")) ?? []).length;
+export const hits = (re: RegExp, s: string) => (s.match(new RegExp(re.source, "gi")) ?? []).length;
 
-const DOODLE_HINTS: [RegExp, string, Gesture][] = [
+export const DOODLE_HINTS: [RegExp, string, Gesture][] = [
   [/\b(manta|ray|shark|turtle|whale|reef)\b/i, "manta", "react"],
   [/\b(dive|dived|diving|underwater|snorkel|mask|tank)\b/i, "diver", "breathe"],
   [/\b(komodo|dragon|lizard|monitor)\b/i, "dragon", "react"],

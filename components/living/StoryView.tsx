@@ -32,7 +32,7 @@ export type StoryViewData = {
   seed?: string;
   /** the rabbit hole at the end of the piece — omitted in the studio preview */
   more?: {
-    same: { handle: string; slug: string; place: string } | null;
+    same: { handle: string; slug: string; place: string; theme?: string | null } | null;
     surprise: { handle: string; slug: string; place: string } | null;
   };
 };
@@ -72,7 +72,7 @@ export function StoryView({
           <div className="keep-going-links">
             {more.same ? (
               <Link href={`/@${more.same.handle}/${more.same.slug}`} className="keep-going-link">
-                Same feeling → <span className="keep-going-place">{more.same.place}</span>
+                {more.same.theme ? <>You may also fall into: {more.same.theme}</> : "Same feeling"} → <span className="keep-going-place">{more.same.place}</span>
               </Link>
             ) : null}
             {more.surprise ? (
