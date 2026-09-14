@@ -885,25 +885,25 @@ a{ color: inherit; }
 
 /* ── expanded worlds: city, trees, field, window, glow ── */
 .bd-city{ left:0; right:0; bottom:0; width:100%; height:30vh; }
-.bd-city-block{ fill: oklch(from var(--accent) 0.5 0.08 h / .5); }
+.bd-city-block{ fill: oklch(from var(--accent) 0.5 0.08 h / 0.5); }
 .bd-city-lit{ fill: oklch(from var(--counter) 0.82 0.16 h / calc(.4 + var(--depth) * .5)); }
 .bd-trees{ left:0; right:0; bottom:0; width:100%; height:26vh; }
 .bd-tree{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
-.bd-trees-far .bd-tree{ stroke: oklch(from var(--accent) 0.5 0.1 h / .5); stroke-width:1.1; }
-.bd-trees-near .bd-tree{ stroke: oklch(from var(--accent) 0.36 0.11 h / .72); stroke-width:1.5; }
+.bd-trees-far .bd-tree{ stroke: oklch(from var(--accent) 0.5 0.1 h / 0.5); stroke-width:1.1; }
+.bd-trees-near .bd-tree{ stroke: oklch(from var(--accent) 0.36 0.11 h / 0.72); stroke-width:1.5; }
 .bd-field{ left:0; right:0; bottom:0; width:100%; height:16vh; }
-.bd-field path{ fill:none; stroke: oklch(from var(--accent) 0.52 0.12 h / .6); stroke-width:.5; stroke-linecap:round; }
-.bd-bloom{ fill: oklch(from var(--counter) 0.72 0.17 h / .85); }
+.bd-field path{ fill:none; stroke: oklch(from var(--accent) 0.52 0.12 h / 0.6); stroke-width:.5; stroke-linecap:round; }
+.bd-bloom{ fill: oklch(from var(--counter) 0.72 0.17 h / 0.85); }
 .bd-stem{ animation: bd-sway 4.5s ease-in-out infinite; }
 @keyframes bd-sway{ 0%,100%{ transform: rotate(-2.5deg); } 50%{ transform: rotate(2.5deg); } }
 .bd-window{ position:absolute; inset:0; }
-.bd-window-pane{ fill: oklch(from var(--accent) 0.9 0.03 h / .12); stroke: oklch(from var(--accent) 0.45 0.06 h / .5); stroke-width:.5; }
-.bd-window-bar{ stroke: oklch(from var(--accent) 0.45 0.06 h / .5); stroke-width:.5; }
+.bd-window-pane{ fill: oklch(from var(--accent) 0.9 0.03 h / 0.12); stroke: oklch(from var(--accent) 0.45 0.06 h / 0.5); stroke-width:.5; }
+.bd-window-bar{ stroke: oklch(from var(--accent) 0.45 0.06 h / 0.5); stroke-width:.5; }
 .bd-glow{ position:absolute; inset:-20%;
   background:
-    radial-gradient(ellipse 50% 45% at 30% 35%, oklch(from var(--accent) 0.6 0.18 h / .5) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 50% at 72% 62%, oklch(from var(--counter) 0.62 0.17 h / .45) 0%, transparent 62%),
-    radial-gradient(ellipse 60% 55% at 50% 90%, oklch(from var(--accent) 0.5 0.14 h / .4) 0%, transparent 66%);
+    radial-gradient(ellipse 50% 45% at 30% 35%, oklch(from var(--accent) 0.6 0.18 h / 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 72% 62%, oklch(from var(--counter) 0.62 0.17 h / 0.45) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 55% at 50% 90%, oklch(from var(--accent) 0.5 0.14 h / 0.4) 0%, transparent 66%);
   filter: blur(8px); animation: bd-drift 26s ease-in-out infinite alternate; }
 @keyframes bd-drift{ 0%{ transform: translate3d(-3%,-2%,0) scale(1.05); } 100%{ transform: translate3d(3%,2%,0) scale(1.12); } }
 @media (prefers-reduced-motion: reduce){ .bd-stem, .bd-glow{ animation:none !important; } }
@@ -973,8 +973,8 @@ a{ color: inherit; }
 .bd-bloom-field{
   position:absolute; inset:0; mix-blend-mode:screen;
   background: radial-gradient(ellipse 46% 42% at var(--bx,50%) var(--by,30%),
-    oklch(from var(--accent) 0.70 0.20 h / .22) 0%,
-    oklch(from var(--counter) 0.72 0.18 h / .12) 42%, transparent 72%);
+    oklch(from var(--accent) 0.70 0.20 h / 0.22) 0%,
+    oklch(from var(--counter) 0.72 0.18 h / 0.12) 42%, transparent 72%);
   animation: bd-bloom 24s ease-in-out infinite alternate;
 }
 @keyframes bd-bloom{ from{ transform: translate3d(-2%,-1%,0) scale(1); } to{ transform: translate3d(2%,2%,0) scale(1.08); } }
@@ -1302,6 +1302,8 @@ a{ color: inherit; }
   .wander-connector-line{ animation: none; opacity: .4; }
   .seed, .seed:not(.arrived){ transition: opacity .3s ease; transform: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
    STORY VISUAL SYSTEM 2.0 — new environment layers (bubbles, raylight,
    shimmer, drape) and new ambient-only motifs (headlights, paperdrift).
    Same discipline as the layers above: seeded, fixed, screen-reader-hidden,
@@ -1311,7 +1313,7 @@ a{ color: inherit; }
 /* — underwater — */
 .bd-bubbles{ inset:0; width:100%; height:100%; }
 .bd-bubbles circle{
-  fill: none; stroke: oklch(from var(--counter) 0.86 0.1 h / .55); stroke-width:.6;
+  fill: none; stroke: oklch(from var(--counter) 0.86 0.1 h / 0.55); stroke-width:.6;
   animation-name: bd-bubble-rise; animation-timing-function: linear; animation-iteration-count: infinite;
 }
 @keyframes bd-bubble-rise{
@@ -1331,7 +1333,7 @@ a{ color: inherit; }
 .bd-shimmer{
   position:absolute; inset:auto 0 0 0; height:30vh;
   background: repeating-linear-gradient(0deg,
-    oklch(from var(--accent) 0.85 0.1 h / .05) 0px,
+    oklch(from var(--accent) 0.85 0.1 h / 0.05) 0px,
     transparent 3px, transparent 7px);
   filter: blur(1.5px);
   animation: bd-shimmerwave 2.4s ease-in-out infinite;
@@ -1341,14 +1343,14 @@ a{ color: inherit; }
 
 /* — palace — */
 .bd-drape{ inset:0; width:100%; height:100%; }
-.bd-drape path{ fill: oklch(from var(--accent) 0.28 0.09 h / .82); }
+.bd-drape path{ fill: oklch(from var(--accent) 0.28 0.09 h / 0.82); }
 .bd-drape-l, .bd-drape-r{ transition: transform 1.4s ease; }
 
 /* — night street: cars that are never mentioned in the text — */
 .bd-headlights{ position:absolute; inset:0; overflow:hidden; }
 .bd-headlight{
   position:absolute; left:-18vw; width:16vw; height:2px; border-radius:2px;
-  background: linear-gradient(90deg, transparent, oklch(from var(--counter) 0.88 0.14 h / .8), transparent);
+  background: linear-gradient(90deg, transparent, oklch(from var(--counter) 0.88 0.14 h / 0.8), transparent);
   animation-name: bd-headlight-pass; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
 }
 @keyframes bd-headlight-pass{
