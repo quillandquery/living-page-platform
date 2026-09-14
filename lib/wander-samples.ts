@@ -104,69 +104,69 @@ There was chai in a paper cup and a dog that had chosen us.
 Then somehow that became the best night. We never did get where we were going.`,
   },
   {
-    slug: "should-i-quit",
-    place: "THE OFFICE, LATE",
-    date: "October",
-    accent: "#F0492E",
-    backdrop: "city",
-    hook: "should i quit",
-    body: `Should I quit.
-I typed it into the search bar like the internet knew my manager.
-The building had emptied hours ago. Just me and the vending machine hum.
-Everyone says you'll know when it's time.
-I know. I've known for a while. That's the part I keep not saying out loud.`,
-  },
-  {
-    slug: "rained-out",
-    place: "A ROOFTOP",
-    date: "June",
+    slug: "the-voicemail",
+    place: "A PARKED CAR",
+    date: "February",
     accent: "#5B7C99",
     backdrop: "window",
-    hook: "rained out",
-    body: `Rained out.
-The whole thing, planned for weeks, gone in twenty minutes of weather.
-We sat inside and watched it come down on the fairy lights.
-Somebody made bad tea. Somebody else told the truth for once.
-It was better than the party would have been. It usually is.`,
+    hook: "i still have one saved voicemail. i can't listen to it and i can't delete it.",
+    body: `I still have one saved voicemail.
+Thirty-one seconds of a voice that stopped existing in the world.
+I can't listen to it. The once was almost too much.
+And I can't delete it, because deleting it feels like the second time.
+So it just sits there, at the top of the list, being impossible.`,
   },
   {
-    slug: "definition-of-success",
-    place: "A KITCHEN TABLE",
-    date: "New Year",
+    slug: "wrong-order",
+    place: "A ROADSIDE DHABA",
+    date: "July",
+    accent: "#C77D3A",
+    backdrop: "cafe",
+    hook: "they brought the wrong dish and i ate it anyway. it was better than what i ordered.",
+    body: `They brought the wrong dish and I ate it anyway.
+It seemed rude to send back a mistake made so cheerfully.
+It was better than what I ordered. Considerably better.
+I have thought about that plate more than most of my decisions.
+Now I sometimes order wrong on purpose, hoping to be corrected.`,
+  },
+  {
+    slug: "borrowed-jacket",
+    place: "THREE CITIES LATER",
+    date: "winter",
     accent: "#1F9E5A",
     backdrop: "meadow",
-    hook: "definition of success?",
-    body: `Definition of success?
-My father would have said a house and a title and a quiet street.
-I have a rented room and a plant that refuses to die.
-Some mornings that feels like failure. Some mornings it feels like enough.
-I'm starting to think the definition was never mine to inherit.`,
+    hook: "i'm three cities away and still wearing a jacket that isn't mine.",
+    body: `I'm three cities away and still wearing a jacket that isn't mine.
+It smells like a house I don't live in anymore and a person I don't call.
+I keep meaning to send it back. I keep not doing it.
+Some things you hold onto by pretending you forgot to return them.
+It's warmer than anything I own, which is not the reason, but it helps.`,
   },
   {
-    slug: "mace-and-croissants",
-    place: "PARIS",
-    date: "a grey week",
+    slug: "last-to-leave",
+    place: "SOMEONE'S FLOOR, 4AM",
+    date: "a birthday",
     accent: "#7A6CE0",
-    backdrop: "dreamscape",
-    hook: "mace & croissants",
-    body: `Mace and croissants.
-That was the whole itinerary, according to the note in my pocket.
-I had carried it across two airports without remembering writing it.
-The city did not care about my plan. It rained on it beautifully.
-I ate the croissant on a wet bench and forgot what the mace was for.`,
+    backdrop: "nightsky",
+    hook: "i'm always the last to leave. someone has to see how the night ends.",
+    body: `I'm always the last one to leave.
+The music's off, the good glasses are in the sink, and it's just the stragglers.
+Someone has to see how the night actually ends.
+The real conversation only starts once most people have gone home.
+I have never once regretted staying. Only the mornings after.`,
   },
   {
-    slug: "why-bother",
-    place: "A TATTOO CHAIR",
-    date: "impulsively",
+    slug: "unsent",
+    place: "1AM, AGAIN",
+    date: "ongoing",
     accent: "#FF7A1A",
     backdrop: "heat",
-    hook: "why bother",
-    body: `Why bother, he said, when I told him it would be hidden.
-Under the sleeve, over the ribs, somewhere only I would ever see.
-That's exactly why, I said. It isn't for the looking.
-Some things you keep because you were there when they were made.
-The needle started. I stopped explaining.`,
+    hook: "i have forty-one drafts to the same person. none of them will ever send.",
+    body: `I have forty-one drafts to the same person.
+Some are one line. One is nine hundred words I'm almost proud of.
+None of them will ever send, and I think I've made my peace with that.
+Writing to someone is different from wanting them to answer.
+The drafts folder is the only place left where we're still talking.`,
   },
   {
     slug: "people-you-almost-knew",
