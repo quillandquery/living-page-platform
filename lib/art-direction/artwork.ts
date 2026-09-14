@@ -16,7 +16,7 @@ import type { CompositionSpec } from "./compositions";
 /** every environment's default object, for a story with no strong OBJECT
  *  signal — never an empty page, never a random one (§38). */
 export const ENVIRONMENT_FALLBACK_ARTWORK: Record<string, string> = {
-  coast: "wave", underwater: "fish", forest: "flower", highland: "mountain",
+  coast: "wave", underwater: "fish", forest: "tree", highland: "mountain",
   meadow: "flower", heat: "sun", desertroad: "car", dawn: "sun",
   city: "person", window: "window", cafe: "cup", palace: "chandelier",
   monsoon: "umbrella", nightcity: "eye", nightroad: "moon", nightsky: "moon",

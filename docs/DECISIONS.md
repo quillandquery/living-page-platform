@@ -20,16 +20,36 @@ cost, no network in the loop.
   added later as an optional enhancement — architect the engine so a smarter
   provider could slot in, but do not build it now.
 
-## D2 — Photography / Pexels: **deferred**
-No external photography in this phase. Identity is hand-drawn, typographic,
-collage-of-drawn-elements. `MediaProvider`/`PexelsProvider` (PRD §20) is a
-later phase.
+## D2 — Photography: **revised 2026-09-14 — imagery allowed via a curated
+library; sourcing still open**
+Originally: no external photography, hand-drawn/typographic/collage identity
+only. Revised after feedback that the all-SVG doodle system reads too
+uniform across stories (same muted palette, thin single-line marks). The
+identity is no longer hand-drawn-only — real imagery may enter the system —
+but the *mechanism* stays deterministic and curated, not per-story
+generative: a tagged, hand-picked illustration/photo library the engine
+selects from by the same signals that already drive doodles (environment,
+mood, objects), never an AI image call and never a random web fetch
+(`MediaProvider`/`PexelsProvider`-style live stock search stays out, per the
+original reasoning below).
 
-- **Why:** stock photos are the fastest way to look like every other site and
-  dilute the differentiator; the PRD itself warns against "stock-photo walls".
-- **Implication:** the "Visuals" control ships with `Auto / Illustrated /
-  Minimal / Collage / Maximal` — NOT "Photographic / Mixed" yet. Don't build
-  image search, caching or attribution plumbing now.
+- **Still true:** stock-photo walls are the fastest way to look like every
+  other site; a live, unvetted image search would reintroduce exactly that
+  and break the "one visual grammar per page" bar. Any imagery must be
+  curated in, not fetched live.
+- **Open / not yet decided:** where the curated assets themselves come from —
+  commissioned illustration, a licensed pack, or a separate future
+  AI batch-generation project to seed the library once, offline. No asset
+  sourcing work has started; this is a scope decision, not an implementation.
+- **Done in the meantime (this date):** pushed the existing hand-drawn SVG
+  system considerably further as an immediately-buildable step — bolder,
+  two-tone "filled" treatment (was a flat 0.3-opacity tint), a widened
+  doodle vocabulary (tree, dove, heart, camera, balloon, dancer — each wired
+  to its own real OBJECT cue, not decorative filler), artwork-layer colour
+  now pulls from the story's own accent instead of the neutral ink, and the
+  colophon's persistent mark now varies by story instead of always being a
+  spiral. The "Visuals" control still ships `Auto / Illustrated / Minimal /
+  Collage / Maximal` — those now visibly, not just numerically, differ.
 
 ## D3 — Repositioning: **full reframe, travel as flagship example**
 Living Page is a general storytelling product (Story / Moment / Thought /

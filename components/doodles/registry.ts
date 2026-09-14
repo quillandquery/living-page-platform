@@ -227,6 +227,46 @@ export const DOODLES: Record<string, DoodleFn> = {
     [[24, 90], [18, 96]], [[76, 90], [82, 96]],
   ],
 
+  /* — Story Visual System 2.0, second pass: a bolder, warmer-blooded
+     vocabulary for "illustrated"/"collage"/"maximal" stories — a real tree
+     (not just the coastal palm), a dove distinct from the generic bird, a
+     figure in motion, and the handful of small objects the "characters,
+     absurdist, bright colour" request named directly. Still closed (D6):
+     each is wired to its own OBJECT cue in lib/semantic-profile.ts, so it
+     only ever appears because the story actually said the word. — */
+  tree: () => [
+    [[50, 94], [50, 58]],
+    ring(50, 42, 20, 16),
+    ring(33, 55, 13, 14),
+    ring(67, 55, 13, 14),
+    ring(50, 25, 15, 14),
+  ],
+  dove: () => [
+    [[16, 54], [32, 42], [52, 44], [70, 34], [86, 40]],
+    [[52, 44], [58, 32], [50, 25]],
+    arc(36, 48, 15, Math.PI * 1.05, Math.PI * 1.9, 10),
+    [[16, 54], [7, 59]],
+  ],
+  heart: () => [[[50, 88], [17, 55], [13, 33], [28, 17], [50, 34], [72, 17], [87, 33], [83, 55], [50, 88]]],
+  camera: () => [
+    [[10, 34], [10, 80], [90, 80], [90, 34], [64, 34], [58, 21], [42, 21], [36, 34], [10, 34]],
+    ring(50, 57, 17, 16), ring(50, 57, 7, 10),
+    [[78, 42], [78, 48]],
+  ],
+  balloon: () => [
+    ring(50, 36, 22, 18),
+    [[50, 58], [46, 64], [54, 64], [50, 58]],
+    [[50, 64], [45, 78], [55, 88], [47, 98]],
+  ],
+  dancer: () => [
+    ring(52, 18, 7, 12),
+    [[52, 25], [47, 48]],
+    [[47, 48], [28, 66], [20, 60]],
+    [[47, 48], [66, 60], [79, 52]],
+    [[52, 25], [71, 13], [83, 17]],
+    [[52, 25], [33, 30], [23, 21]],
+  ],
+
   /* — marks — */
   spiral: () => {
     const p: Stroke = [];

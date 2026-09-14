@@ -297,13 +297,32 @@ a{ color: inherit; }
 .doodle .stk{ stroke-dasharray: var(--len); }
 @media (max-width: 900px){ .doodle{ opacity: .55; } }
 
-/* ── ARTWORK treatment: filled — a coloured-illustration read on the same
-   generated points, not a new asset (§28 of the visual-system PRD). ── */
-.doodle-filled path, .doodle-filled circle{
-  fill: color-mix(in oklab, currentColor 55%, var(--accent2, var(--accent)) 45%);
-  fill-opacity: .3; stroke-opacity: .8;
+/* the page-level artwork and the persistent signature read in the story's
+   own colour, not the neutral ink — the margin doodle already leans on
+   --counter (below); this is what makes even the *line* treatment feel
+   story-specific rather than a uniform grey mark on every page. */
+.artwork-layer .doodle svg, .signature-layer .doodle svg{
+  stroke: color-mix(in oklab, var(--accent) 68%, var(--ink-base) 20%);
 }
-.doodle-filled .stk{ stroke-dasharray: none; }
+
+/* ── ARTWORK treatment: filled — a coloured-illustration read on the same
+   generated points, not a new asset (§28 of the visual-system PRD). Two-tone
+   (accent / accent2, alternated per stroke) and considerably bolder than the
+   line treatment, so "illustrated"/"collage"/"maximal" stories genuinely
+   look like a different medium, not the same faint mark at higher count. ── */
+.doodle-filled path, .doodle-filled circle{
+  fill: color-mix(in oklab, var(--accent) 70%, var(--ink-base) 10%);
+  fill-opacity: .86; stroke-opacity: .95;
+  stroke: color-mix(in oklab, var(--ink-base) 42%, var(--accent) 58%);
+}
+.doodle-filled path:nth-of-type(2n), .doodle-filled circle:nth-of-type(2n){
+  fill: color-mix(in oklab, var(--accent2, var(--counter)) 76%, var(--ink-base) 6%);
+  stroke: color-mix(in oklab, var(--ink-base) 42%, var(--accent2, var(--counter)) 58%);
+}
+.doodle-filled path:nth-of-type(3n), .doodle-filled circle:nth-of-type(3n){
+  fill: color-mix(in oklab, var(--accent) 42%, var(--accent2, var(--counter)) 52%);
+}
+.doodle-filled .stk{ stroke-dasharray: none; stroke-width: 2.1; }
 @keyframes lp-fillreveal{ from{ opacity:0; transform: scale(.9); } to{ opacity:1; transform:none; } }
 .beat.arrived .doodle-filled .stk{
   animation: lp-fillreveal .9s cubic-bezier(.3,.7,.3,1) both;
@@ -1404,6 +1423,13 @@ a{ color: inherit; }
   transform: translateX(-50%); width: min(70vw, 620px);
 }
 .artwork-layer .art-bleed .doodle{ width: 100%; }
+/* a filled piece is the story's own illustration, not a margin note — it
+   earns more presence on the page than the base opacities above allow
+   (§36 still holds: behind-text and full-bleed stay well short of solid). */
+.artwork-layer .art-margin:has(.doodle-filled),
+.artwork-layer .art-corner:has(.doodle-filled){ opacity: .86; }
+.artwork-layer .art-behind:has(.doodle-filled){ opacity: .3; }
+.artwork-layer .art-bleed:has(.doodle-filled){ opacity: .26; }
 @media (max-width: 1100px){
   .artwork-layer .art-margin{ display: none; }
   .artwork-layer .art-corner{ opacity: .32; transform: scale(.7); }
@@ -1418,6 +1444,7 @@ a{ color: inherit; }
    ══════════════════════════════════════════════════════════════════════ */
 .signature-layer{ position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .signature{ position: absolute; opacity: .8; filter: drop-shadow(0 6px 16px rgba(0,0,0,.18)); }
+.signature-layer .signature:has(.doodle-filled){ opacity: .94; filter: drop-shadow(0 8px 22px rgba(0,0,0,.24)); }
 .signature-left  .signature{ left: 2.5vw; }
 .signature-right .signature{ right: 2.5vw; }
 .signature-layer .signature:not(.signature-a):not(.signature-b){

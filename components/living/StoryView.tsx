@@ -113,7 +113,7 @@ export function StoryView({
             {place} · {date}
             {author ? <> · <Link href={author.href ?? `/@${author.handle}`} className="back">@{author.handle}</Link></> : null}
           </span>
-          <span className="colophon-doodle"><Doodle name="spiral" seed={19} size={54} ink="var(--rule)" /></span>
+          <span className="colophon-doodle"><Doodle name={ad?.signature.doodle ?? "spiral"} seed={19} size={54} ink="var(--rule)" /></span>
           <Link href="/" className="back">the rest of them</Link>
         </footer>
       ) : null}
