@@ -1088,7 +1088,7 @@ a{ color: inherit; }
 
 /* a beat inside a seed is not a full reading column — reset its layout,
    keep its voice colours, its word-arrival animation and its doodle
-   gestures (all keyed off .beat/.mv-*/.g-*/.arrived, unchanged) */
+   gestures (all keyed off .beat, .mv- , .g- and .arrived, unchanged) */
 .seed .beat{ display: block; padding-block: 0; }
 .seed .words{ max-width: 100%; }
 
