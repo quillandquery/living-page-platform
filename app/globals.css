@@ -992,7 +992,17 @@ a{ color: inherit; }
    so it reads as a small window into that story's actual world.
    ══════════════════════════════════════════════════════════════════════ */
 
-.wander{ position: relative; padding-bottom: 8vh; overflow-x: clip; }
+.wander{
+  /* Home's own palette (app/page.tsx's .lp block), not the reader's
+     --accent-derived system — so Wander visibly belongs to the same site
+     as the front door. */
+  --paper: #FBF6EC; --paper-2: #fff; --paper-3: #F3ECDA;
+  --ink: #1A1816; --ink-soft: #4A4642; --mute: #8A837A;
+  --rule: #E7DFCE; --rule-2: color-mix(in oklab, #E7DFCE 55%, transparent);
+  --accent: #2D6BF0; --counter: #F0492E;
+  --sun: #FFC53D; --tomato: #F0492E; --electric: #2D6BF0; --grass: #1F9E5A; --coral: #FF5C7A; --lilac: #9B7EDE;
+  position: relative; padding-bottom: 8vh; overflow-x: clip;
+}
 
 .wander-hero{ max-width: 70rem; margin: 0 auto; padding: 9vh max(1.25rem,4vw) 5vh; text-align: center; }
 .wander-title{
@@ -1165,10 +1175,6 @@ a{ color: inherit; }
 
 .mood-doors{ display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
 .mood-door{
-  /* same trick as --counter/--pop above: a bold, saturated hit of the
-     site's own --accent, just rotated round the wheel per door — so this
-     reads as more of the same design system, not a different palette. */
-  --door-color: oklch(from var(--accent) 0.62 0.2 calc(h + var(--door-hue, 0)));
   position: relative; display: flex; flex-direction: column; gap: .3rem;
   min-width: 9.5rem; padding: 1.1rem 1.2rem; text-align: left;
   background: var(--paper-2); border: 1px solid var(--rule-2);
@@ -1190,7 +1196,6 @@ a{ color: inherit; }
 
 .time-doors{ display: flex; flex-wrap: wrap; gap: .8rem; justify-content: center; }
 .time-door{
-  --door-color: oklch(from var(--accent) 0.62 0.2 calc(h + var(--door-hue, 0)));
   display: flex; flex-direction: column; gap: .15rem; padding: .75rem 1.1rem;
   background: var(--paper-2); border: 1px solid var(--rule-2); border-radius: 999px;
   cursor: pointer; transition: all .18s ease; font: inherit;

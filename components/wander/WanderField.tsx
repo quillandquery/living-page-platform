@@ -18,24 +18,24 @@ import type { StorySeed as Seed } from "@/lib/discover";
 type MoodKey = "laugh" | "somewhere" | "feel" | "think" | "weird" | "heartbreak";
 type TimeKey = "all" | "quick" | "five" | "ten" | "long";
 
-/* each door's colour is the site's own --accent, hue-rotated — the same
-   relative-colour trick globals.css already uses for --counter/--pop — so
-   Wander stays the same design system, just spread across its wheel. */
-const MOODS: { key: MoodKey; label: string; sub: string; hue: number; test: (s: Seed) => boolean }[] = [
-  { key: "laugh", label: "Make me laugh", sub: "loud, fast, a little absurd", hue: 0, test: (s) => s.dominantVoice === "shout" || s.energy === "electric" },
-  { key: "somewhere", label: "Take me somewhere", sub: "a place, a road, a dateline", hue: 60, test: (s) => s.themes.includes("in transit") || s.form === "postcard" },
-  { key: "feel", label: "Make me feel something", sub: "quiet, close, unresolved", hue: 120, test: (s) => (["whisper", "listen", "thought"] as const).includes(s.dominantVoice as any) },
-  { key: "think", label: "Give me something to think about", sub: "circling a question", hue: 180, test: (s) => s.dominantVoice === "thought" || s.dominantVoice === "drift" },
-  { key: "weird", label: "Show me something weird", sub: "too many things at once", hue: 240, test: (s) => s.form === "collage" || s.form === "typographic" },
-  { key: "heartbreak", label: "Break my heart a little", sub: "leaving, alone, still waiting", hue: 300, test: (s) => s.themes.some((t) => ["loss", "leaving", "alone", "waiting"].includes(t)) },
+/* Home's own six chips (app/page.tsx's .lp block: sun/tomato/electric/
+   grass/coral/lilac) — reused as-is, not a synthetic wheel, so Wander's
+   colour is literally the same palette as the front door. */
+const MOODS: { key: MoodKey; label: string; sub: string; color: string; test: (s: Seed) => boolean }[] = [
+  { key: "laugh", label: "Make me laugh", sub: "loud, fast, a little absurd", color: "#FFC53D", test: (s) => s.dominantVoice === "shout" || s.energy === "electric" },
+  { key: "somewhere", label: "Take me somewhere", sub: "a place, a road, a dateline", color: "#2D6BF0", test: (s) => s.themes.includes("in transit") || s.form === "postcard" },
+  { key: "feel", label: "Make me feel something", sub: "quiet, close, unresolved", color: "#9B7EDE", test: (s) => (["whisper", "listen", "thought"] as const).includes(s.dominantVoice as any) },
+  { key: "think", label: "Give me something to think about", sub: "circling a question", color: "#1F9E5A", test: (s) => s.dominantVoice === "thought" || s.dominantVoice === "drift" },
+  { key: "weird", label: "Show me something weird", sub: "too many things at once", color: "#FF5C7A", test: (s) => s.form === "collage" || s.form === "typographic" },
+  { key: "heartbreak", label: "Break my heart a little", sub: "leaving, alone, still waiting", color: "#F0492E", test: (s) => s.themes.some((t) => ["loss", "leaving", "alone", "waiting"].includes(t)) },
 ];
 
-const TIME: { key: TimeKey; label: string; sub: string; hue: number; test: (s: number) => boolean }[] = [
-  { key: "all", label: "Everything", sub: "no rush", hue: 0, test: () => true },
-  { key: "quick", label: "90 sec", sub: "a tiny stumble", hue: 45, test: (s) => s <= 90 },
-  { key: "five", label: "5 min", sub: "a little detour", hue: 135, test: (s) => s > 90 && s <= 300 },
-  { key: "ten", label: "10 min", sub: "let's wander", hue: 225, test: (s) => s > 300 && s <= 600 },
-  { key: "long", label: "All night", sub: "bad idea. perfect.", hue: 315, test: (s) => s > 600 },
+const TIME: { key: TimeKey; label: string; sub: string; color: string; test: (s: number) => boolean }[] = [
+  { key: "all", label: "Everything", sub: "no rush", color: "", test: () => true },
+  { key: "quick", label: "90 sec", sub: "a tiny stumble", color: "#1F9E5A", test: (s) => s <= 90 },
+  { key: "five", label: "5 min", sub: "a little detour", color: "#2D6BF0", test: (s) => s > 90 && s <= 300 },
+  { key: "ten", label: "10 min", sub: "let's wander", color: "#9B7EDE", test: (s) => s > 300 && s <= 600 },
+  { key: "long", label: "All night", sub: "bad idea. perfect.", color: "#F0492E", test: (s) => s > 600 },
 ];
 
 function useReducedMotion() {
@@ -204,7 +204,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
                   key={m.key}
                   type="button"
                   className={`mood-door${mood === m.key ? " is-active" : ""}`}
-                  style={{ ["--i" as string]: i, ["--door-hue" as string]: m.hue } as CSSProperties}
+                  style={{ ["--i" as string]: i, ["--door-color" as string]: m.color } as CSSProperties}
                   onClick={() => setMood(mood === m.key ? null : m.key)}
                 >
                   <span className="mood-door-label">{m.label}</span>
@@ -228,7 +228,7 @@ export function WanderField({ seeds }: { seeds: Seed[] }) {
                   key={t.key}
                   type="button"
                   className={`time-door${timeKey === t.key ? " is-active" : ""}`}
-                  style={{ ["--door-hue" as string]: t.hue } as CSSProperties}
+                  style={{ ["--door-color" as string]: t.color } as CSSProperties}
                   onClick={() => setTimeKey(timeKey === t.key ? "all" : t.key)}
                 >
                   <span className="time-door-label">{t.label}</span>
