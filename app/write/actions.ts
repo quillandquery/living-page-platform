@@ -6,6 +6,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { myProfile } from "@/lib/db";
 import type { Block } from "@/lib/story-blocks.mjs";
 import { resolveImagery } from "@/lib/media";
+import type { StoryArtDirection } from "@/lib/art-direction/types";
 
 /**
  * THE STUDIO'S HANDS, on a platform.
@@ -49,6 +50,10 @@ export type SaveInput = {
   blocks: Block[];
   /** when true, the save resolves photographic imagery into the blocks */
   imagery?: boolean;
+  /** the full Story Visual System 2.0 direction, computed client-side by
+   *  the editor (lib/art-direction/generate.ts) so it round-trips exactly
+   *  as previewed. Optional only for callers that predate this. */
+  art_direction?: StoryArtDirection;
 };
 
 export type SaveResult =
@@ -100,6 +105,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     source: input.source,
     blocks,
   };
+  if (input.art_direction) patch.art_direction = input.art_direction;
   if (publish === true) { patch.status = "published"; patch.published_at = new Date().toISOString(); }
   if (publish === false) { patch.status = "draft"; }
 

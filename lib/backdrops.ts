@@ -16,10 +16,20 @@
 export const LAYERS = [
   "sky", "stars", "moon", "sun", "ridge", "road", "sea", "rain", "haze",
   "trees", "city", "window", "field", "glow",
+  // Story Visual System 2.0 — a small, curated widening (D6), each new
+  // layer is a distinct *ambient motif*, not a recolour of an old one.
+  "bubbles", "raylight", "shimmer", "drape",
 ] as const;
 export type Layer = (typeof LAYERS)[number];
 
 export type Energy = "quiet" | "warm" | "vivid" | "electric";
+
+/** Where the reader is standing. Debug/render-plan metadata today; the
+ *  layers below are what actually draws the vantage point. */
+export type Viewpoint =
+  | "open_horizon" | "shoreline" | "underwater_depth" | "treeline" | "ridge_top"
+  | "field_level" | "moving_vehicle" | "street_level" | "through_glass"
+  | "interior" | "grand_hall" | "night_street" | "open_sky" | "floating";
 
 export type Backdrop = {
   label: string;
@@ -38,57 +48,68 @@ export type Backdrop = {
   paperTint?: string;
   /** words that pull the engine toward this world */
   cues: string[];
+  /** where the reader is standing — used by the art-direction debug plan */
+  viewpoint?: Viewpoint;
 };
 
 export const BACKDROPS: Record<string, Backdrop> = {
   // — daylight & nature —
   coast:     { label: "sunlit coast", scheme: "light", energy: "vivid", accent: "#00A6D6", secondaryAccent: "#FFB23E", paperTint: "#F7F1D8",
-    layers: ["sky", "sun", "haze", "sea"],
+    layers: ["sky", "sun", "haze", "sea"], viewpoint: "shoreline",
     cues: ["beach", "sea", "ocean", "coast", "shore", "sand", "wave", "surf", "salt", "tide", "swim"] },
   forest:    { label: "forest", scheme: "light", energy: "vivid", accent: "#1F9E5A", secondaryAccent: "#B6D14B", paperTint: "#EDF2DB",
-    layers: ["sky", "haze", "trees"],
+    layers: ["sky", "haze", "trees"], viewpoint: "treeline",
     cues: ["forest", "jungle", "tree", "trees", "woods", "leaves", "trail", "moss", "pine", "green"] },
   highland:  { label: "highland", scheme: "light", energy: "warm", accent: "#4C6A8A", secondaryAccent: "#AFC0CE", paperTint: "#EBEFF2",
-    layers: ["sky", "haze", "ridge"],
+    layers: ["sky", "haze", "ridge"], viewpoint: "ridge_top",
     cues: ["mountain", "hill", "ghat", "ridge", "valley", "cliff", "peak", "highland", "altitude"] },
   meadow:    { label: "wildflower field", scheme: "light", energy: "vivid", accent: "#E4A81F", secondaryAccent: "#3FA05C", paperTint: "#F3F0D6",
-    layers: ["sky", "sun", "field"],
+    layers: ["sky", "sun", "field"], viewpoint: "field_level",
     cues: ["field", "meadow", "flowers", "grass", "picnic", "wildflower", "garden", "bloom"] },
   heat:      { label: "desert heat", scheme: "light", energy: "electric", accent: "#FF7A1A", secondaryAccent: "#FF4D5E", paperTint: "#FBF0DA",
-    layers: ["sky", "sun", "haze"],
+    layers: ["sky", "sun", "haze"], viewpoint: "open_horizon",
     cues: ["desert", "heat", "hot", "noon", "dust", "dry", "dune", "scorching", "shimmer"] },
+  desertroad:{ label: "desert highway", scheme: "light", energy: "electric", accent: "#E85A1A", secondaryAccent: "#C9A227", paperTint: "#F4E3C6",
+    layers: ["sky", "sun", "shimmer", "road", "haze"], viewpoint: "moving_vehicle",
+    cues: ["road trip", "drove across", "driving across", "highway", "open road", "rajasthan", "quit my job and drove"] },
   dawn:      { label: "dawn", scheme: "light", energy: "vivid", dawn: true, accent: "#E8734F", secondaryAccent: "#E86FA0", paperTint: "#F7E7DC",
-    layers: ["sky", "sun", "haze", "field"],
+    layers: ["sky", "sun", "haze", "field"], viewpoint: "open_sky",
     cues: ["dawn", "sunrise", "morning", "early", "first light", "rooster"] },
 
   // — travel & interior —
   city:      { label: "city", scheme: "light", energy: "warm", accent: "#3A5BD0", secondaryAccent: "#7183A6", paperTint: "#ECEDF3",
-    layers: ["sky", "haze", "city"],
-    cues: ["city", "street", "downtown", "traffic", "crowd", "sidewalk", "avenue", "market", "old town"] },
+    layers: ["sky", "haze", "city"], viewpoint: "street_level",
+    cues: ["city", "street", "downtown", "traffic", "crowd", "sidewalk", "avenue", "market", "old town", "paris", "cobbled"] },
   window:    { label: "rainy window", scheme: "light", energy: "quiet", accent: "#5B7C99", secondaryAccent: "#93A8B8", paperTint: "#ECEEEF",
-    layers: ["window", "rain"],
+    layers: ["window", "rain"], viewpoint: "through_glass",
     cues: ["window", "café", "cafe", "coffee", "train window", "indoors", "inside", "glass", "watching"] },
   cafe:      { label: "warm interior", scheme: "light", energy: "warm", accent: "#C77D3A", secondaryAccent: "#B98A55", paperTint: "#F3E9D6",
-    layers: ["window", "glow"],
-    cues: ["kitchen", "bedroom", "home", "lamp", "warm", "bed", "tea", "apartment", "sofa", "room"] },
+    layers: ["window", "glow"], viewpoint: "interior",
+    cues: ["kitchen", "bedroom", "home", "lamp", "warm", "bed", "tea", "apartment", "sofa", "room", "office", "desk"] },
+  palace:    { label: "palace interior", scheme: "light", energy: "vivid", accent: "#C9A227", secondaryAccent: "#7A2E3A", paperTint: "#F6EFD8",
+    layers: ["window", "drape", "glow"], viewpoint: "grand_hall",
+    cues: ["palace", "chandelier", "ballroom", "royal", "overdressed", "grand hall", "throne"] },
+  underwater:{ label: "underwater", scheme: "dark", energy: "vivid", accent: "#0E7C86", secondaryAccent: "#39FFB0",
+    layers: ["raylight", "bubbles", "sea"], viewpoint: "underwater_depth",
+    cues: ["underwater", "dive", "dived", "diving", "reef", "scuba", "beneath the surface", "submerged", "something enormous moving beneath"] },
 
   // — weather & night —
   monsoon:   { label: "monsoon", scheme: "dark", energy: "warm", accent: "#3E9BAB", secondaryAccent: "#7FB0B8",
-    layers: ["sky", "haze", "rain"],
+    layers: ["sky", "haze", "rain"], viewpoint: "street_level",
     cues: ["rain", "monsoon", "storm", "downpour", "wet", "thunder", "drizzle", "umbrella", "flood"] },
   nightcity: { label: "neon city", scheme: "dark", energy: "electric", accent: "#C25AD0", secondaryAccent: "#31C8D8",
-    layers: ["sky", "stars", "city"],
-    cues: ["neon", "nightlife", "bar", "club", "late night", "streetlight", "midnight city"] },
+    layers: ["sky", "stars", "city"], viewpoint: "night_street",
+    cues: ["neon", "nightlife", "bar", "club", "late night", "streetlight", "midnight city", "2am", "2:13", "didn't want the night to end"] },
   nightroad: { label: "night road", scheme: "dark", energy: "warm", dawn: true, accent: "#2B3ED0", secondaryAccent: "#E58A6C",
-    layers: ["sky", "stars", "moon", "ridge", "road"],
-    cues: ["night", "midnight", "road", "drive", "bus", "highway", "stars", "moon", "4am", "asleep", "dark"] },
+    layers: ["sky", "stars", "moon", "ridge", "road"], viewpoint: "moving_vehicle",
+    cues: ["midnight", "night bus", "moonlit", "4am", "red-eye", "drove through the night", "asleep on the bus"] },
   nightsky:  { label: "night sky", scheme: "dark", energy: "quiet", dawn: true, accent: "#3145C0", secondaryAccent: "#8AA6E6",
-    layers: ["sky", "stars", "moon"],
+    layers: ["sky", "stars", "moon"], viewpoint: "open_sky",
     cues: ["sky", "stars", "constellation", "quiet night", "rooftop at night"] },
 
   // — surreal —
   dreamscape:{ label: "dreamscape", scheme: "dark", energy: "vivid", accent: "#7A6CE0", secondaryAccent: "#E86FA0",
-    layers: ["glow", "stars", "field"],
+    layers: ["glow", "stars", "field"], viewpoint: "floating",
     cues: ["dream", "dreamt", "surreal", "floating", "memory", "unreal", "blur", "imagine"] },
 };
 

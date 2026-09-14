@@ -1,4 +1,8 @@
 import type { Block } from "./story-blocks.mjs";
+import type { StoryArtDirection } from "./art-direction/types";
+
+/** Story / Moment / Thought / Just start (D3) — cosmetic entry mode. */
+export type StoryType = "story" | "moment" | "thought" | "freeform";
 
 /**
  * THE DATA SHAPES that cross the DB boundary.
@@ -37,6 +41,10 @@ export type StoryRow = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  /** `{}` for a row saved before Story Visual System 2.0 — see
+   *  `isCompleteArtDirection` in `lib/art-direction/types.ts`. */
+  art_direction: Partial<StoryArtDirection>;
+  type: StoryType;
 };
 
 /** A story joined with the writer who wrote it — what the feed and reader need. */
@@ -54,4 +62,6 @@ export type StoryDraftInput = {
   veil: boolean;
   source: string;
   blocks: Block[];
+  art_direction?: Partial<StoryArtDirection>;
+  type?: StoryType;
 };

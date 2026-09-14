@@ -11,6 +11,9 @@ import { type Body, type Gesture, type Move, type Voice } from "@/lib/vocabulary
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
+import { extractStoryProfile } from "@/lib/semantic-profile";
+import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
+import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
   type SaveInput,
@@ -26,65 +29,18 @@ import {
 
 const PROMPT = "Start anywhere. Don't worry about the beginning.";
 
-const MOODS = ["auto", "quiet", "dreamy", "raw", "playful", "cinematic", "warm", "romantic", "restless", "chaotic"] as const;
+// The Mood/World/Visuals dropdowns are the writer-facing surface (PRD §14);
+// underneath, `lib/art-direction/generate.ts` is now the one engine that
+// picks environment/atmosphere/art-style/artwork/ambient-motion/material/
+// composition/signature together, so "auto" gets the full Story Visual
+// System 2.0 treatment instead of an accent-and-density guess.
+const MOODS = ["auto", ...ART_MOODS] as const;
 type Mood = (typeof MOODS)[number];
 const VISUALS = ["auto", "minimal", "illustrated", "collage", "maximal"] as const;
 type Visual = (typeof VISUALS)[number];
 
-// mood → colour + how alive the margins are + how many lines may leave plain
-const MOOD_SPEC: Record<Exclude<Mood, "auto">, { accent: string; density: number; budget: number }> = {
-  quiet: { accent: "#4C6A8A", density: 3, budget: 30 },
-  dreamy: { accent: "#7A6CE0", density: 6, budget: 46 },
-  raw: { accent: "#D23B2E", density: 5, budget: 46 },
-  playful: { accent: "#E68A2E", density: 8, budget: 48 },
-  cinematic: { accent: "#2E6E8E", density: 6, budget: 40 },
-  warm: { accent: "#C77D3A", density: 6, budget: 42 },
-  romantic: { accent: "#D0567F", density: 5, budget: 42 },
-  restless: { accent: "#2B5BD0", density: 7, budget: 48 },
-  chaotic: { accent: "#E24A3B", density: 9, budget: 56 },
-};
+const MOOD_SPEC = MOOD_ATMOSPHERE;
 const VISUAL_DENSITY: Record<Exclude<Visual, "auto">, number> = { minimal: 2, illustrated: 6, collage: 8, maximal: 10 };
-
-const MOOD_CUES: [Exclude<Mood, "auto">, RegExp][] = [
-  ["chaotic", /\b(chaos|frantic|crowd|noise|everywhere|too much|panic|spinning)\b/i],
-  ["raw", /\b(furious|angry|rage|grief|cried|crying|broke|broken|scream|hurt|heartache)\b/i],
-  ["romantic", /\b(love|loved|kiss|held|heart|tender|close|skin|touch)\b/i],
-  ["dreamy", /\b(dream|dreamt|floating|memory|remember|unreal|haze|drift|sabbatical)\b/i],
-  ["quiet", /\b(silence|silent|quiet|still|alone|empty|slow|breath|nobody|calm)\b/i],
-  ["playful", /\b(laugh|funny|silly|ridiculous|joke|grin|fun|delighted)\b/i],
-  ["restless", /\b(couldn't sleep|awake|restless|racing|can't stop|nervous|not right)\b/i],
-];
-const WORLD_CUES: [string, RegExp][] = [
-  ["forest", /\b(forest|jungle|trees?|woods|leaves|trail|moss|pine)\b/i],
-  ["monsoon", /\b(monsoon|downpour|thunder|storm|flood|drizzle)\b/i],
-  ["dreamscape", /\b(dream|dreamt|surreal|floating|unreal|imagine|sabbatical)\b/i],
-  ["nightcity", /\b(neon|nightlife|club|streetlight)\b/i],
-  ["nightroad", /\b(night|midnight|road|drive|cab|bus|airport|highway|moon|stars|4am|asleep)\b/i],
-  ["coast", /\b(beach|sea|ocean|coast|shore|sand|wave|surf|salt|tide|swim)\b/i],
-  ["window", /\b(window|caf[eé]|coffee|glass|watching|indoors|inside)\b/i],
-  ["cafe", /\b(kitchen|bedroom|home|lamp|bed|tea|apartment|sofa|office|corporate|desk)\b/i],
-  ["meadow", /\b(field|meadow|flowers?|grass|picnic|wildflower|garden|bloom)\b/i],
-  ["highland", /\b(mountain|hill|ghat|ridge|valley|cliff|peak|fog)\b/i],
-  ["heat", /\b(desert|heat|noon|dust|scorching|dune)\b/i],
-  ["dawn", /\b(dawn|sunrise|morning|first light|rooster)\b/i],
-  ["city", /\b(city|street|downtown|traffic|crowd|sidewalk|avenue|market|bangalore)\b/i],
-];
-const WORLD_ACCENT: Record<string, string> = {
-  coast: "#1C86C4", forest: "#2E7D4F", highland: "#4C6A8A", meadow: "#C9962B", heat: "#D2691E",
-  dawn: "#E0876B", city: "#3A5BD0", window: "#5B7C99", cafe: "#C77D3A", monsoon: "#3E8E9E",
-  nightcity: "#B65CC0", nightroad: "#2B3ED0", nightsky: "#2B3ED0", dreamscape: "#7A6CE0",
-};
-
-const count = (re: RegExp, s: string) => (s.match(new RegExp(re.source, "gi")) ?? []).length;
-function inferMood(t: string): Exclude<Mood, "auto"> {
-  let best: Exclude<Mood, "auto"> = "warm", score = 0.4;
-  for (const [m, re] of MOOD_CUES) { const n = count(re, t); if (n > score) { score = n; best = m; } }
-  return best;
-}
-function inferWorld(t: string): string {
-  for (const [w, re] of WORLD_CUES) if (re.test(t)) return w;
-  return "dawn";
-}
 
 /**
  * Guarantee the page reads as transformed, not as a copy of the textarea:
@@ -146,10 +102,22 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [tab, setTab] = useState<"page" | "words">("page");
   const [pending, start] = useTransition();
 
-  const mood = moodSel === "auto" ? inferMood(raw) : moodSel;
-  const spec = MOOD_SPEC[mood];
-  const world = worldSel === "auto" ? inferWorld(raw) : worldSel;
-  const accent = moodSel === "auto" ? (WORLD_ACCENT[world] ?? spec.accent) : spec.accent;
+  // The one engine, Auto or nudged: a manual World/Mood pick overrides just
+  // that axis and still lets everything downstream (art style, artwork,
+  // ambient motion, material, composition, signature) follow from it.
+  const artDirection = useMemo(() => {
+    const profile = extractStoryProfile(raw);
+    return generateArtDirection(raw, profile, {
+      environmentOverride: worldSel === "auto" ? undefined : worldSel,
+      moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
+      visualIntensity: visSel === "auto" ? undefined : visSel,
+    });
+  }, [raw, worldSel, moodSel, visSel]);
+
+  const mood = artDirection.atmosphere.mood as Mood;
+  const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];
+  const world = artDirection.environment.key;
+  const accent = artDirection.accent;
   const density = visSel === "auto" ? spec.density : VISUAL_DENSITY[visSel];
   const budget = spec.budget;
   const dark = getBackdrop(world)?.scheme === "dark";
@@ -166,6 +134,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const input = (): SaveInput => ({
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,
+    art_direction: artDirection,
   });
 
   const run = (fn: (i: SaveInput) => Promise<{ ok: boolean; message?: string }>, verb: string, live?: boolean) =>
@@ -229,6 +198,12 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
               </form>
             </div>
           </details>
+
+          {/* development-only render plan (§45) — never shown to a reader */}
+          <details className="ed-details">
+            <summary>Art direction (debug)</summary>
+            <pre className="ed-artdir">{describeArtDirection(artDirection)}</pre>
+          </details>
         </section>
 
         {/* — the living page — */}
@@ -239,7 +214,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
           </div>
           {tab === "page" ? (
             <div className={`ed-live${dark ? " dark" : ""}`} style={{ ["--accent" as string]: accent }} key={world}>
-              <Backdrop name={world} seed={story.id} />
+              <Backdrop name={world} seed={story.id} ambient={artDirection.ambientMotion} />
               <div className="ed-flow">
                 {raw.trim() ? <LivePreview blocks={blocks} /> : <p className="ed-blank">Your living page appears here as you write.</p>}
               </div>
@@ -285,6 +260,7 @@ const CSS = `
 .ed-mini{ align-self:flex-start; font-family:var(--f-mono); font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; background:transparent; border:1px solid var(--line); color:var(--ink-soft); border-radius:999px; padding:.4rem .8rem; cursor:pointer; }
 .ed-del{ background:none; border:0; color:var(--mute); font-family:var(--f-mono); font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; padding:0; text-align:left; }
 .ed-del:hover{ color:#C0392B; }
+.ed-artdir{ font-family:var(--f-mono); font-size:.66rem; line-height:1.6; color:var(--ink-soft); white-space:pre-wrap; margin:.6rem 0 0; }
 
 .ed-preview-col{ display:flex; flex-direction:column; }
 .ed-seg{ display:flex; gap:.2rem; padding:.8rem max(1rem,2vw); border-bottom:1px solid var(--line); background:var(--paper); }

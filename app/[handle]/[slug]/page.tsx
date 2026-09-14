@@ -57,6 +57,7 @@ export default async function StoryReaderPage(
       blocks={story.blocks}
       author={{ handle: story.author.handle, display_name: story.author.display_name }}
       seed={story.id}
+      artDirection={story.art_direction}
       more={{
         same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, theme: matchedTheme } : null,
         surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place } : null,
