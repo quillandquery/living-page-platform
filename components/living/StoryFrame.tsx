@@ -12,6 +12,12 @@ import React, { useEffect, useRef } from "react";
  * The veil class is added here, in script — a page with JS disabled
  * renders the whole story legibly, and nothing is ever parked at
  * opacity: 0 waiting on an observer.
+ *
+ * The shell may be the window (a story read on the platform) or a
+ * scrolling box that fills the window (the studio's full-screen reveal).
+ * We resolve which one actually scrolls and listen to it — and, because a
+ * nested element's scroll does not bubble, we also listen in the capture
+ * phase so an overlay's scroll still drives the choreography.
  */
 export function StoryFrame({
   children, veil = true, accent, arc = true,
@@ -21,6 +27,19 @@ export function StoryFrame({
   useEffect(() => {
     const root = flow.current;
     if (!root) return;
+
+    // the nearest ancestor that scrolls, if any — otherwise the window.
+    const scrollParent = (el: HTMLElement | null): HTMLElement | null => {
+      let n = el?.parentElement ?? null;
+      while (n) {
+        if (n === document.body || n === document.documentElement) break;
+        const s = getComputedStyle(n);
+        if (/(auto|scroll|overlay)/.test(s.overflowY)) return n;
+        n = n.parentElement;
+      }
+      return null; // the window scrolls
+    };
+    const box = scrollParent(root); // null => the window scrolls
 
     if (veil) root.classList.add("veiled");
     let pending = Array.from(root.querySelectorAll<HTMLElement>(".beat"));
@@ -36,8 +55,10 @@ export function StoryFrame({
         if (lastDepth !== 0.5) { lastDepth = 0.5; document.documentElement.style.setProperty("--depth", "0.5"); }
         return;
       }
-      const span = document.documentElement.scrollHeight - window.innerHeight;
-      const raw = span > 0 ? window.scrollY / span : 0;
+      const span = box ? box.scrollHeight - box.clientHeight
+                       : document.documentElement.scrollHeight - window.innerHeight;
+      const pos = box ? box.scrollTop : window.scrollY;
+      const raw = span > 0 ? pos / span : 0;
       const d = Math.round(Math.min(1, Math.max(0, raw)) * 20) / 20;
       if (d !== lastDepth) {
         lastDepth = d;
@@ -45,15 +66,23 @@ export function StoryFrame({
       }
     };
 
+    // viewport height and a beat's position within it — valid whether the
+    // scroller is the window or a box that fills it (fixed inset:0).
+    const vpH = () => (box ? box.clientHeight : window.innerHeight);
+    const topOf = (el: HTMLElement) => {
+      const t = el.getBoundingClientRect().top;
+      return box ? t - box.getBoundingClientRect().top : t;
+    };
+
     const tick = () => {
       ticking = false;
       setDepth();
-      const vh = window.innerHeight;
+      const vh = vpH();
       const readAt = veil ? vh * 0.78 : vh * 0.92;
       const nearAt = vh * 1.25;
       for (let i = pending.length - 1; i >= 0; i--) {
         const el = pending[i];
-        const top = el.getBoundingClientRect().top;
+        const top = topOf(el);
         if (started && top < readAt) {
           el.classList.add("arrived");
           el.classList.remove("near");
@@ -76,18 +105,20 @@ export function StoryFrame({
       let k = 0;
       const keep: HTMLElement[] = [];
       pending.forEach((el) => {
-        if (el.getBoundingClientRect().top < window.innerHeight * 0.94) {
+        if (topOf(el) < vpH() * 0.94) {
           window.setTimeout(() => el.classList.add("arrived"), 140 + k++ * 130);
         } else keep.push(el);
       });
       pending = keep;
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    // capture phase so a nested overlay's (non-bubbling) scroll is heard too
+    const target: EventTarget = box ?? window;
+    target.addEventListener("scroll", onScroll, { passive: true, capture: true });
     window.addEventListener("resize", queue);
     requestAnimationFrame(tick);
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      target.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
       window.removeEventListener("resize", queue);
       document.documentElement.style.removeProperty("--depth");
     };
