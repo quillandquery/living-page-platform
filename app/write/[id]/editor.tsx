@@ -6,6 +6,7 @@ import { annotate, toBlocks } from "@/lib/annotate";
 import { Beat } from "@/components/living/Beat";
 import { Hold } from "@/components/living/Scene";
 import { Backdrop } from "@/components/living/Backdrop";
+import { StoryView } from "@/components/living/StoryView";
 import { getBackdrop } from "@/lib/backdrops";
 import { type Body, type Gesture, type Move, type Voice } from "@/lib/vocabulary";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
@@ -27,7 +28,7 @@ import {
  * folded into one quiet "Details". Nothing mentions beats or voice budgets.
  */
 
-const PROMPT = "Start anywhere. Don't worry about the beginning.";
+const PROMPT = "start anywhere — a smell, something someone said, the worst part, the thing you keep replaying.\n\ni thought i wanted to leave.\nturns out i just wanted someone to ask me to stay.";
 
 // The Mood/World/Visuals dropdowns are the writer-facing surface (PRD §14);
 // underneath, `lib/art-direction/generate.ts` is now the one engine that
@@ -101,6 +102,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [published, setPublished] = useState(story.status === "published");
   const [tab, setTab] = useState<"page" | "words">("page");
   const [pending, start] = useTransition();
+  const [reveal, setReveal] = useState(false);
 
   // The one engine, Auto or nudged: a manual World/Mood pick overrides just
   // that axis and still lets everything downstream (art style, artwork,
@@ -155,6 +157,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
         <span className="ed-save">{pending ? "saving…" : status ? status.text : "draft"}</span>
         <span className="ed-bar-r">
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
+          <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); setReveal(true); }}>See it come alive →</button>
           <button className="ed-ghost" disabled={pending} onClick={() => run(saveDraftAction, "save")}>Save</button>
           <button className="ed-pub" disabled={pending} onClick={() => run(publishAction, "publish", true)}>{published ? "Update" : "Publish"}</button>
         </span>
@@ -224,6 +227,14 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
           )}
         </section>
       </div>
+      {reveal ? (
+        <div className="ed-reveal">
+          <button className="ed-reveal-close" onClick={() => setReveal(false)}>← keep editing</button>
+          <StoryView place={place} date={date} fragment={fragment} accent={accent}
+                     backdrop={world} veil={veil} blocks={blocks} seed={story.id}
+                     artDirection={artDirection} chrome />
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -290,6 +301,13 @@ const CSS = `
 .ed-live.dark{ scrollbar-color: rgba(236,232,223,.55) transparent; }
 .ed-live.dark::-webkit-scrollbar-thumb{ background:rgba(236,232,223,.5); border:3px solid transparent; background-clip:padding-box; }
 .ed-live.dark::-webkit-scrollbar-thumb:hover{ background:rgba(236,232,223,.8); background-clip:padding-box; }
+.ed-see{ font-family:var(--f-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; background:var(--electric); color:#fff; border:0; border-radius:999px; padding:.55rem 1.1rem; cursor:pointer; }
+.ed-see:hover{ filter:brightness(1.08); }
+.ed-see:disabled{ opacity:.5; cursor:default; }
+.ed-reveal{ position:fixed; inset:0; z-index:100; overflow-y:auto; background:var(--paper); animation:ed-reveal-in .6s cubic-bezier(.2,.8,.25,1) both; }
+@keyframes ed-reveal-in{ from{ opacity:0; transform:scale(.985); } to{ opacity:1; transform:none; } }
+.ed-reveal-close{ position:fixed; top:1.1rem; left:1.1rem; z-index:101; font-family:var(--f-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; background:rgba(20,18,16,.62); color:#fff; border:0; border-radius:999px; padding:.55rem 1rem; cursor:pointer; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+.ed-reveal-close:hover{ background:rgba(20,18,16,.88); }
 @media (max-width:900px){ .ed-grid{ grid-template-columns:1fr; } .ed-write{ border-right:0; border-bottom:1px solid var(--line); } .ed-live{ min-height:70vh; } }
 @media (prefers-reduced-motion:reduce){ .ed-live .beat{ animation:none; } }
 `;
