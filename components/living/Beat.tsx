@@ -40,7 +40,7 @@ function wordify(node: React.ReactNode, scatter: boolean, key = "w"): React.Reac
         const h = hash(key + p + idx);
         // handed to CSS rather than set directly, so the arrival
         // animation can land ON the scatter instead of wiping it
-        style["--tf"] = `translate(${((h - 0.5) * 1.6).toFixed(2)}em, ${((hash(p + idx) - 0.5) * 0.7).toFixed(2)}em) rotate(${((h - 0.5) * 7).toFixed(1)}deg)`;
+        style["--tf"] = `translate(${((h - 0.5) * 0.4).toFixed(2)}em, ${((hash(p + idx) - 0.5) * 0.34).toFixed(2)}em) rotate(${((h - 0.5) * 5).toFixed(1)}deg)`;
       }
       return (
         <span className="word" key={`${key}-${k}`} style={style}>
