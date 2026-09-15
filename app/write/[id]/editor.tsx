@@ -305,7 +305,7 @@ const CSS = `
 .ed-see:hover{ filter:brightness(1.08); }
 .ed-see:disabled{ opacity:.5; cursor:default; }
 .ed-reveal{ position:fixed; inset:0; z-index:100; overflow-y:auto; background:var(--paper); animation:ed-reveal-in .6s cubic-bezier(.2,.8,.25,1) both; }
-@keyframes ed-reveal-in{ from{ opacity:0; transform:scale(.985); } to{ opacity:1; transform:none; } }
+@keyframes ed-reveal-in{ from{ opacity:0; } to{ opacity:1; } } /* opacity-only: a transform here would trap the fixed backdrop inside the overlay */
 .ed-reveal-close{ position:fixed; top:1.1rem; left:1.1rem; z-index:101; font-family:var(--f-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; background:rgba(20,18,16,.62); color:#fff; border:0; border-radius:999px; padding:.55rem 1rem; cursor:pointer; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
 .ed-reveal-close:hover{ background:rgba(20,18,16,.88); }
 @media (max-width:900px){ .ed-grid{ grid-template-columns:1fr; } .ed-write{ border-right:0; border-bottom:1px solid var(--line); } .ed-live{ min-height:70vh; } }
