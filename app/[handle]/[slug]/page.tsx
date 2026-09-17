@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { StoryView } from "@/components/living/StoryView";
+import { StoryStage } from "@/components/living/StoryStage";
+import { resolveFormat, fittingFormats } from "@/lib/formats";
 import { publishedStory, otherPublishedStories } from "@/lib/db";
 import { themesOf } from "@/lib/discover";
 
@@ -20,9 +21,10 @@ export async function generateMetadata(
 
 /** `/@handle/slug` — the reader. Renders the story's blocks at request time. */
 export default async function StoryReaderPage(
-  { params }: { params: Promise<{ handle: string; slug: string }> },
+  { params, searchParams }: { params: Promise<{ handle: string; slug: string }>; searchParams: Promise<{ as?: string }> },
 ) {
   const { handle, slug } = await params;
+  const { as } = await searchParams;
   const story = await publishedStory(clean(handle), slug);
   if (!story) notFound();
 
@@ -46,8 +48,15 @@ export default async function StoryReaderPage(
   const surprisePool = others.filter((o) => o.id !== same?.id);
   const surprise = surprisePool.length ? surprisePool[Math.floor(Math.random() * surprisePool.length)] : null;
 
+  const fitting = fittingFormats(story.blocks);
+  const format = resolveFormat(as, story.blocks, { look: story.art_direction?.look });
+  const basePath = `/@${story.author.handle}/${slug}`;
+
   return (
-    <StoryView
+    <StoryStage
+      format={format}
+      formats={fitting}
+      basePath={basePath}
       place={story.place}
       date={story.date}
       fragment={story.fragment}
