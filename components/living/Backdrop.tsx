@@ -344,10 +344,12 @@ const AMBIENT_RENDER: Record<AmbientMotif, (seed: string) => React.ReactNode> = 
 };
 
 export function Backdrop({
-  name, seed, ambient,
+  name, seed, ambient, scheme,
 }: {
   name?: string;
   seed: string;
+  /** override the world's own light/dark scheme (the palette may differ) */
+  scheme?: "light" | "dark";
   /** Which ambient motifs to layer on. Omitted (not `[]`) falls back to the
    *  old universal bloom+motes, for stories with no stored art direction —
    *  see `lib/art-direction/ambient-motion.ts` for the semantic picker. */
@@ -355,12 +357,13 @@ export function Backdrop({
 }) {
   const b = getBackdrop(name);
   if (!b) return null;
+  const sch = scheme ?? b.scheme;
   const motifs = ambient ?? (["bloom", "motes"] as const);
   return (
-    <div className={`backdrop bd-${name} bd-${b.scheme}`} aria-hidden="true">
+    <div className={`backdrop bd-${name} bd-${sch}`} aria-hidden="true">
       {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
       {motifs.map((m) => <Fragment key={m}>{AMBIENT_RENDER[m](seed)}</Fragment>)}
-      <div className={`bd-scrim ${b.scheme === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
+      <div className={`bd-scrim ${sch === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
     </div>
   );
 }

@@ -85,6 +85,16 @@ export type SignatureDirection = {
   arc: "grows" | "shrinks" | "fades" | "separates" | "converges" | "steady";
 };
 
+export type PaletteDirection = {
+  /** key into lib/art-direction/palettes.ts PALETTES */
+  key: string;
+  label: string;
+  scheme: "light" | "dark";
+  /** the full CSS custom-property block the reader injects (self-contained,
+   *  so a stored row never breaks if the palette registry later changes) */
+  vars: string;
+};
+
 export type StoryArtDirection = {
   environment: EnvironmentDirection;
   atmosphere: AtmosphereDirection;
@@ -95,6 +105,10 @@ export type StoryArtDirection = {
   composition: CompositionDirection;
   typography: TypographyDirection;
   signature: SignatureDirection;
+  /** the story's colour identity — owns the ground, not just the accent */
+  palette: PaletteDirection;
+  /** which named Look produced this, if any (minimal/maximal/postcard/eighties) */
+  look?: string;
   /** for the reader: --accent / --accent2, unaffected by any of the above */
   accent: string;
   secondaryAccent?: string;

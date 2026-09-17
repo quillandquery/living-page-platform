@@ -50,9 +50,10 @@ export function StoryView({
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
-  const vars = worldVars(world, safeAccent);
+  const ad0 = isCompleteArtDirection(artDirection) ? artDirection : null;
+  const vars = ad0?.palette?.vars ?? worldVars(world, safeAccent);
 
-  const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
+  const ad = ad0;
   const shellClass = [
     "frame", "story-reading",
     ad ? `material-${ad.material.key}` : "",
@@ -60,13 +61,16 @@ export function StoryView({
     ad?.typography.handwrittenBias ? "typo-handwritten" : "",
     ad?.typography.framed ? "typo-framed" : "",
     ad && ad.typography.rotateBias ? "typo-rotate" : "",
+    ad?.look ? `look-${ad.look}` : "",
+    ad?.palette ? `palette-${ad.palette.key}` : "",
+    ad?.palette ? `scheme-${ad.palette.scheme}` : "",
   ].filter(Boolean).join(" ");
   const materialVars = ad ? `--material-grain:${ad.material.grain};--material-contrast:${ad.material.contrast};--art-rotate:${ad.typography.rotateBias}deg;` : "";
 
   return (
     <main className={shellClass}>
       <style>{`:root{${vars};${materialVars}}`}</style>
-      <Backdrop name={ad?.environment.key ?? (backdrop ?? undefined)} seed={seed} ambient={ad?.ambientMotion} />
+      <Backdrop name={ad?.environment.key ?? (backdrop ?? undefined)} seed={seed} ambient={ad?.ambientMotion} scheme={ad?.palette?.scheme} />
       {ad ? <div className="material-layer" /> : null}
       {ad ? <Artwork pieces={ad.artwork} seed={seed} /> : null}
       {ad ? <Signature signature={ad.signature} seed={world?.scheme === "dark" ? 11 : 5} treatment={ad.artStyle.artworkTreatment} side={ad.composition.key === "postcard" ? "left" : "right"} /> : null}

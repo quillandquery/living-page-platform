@@ -16,7 +16,9 @@
  */
 import { BACKDROPS, getBackdrop } from "../backdrops";
 import type { SemanticStoryProfile } from "../semantic-profile";
-import { ART_STYLES, ART_STYLE_KEYS, type ArtStyleSpec } from "./art-styles";
+import { ART_STYLES } from "./art-styles";
+import { PALETTES, paletteVars } from "./palettes";
+import { LOOKS, autoLook, type LookKey } from "./looks";
 import { MATERIALS } from "./materials";
 import { COMPOSITIONS } from "./compositions";
 import { buildAtmosphere, inferMood } from "./atmosphere";
@@ -56,17 +58,6 @@ export function scoreEnvironments(raw: string, profile: SemanticStoryProfile): {
     .sort((a, b) => b.score - a.score);
 }
 
-function scoreArtStyles(raw: string, mood: string): { key: ArtStyleSpec; score: number }[] {
-  const text = raw.toLowerCase();
-  return ART_STYLE_KEYS.map((key) => {
-    const spec = ART_STYLES[key];
-    let s = 0.3; // every style is at least reachable
-    for (const cue of spec.cues) if (cue.test(text)) s += 1.6;
-    if (spec.moodAffinity.includes(mood)) s += 1.2;
-    return { key: spec, score: s };
-  }).sort((a, b) => b.score - a.score);
-}
-
 /** seeded pick among candidates within `band` of the top score — ties break
  *  by seed, a clear winner still wins (§21, §24). */
 function seededPick<T>(scored: { item: T; score: number }[], seed: number, band = 0.72): T {
@@ -97,10 +88,10 @@ export function generateArtDirection(
     environmentOverride?: string;
     moodOverride?: import("./atmosphere").MoodKey;
     visualIntensity?: VisualIntensity;
+    lookOverride?: LookKey;
   } = {},
 ): StoryArtDirection {
   const seed = (opts.seed ?? seedHash(raw)) >>> 0;
-  const intensity = opts.visualIntensity;
 
   // — environment —
   const envScored = scoreEnvironments(raw, profile);
@@ -112,41 +103,40 @@ export function generateArtDirection(
   const mood = opts.moodOverride ?? inferMood(profile.emotion, backdrop.scheme === "dark");
   const atmosphere = buildAtmosphere(mood);
 
-  // — art style —
-  const styleScored = scoreArtStyles(raw, mood);
-  const artStyleSpec = seededPick(styleScored.map((s) => ({ item: s.key, score: s.score })), seed >>> 3, 0.75);
+  // — art style / look — a Look owns the medium; without one the mood picks it
+  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood);
+  const artStyleSpec = ART_STYLES[look.artStyle];
+  const intensity: VisualIntensity = opts.visualIntensity ?? look.visualIntensity;
 
-  // — composition — auto still lets the seed pick between the style's two
-  // options; a manual intensity picks the sparser or denser of the two
-  // instead, so "minimal" and "maximal" are visibly, not just numerically,
-  // different pages even within the same art style.
-  const compChoices = artStyleSpec.compositions
-    .map((k) => COMPOSITIONS[k])
-    .sort((a, b) => a.placements.length - b.placements.length);
-  const composition = !intensity
-    ? COMPOSITIONS[artStyleSpec.compositions[Math.abs(seed >>> 5) % artStyleSpec.compositions.length]]
-    : intensity === "minimal" ? compChoices[0]
-    : intensity === "maximal" || intensity === "collage" ? compChoices[compChoices.length - 1]
-    : compChoices[Math.abs(seed >>> 5) % compChoices.length];
+  // — palette — the story's colour identity: it owns the ground, not just the accent
+  const paletteSpec = PALETTES[look.palette];
+  const palette = {
+    key: paletteSpec.key, label: paletteSpec.label,
+    scheme: paletteSpec.scheme, vars: paletteVars(paletteSpec),
+  };
+
+  // — composition — the Look sets where the visual world lives
+  const composition = COMPOSITIONS[look.composition];
 
   // — artwork —
-  const artworkTreatment = (intensity && INTENSITY_TREATMENT[intensity]) || artStyleSpec.artworkTreatment;
-  const artworkCount = intensity ? INTENSITY_ARTWORK_COUNT[intensity] : 4;
+  const artworkTreatment = INTENSITY_TREATMENT[intensity] || artStyleSpec.artworkTreatment;
+  const artworkCount = INTENSITY_ARTWORK_COUNT[intensity];
   const artwork = pickArtwork(
-    profile.objects, envKey, composition, artworkTreatment, seed >>> 7, artworkCount, !!intensity,
+    profile.objects, envKey, composition, artworkTreatment, seed >>> 7, artworkCount, true,
   );
 
-  // — ambient motion —
-  const ambientMotion = pickAmbientMotion(envKey, mood, atmosphere.motionIntensity, artStyleSpec.key);
+  // — ambient motion — the Look may force it, otherwise infer from the world
+  const ambientMotion = look.ambient ?? pickAmbientMotion(envKey, mood, atmosphere.motionIntensity, artStyleSpec.key);
 
   // — material —
-  const material = MATERIALS[artStyleSpec.materialDefault];
+  const material = MATERIALS[look.material] ?? MATERIALS[artStyleSpec.materialDefault];
 
   // — signature —
   const signature = pickSignature(artwork, profile.narrative, ENVIRONMENT_FALLBACK_ARTWORK[envKey] ?? "spiral");
 
-  const accent = backdrop.accent;
-  const secondaryAccent = backdrop.secondaryAccent;
+  // colour comes from the palette now, not the world — that is the whole fix
+  const accent = paletteSpec.accent;
+  const secondaryAccent = paletteSpec.accent2;
 
   return {
     environment: { key: envKey, label: backdrop.label, viewpoint: backdrop.viewpoint },
@@ -156,8 +146,10 @@ export function generateArtDirection(
     ambientMotion,
     material,
     composition: { key: composition.key, label: composition.label },
-    typography: artStyleSpec.typography,
+    typography: look.typography ?? artStyleSpec.typography,
     signature,
+    palette,
+    look: look.key,
     accent,
     secondaryAccent,
     seed,
@@ -168,6 +160,7 @@ export function generateArtDirection(
  *  reader, just what a build tool or `app/dev/preview` can print. */
 export function describeArtDirection(d: StoryArtDirection): string {
   return [
+    `LOOK          ${d.look ?? "(auto)"} · palette ${d.palette?.label ?? "?"} (${d.palette?.scheme ?? "?"})`,
     `ENVIRONMENT   ${d.environment.label}${d.environment.viewpoint ? ` / ${d.environment.viewpoint}` : ""}`,
     `ATMOSPHERE    ${d.atmosphere.mood} · ${d.atmosphere.energy} energy · ${d.atmosphere.spatialOpenness} · ${d.atmosphere.motionIntensity}`,
     `STYLE         ${d.artStyle.label} (${d.artStyle.artworkTreatment})`,

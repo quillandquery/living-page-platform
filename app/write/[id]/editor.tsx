@@ -14,6 +14,7 @@ import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
+import { LOOK_KEYS, type LookKey } from "@/lib/art-direction/looks";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
@@ -39,6 +40,8 @@ const MOODS = ["auto", ...ART_MOODS] as const;
 type Mood = (typeof MOODS)[number];
 const VISUALS = ["auto", "minimal", "illustrated", "collage", "maximal"] as const;
 type Visual = (typeof VISUALS)[number];
+const LOOKS_UI = ["auto", ...LOOK_KEYS] as const;
+type LookSel = (typeof LOOKS_UI)[number];
 
 const MOOD_SPEC = MOOD_ATMOSPHERE;
 const VISUAL_DENSITY: Record<Exclude<Visual, "auto">, number> = { minimal: 2, illustrated: 6, collage: 8, maximal: 10 };
@@ -87,6 +90,7 @@ type Msg = { tone: "ok" | "bad"; text: string } | null;
 
 export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [raw, setRaw] = useState(story.source);
+  const [lookSel, setLook] = useState<LookSel>("auto");
   const [moodSel, setMood] = useState<Mood>("auto");
   const [visSel, setVis] = useState<Visual>("auto");
   const [worldSel, setWorld] = useState<string>("auto");
@@ -113,8 +117,9 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       environmentOverride: worldSel === "auto" ? undefined : worldSel,
       moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
       visualIntensity: visSel === "auto" ? undefined : visSel,
+      lookOverride: lookSel === "auto" ? undefined : (lookSel as LookKey),
     });
-  }, [raw, worldSel, moodSel, visSel]);
+  }, [raw, worldSel, moodSel, visSel, lookSel]);
 
   const mood = artDirection.atmosphere.mood as Mood;
   const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];
@@ -174,6 +179,11 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <summary>Details &amp; shaping</summary>
             <div className="ed-details-body">
               <div className="ed-row">
+                <label className="ed-ctl">Look
+                  <select value={lookSel} onChange={(e) => setLook(e.target.value as LookSel)}>
+                    {LOOKS_UI.map((l) => <option key={l} value={l}>{l === "auto" ? `auto (${artDirection.look ?? "—"})` : l}</option>)}
+                  </select>
+                </label>
                 <label className="ed-ctl">Mood
                   <select value={moodSel} onChange={(e) => setMood(e.target.value as Mood)}>
                     {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}

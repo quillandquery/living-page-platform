@@ -1534,3 +1534,60 @@ a{ color: inherit; }
 .typo-handwritten .v-listen, .typo-handwritten .frontispiece .place{ font-style: italic; }
 .typo-framed .frontispiece{ padding: 1.1rem 1.4rem; border: 1px solid var(--rule); border-radius: 4px; }
 .typo-rotate .margin .doodle{ transform: rotate(var(--art-rotate, 0deg)); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LOOKS — a whole visual identity per story. The palette (injected as CSS
+   vars by StoryView) owns the ground and colour; these rules add the
+   per-look habits the palette alone can't express. Set via the studio's
+   Look picker, or auto-assigned from mood.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* a bold/dark palette over any world gets the dark material blend */
+.scheme-dark .material-layer{ mix-blend-mode: overlay; }
+
+/* MINIMAL — near-white, spare; the world recedes so the words carry it. */
+.look-minimal .backdrop{ opacity: .14; }
+.look-minimal .material-layer{ display: none; }
+.look-minimal .artwork-layer{ opacity: .45; }
+.look-minimal .frontispiece{ margin-bottom: 5.5rem; }
+.look-minimal .beat{ padding-block: .7rem; }
+
+/* MAXIMAL — bold ground, art everywhere, nothing shy. */
+.look-maximal .backdrop{ opacity: .55; }
+.look-maximal .artwork-layer{ opacity: .96; }
+.look-maximal .frontispiece .place{ font-weight: 700; }
+
+/* POSTCARD — a bordered, faded, stamped card. */
+.look-postcard .frontispiece .place{ font-family: var(--f-disp); letter-spacing: .02em; }
+.look-postcard .frontispiece .stamp,
+.look-postcard .colophon .stamp{ font-family: var(--f-mono); letter-spacing: .24em; text-transform: uppercase; }
+.look-postcard .frontispiece{ position: relative; }
+.look-postcard .frontispiece::after{
+  content: ""; position: absolute; top: -.5rem; right: -.5rem;
+  width: 3.2rem; height: 3.2rem; border: 2px dashed var(--rule);
+  border-radius: 50%; opacity: .5; transform: rotate(-12deg); pointer-events: none;
+}
+
+/* 80s / MEMPHIS — black ground, neon, chunky geometric type, soft blobs. */
+.look-eighties .v-shout,
+.look-eighties .frontispiece .place{
+  font-family: "Helvetica Neue", Arial, system-ui, sans-serif;
+  font-weight: 800; letter-spacing: -.02em; text-transform: uppercase;
+}
+.look-eighties .v-shout{ color: var(--pop); }
+.look-eighties .frontispiece .place{ color: var(--accent); }
+.look-eighties .frame::before,
+.look-eighties .frame::after{
+  content: ""; position: fixed; z-index: 0; pointer-events: none; opacity: .9;
+  width: 42vmin; height: 42vmin;
+  border-radius: 42% 58% 63% 37% / 45% 38% 62% 55%;
+}
+.look-eighties .frame::before{ top: -14vmin; right: -10vmin; background: var(--accent2); }
+.look-eighties .frame::after{
+  bottom: -16vmin; left: -12vmin; background: var(--pop);
+  border-radius: 58% 42% 38% 62% / 55% 62% 38% 45%;
+}
+.look-eighties .frontispiece,
+.look-eighties .flow,
+.look-eighties .colophon,
+.look-eighties .keep-going{ position: relative; z-index: 1; }

@@ -6,4 +6,6 @@ export * from "./compositions";
 export * from "./ambient-motion";
 export * from "./artwork";
 export * from "./signature";
+export * from "./palettes";
+export * from "./looks";
 export * from "./generate";
