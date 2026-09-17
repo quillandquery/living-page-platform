@@ -49,7 +49,7 @@ export default async function StoryReaderPage(
   const surprise = surprisePool.length ? surprisePool[Math.floor(Math.random() * surprisePool.length)] : null;
 
   const fitting = fittingFormats(story.blocks);
-  const format = resolveFormat(as, story.blocks, { look: story.art_direction?.look });
+  const format = resolveFormat(as, story.blocks, { authorDefault: story.art_direction?.format, look: story.art_direction?.look });
   const basePath = `/@${story.author.handle}/${slug}`;
 
   return (

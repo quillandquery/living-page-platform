@@ -14,7 +14,8 @@ import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
-import { LOOK_KEYS, type LookKey } from "@/lib/art-direction/looks";
+import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, type FormatKey } from "@/lib/formats";
+import { ScrapbookView } from "@/components/living/formats/ScrapbookView";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
@@ -40,8 +41,8 @@ const MOODS = ["auto", ...ART_MOODS] as const;
 type Mood = (typeof MOODS)[number];
 const VISUALS = ["auto", "minimal", "illustrated", "collage", "maximal"] as const;
 type Visual = (typeof VISUALS)[number];
-const LOOKS_UI = ["auto", ...LOOK_KEYS] as const;
-type LookSel = (typeof LOOKS_UI)[number];
+const FORMATS_UI = ["auto", ...FORMAT_KEYS] as const;
+type FmtSel = (typeof FORMATS_UI)[number];
 
 const MOOD_SPEC = MOOD_ATMOSPHERE;
 const VISUAL_DENSITY: Record<Exclude<Visual, "auto">, number> = { minimal: 2, illustrated: 6, collage: 8, maximal: 10 };
@@ -90,7 +91,7 @@ type Msg = { tone: "ok" | "bad"; text: string } | null;
 
 export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [raw, setRaw] = useState(story.source);
-  const [lookSel, setLook] = useState<LookSel>("auto");
+  const [fmtSel, setFmt] = useState<FmtSel>("auto");
   const [moodSel, setMood] = useState<Mood>("auto");
   const [visSel, setVis] = useState<Visual>("auto");
   const [worldSel, setWorld] = useState<string>("auto");
@@ -117,9 +118,8 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       environmentOverride: worldSel === "auto" ? undefined : worldSel,
       moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
       visualIntensity: visSel === "auto" ? undefined : visSel,
-      lookOverride: lookSel === "auto" ? undefined : (lookSel as LookKey),
     });
-  }, [raw, worldSel, moodSel, visSel, lookSel]);
+  }, [raw, worldSel, moodSel, visSel]);
 
   const mood = artDirection.atmosphere.mood as Mood;
   const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];
@@ -134,6 +134,10 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
     [raw, density, budget],
   );
 
+  // Format is the one explicit choice now (palette/style follow automatically).
+  const fitting = useMemo(() => fittingFormats(blocks), [blocks]);
+  const format = resolveFormat(fmtSel === "auto" ? undefined : fmtSel, blocks, { look: artDirection.look });
+
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
 
@@ -141,7 +145,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const input = (): SaveInput => ({
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,
-    art_direction: artDirection,
+    art_direction: { ...artDirection, format: fmtSel === "auto" ? undefined : fmtSel },
   });
 
   const run = (fn: (i: SaveInput) => Promise<{ ok: boolean; message?: string }>, verb: string, live?: boolean) =>
@@ -179,9 +183,9 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <summary>Details &amp; shaping</summary>
             <div className="ed-details-body">
               <div className="ed-row">
-                <label className="ed-ctl">Look
-                  <select value={lookSel} onChange={(e) => setLook(e.target.value as LookSel)}>
-                    {LOOKS_UI.map((l) => <option key={l} value={l}>{l === "auto" ? `auto (${artDirection.look ?? "—"})` : l}</option>)}
+                <label className="ed-ctl">Format
+                  <select value={fmtSel} onChange={(e) => setFmt(e.target.value as FmtSel)}>
+                    {FORMATS_UI.map((f) => <option key={f} value={f}>{f === "auto" ? `auto (${FORMATS[format].label})` : FORMATS[f as FormatKey].label}{f !== "auto" && !fitting.includes(f as FormatKey) ? " — n/a" : ""}</option>)}
                   </select>
                 </label>
                 <label className="ed-ctl">Mood
@@ -240,9 +244,13 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       {reveal ? (
         <div className="ed-reveal">
           <button className="ed-reveal-close" onClick={() => setReveal(false)}>← keep editing</button>
-          <StoryView place={place} date={date} fragment={fragment} accent={accent}
+          {format === "scrapbook"
+            ? <ScrapbookView place={place} date={date} fragment={fragment} accent={accent}
                      backdrop={world} veil={veil} blocks={blocks} seed={story.id}
                      artDirection={artDirection} chrome />
+            : <StoryView place={place} date={date} fragment={fragment} accent={accent}
+                     backdrop={world} veil={veil} blocks={blocks} seed={story.id}
+                     artDirection={artDirection} chrome />}
         </div>
       ) : null}
     </main>

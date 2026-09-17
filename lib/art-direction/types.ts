@@ -109,6 +109,8 @@ export type StoryArtDirection = {
   palette: PaletteDirection;
   /** which named Look produced this, if any (minimal/maximal/postcard/eighties) */
   look?: string;
+  /** the author's chosen format (standard/scrapbook/…), if any */
+  format?: string;
   /** for the reader: --accent / --accent2, unaffected by any of the above */
   accent: string;
   secondaryAccent?: string;

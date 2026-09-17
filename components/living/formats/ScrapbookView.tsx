@@ -1,43 +1,49 @@
 import Link from "next/link";
+import { Beat } from "@/components/living/Beat";
+import { StoryFrame } from "@/components/living/StoryFrame";
 import { Doodle } from "@/components/doodles/Doodle";
 import { worldVars } from "@/lib/backdrops";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
 import type { StoryViewData } from "@/components/living/StoryView";
 import type { Block } from "@/lib/story-blocks.mjs";
+import type { Body, Gesture, Move, Voice } from "@/lib/vocabulary";
 
 /**
  * SCRAPBOOK FORMAT.
  *
- * The same story, but not read down a column — pinned to a board. Each beat
- * becomes a torn-paper card at its own slight angle, a strip of tape at the
- * corner; doodles the story named become stickers and polaroids; the place is
- * a rubber stamp. Nothing scrolls in a straight line — you sift.
- *
- * It consumes the identical block data the standard reader does, so a reader
- * flipping "Read as — Scrapbook" sees THIS story, rearranged, not a new one.
+ * The same story, pinned to a board instead of read down a column — BUT the
+ * living core is untouched: every card holds a real <Beat>, so the words
+ * still carry their voice, still move and scatter, and the whole board still
+ * veils and reveals on scroll through <StoryFrame>. A format changes the
+ * stage, never the behaviour. The card, the tape, the tilt, the stamp are
+ * staging around beats that behave exactly as they do everywhere else.
  */
 
+const VOICES = new Set<Voice>(["speak", "whisper", "shout", "thought", "drift", "echo", "listen", "ledger"]);
 const strip = (s: string) => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 
-type Card = { text: string; doodle?: string; kind: "note" | "polaroid" };
+type Card = { text: string; voice: Voice; body?: Body; move?: Move; gesture?: Gesture; doodle?: string };
 
 function toCards(blocks: Block[]): Card[] {
   const cards: Card[] = [];
   for (const b of blocks) {
-    if (b.kind === "beat") {
-      const text = (b.text ?? "").trim();
-      if (!text) continue;
-      const short = text.length <= 46;
-      cards.push({ text, doodle: b.doodle, kind: b.doodle && short ? "polaroid" : "note" });
+    if (b.kind === "beat" && (b.text ?? "").trim()) {
+      cards.push({
+        text: b.text.trim(),
+        voice: VOICES.has(b.voice as Voice) ? (b.voice as Voice) : "speak",
+        body: b.body as Body | undefined,
+        move: b.move as Move | undefined,
+        gesture: b.gesture as Gesture | undefined,
+        doodle: b.doodle,
+      });
     } else if (b.kind === "raw" && !b.text.trim().startsWith("<")) {
       const text = strip(b.text);
-      if (text && text !== "---") cards.push({ text, kind: "note" });
+      if (text && text !== "---") cards.push({ text, voice: "speak" });
     }
   }
   return cards;
 }
 
-/** deterministic per-card jitter so the board is the same on every visit */
 function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -45,7 +51,7 @@ function hash(s: string): number {
 }
 
 export function ScrapbookView({
-  place, date, fragment, accent, backdrop, blocks, author, chrome = true, seed = "preview", artDirection,
+  place, date, fragment, accent, blocks, author, chrome = true, seed = "preview", artDirection,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#A66A3B";
   const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
@@ -69,28 +75,27 @@ export function ScrapbookView({
         </header>
       ) : null}
 
-      <div className="sb-scatter">
-        {cards.map((c, i) => {
-          const r = (hash(`${seed}-r-${i}`) - 0.5) * 7;          // ±3.5deg
-          const style = { ["--r" as string]: `${r.toFixed(2)}deg`, ["--i" as string]: i } as React.CSSProperties;
-          if (c.kind === "polaroid" && c.doodle) {
+      <StoryFrame veil accent={safeAccent}>
+        <div className="sb-scatter">
+          {cards.map((c, i) => {
+            const r = (hash(`${seed}-r-${i}`) - 0.5) * 6.5;
+            const style = { ["--r" as string]: `${r.toFixed(2)}deg` } as React.CSSProperties;
             return (
-              <figure className="sb-card sb-polaroid" style={style} key={i}>
-                <span className="sb-tape" />
-                <span className="sb-photo"><Doodle name={c.doodle} seed={i * 41 + 7} treatment="filled" size={128} ink="var(--accent)" /></span>
-                <figcaption>{c.text}</figcaption>
-              </figure>
+              <div className="sb-card" style={style} key={i}>
+                <span className="sb-tape" aria-hidden="true" />
+                {c.doodle ? (
+                  <span className="sb-sticker" aria-hidden="true">
+                    <Doodle name={c.doodle} seed={i * 41 + 7} treatment="line" size={52} ink="var(--accent)" />
+                  </span>
+                ) : null}
+                <Beat voice={c.voice} body={c.body} move={c.move} gesture={c.gesture} seed={i * 7 + 3}>
+                  {c.text}
+                </Beat>
+              </div>
             );
-          }
-          return (
-            <div className={`sb-card sb-note ${i % 5 === 0 ? "sb-wide" : ""}`} style={style} key={i}>
-              <span className="sb-tape" />
-              {c.doodle ? <span className="sb-sticker"><Doodle name={c.doodle} seed={i * 41 + 7} treatment="line" size={54} ink="var(--accent)" /></span> : null}
-              <p>{c.text}</p>
-            </div>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      </StoryFrame>
 
       {chrome ? (
         <footer className="sb-foot">
