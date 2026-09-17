@@ -112,7 +112,7 @@ export function generateArtDirection(
   const paletteSpec = PALETTES[look.palette];
   const palette = {
     key: paletteSpec.key, label: paletteSpec.label,
-    scheme: paletteSpec.scheme, vars: paletteVars(paletteSpec),
+    scheme: paletteSpec.scheme, vars: paletteVars(paletteSpec, seed),
   };
 
   // — composition — the Look sets where the visual world lives
@@ -135,8 +135,8 @@ export function generateArtDirection(
   const signature = pickSignature(artwork, profile.narrative, ENVIRONMENT_FALLBACK_ARTWORK[envKey] ?? "spiral");
 
   // colour comes from the palette now, not the world — that is the whole fix
-  const accent = paletteSpec.accent;
-  const secondaryAccent = paletteSpec.accent2;
+  const accent = paletteSpec.baseAccent;
+  const secondaryAccent = paletteSpec.baseAccent2;
 
   return {
     environment: { key: envKey, label: backdrop.label, viewpoint: backdrop.viewpoint },

@@ -21,15 +21,16 @@ The bus left at dawn and I watched the city give way to fields, then to nothing,
 I thought I wanted to leave. Turns out I just wanted someone to ask me to stay.`;
 
 export default async function LooksPreview(
-  { searchParams }: { searchParams: Promise<{ look?: string }> },
+  { searchParams }: { searchParams: Promise<{ look?: string; seed?: string }> },
 ) {
-  const { look } = await searchParams;
+  const { look, seed: seedRaw } = await searchParams;
+  const seed = Number(seedRaw) || 7;
   const active: LookKey = (LOOK_KEYS as string[]).includes(look ?? "")
     ? (look as LookKey) : "minimal";
 
   const profile = extractStoryProfile(SAMPLE);
-  const ad = generateArtDirection(SAMPLE, profile, { lookOverride: active, seed: 7 });
-  const blocks = toBlocks(annotate(SAMPLE, { doodleDensity: 6, voiceBudget: 0.4, seed: 7 }));
+  const ad = generateArtDirection(SAMPLE, profile, { lookOverride: active, seed });
+  const blocks = toBlocks(annotate(SAMPLE, { doodleDensity: 6, voiceBudget: 0.4, seed }));
 
   return (
     <>
@@ -41,11 +42,19 @@ export default async function LooksPreview(
         backdropFilter: "blur(6px)",
       }}>
         {LOOK_KEYS.map((k) => (
-          <a key={k} href={`/looks?look=${k}`} style={{
+          <a key={k} href={`/looks?look=${k}&seed=${seed}`} style={{
             color: k === active ? "#fff" : "#9a9a9e",
             padding: ".35rem .9rem", textDecoration: "none",
             fontWeight: k === active ? 700 : 400,
           }}>{LOOKS[k].label}</a>
+        ))}
+        <span style={{ color: "#555", padding: ".35rem .5rem" }}>|</span>
+        {[7, 42, 108, 333].map((sd) => (
+          <a key={sd} href={`/looks?look=${active}&seed=${sd}`} style={{
+            color: sd === seed ? "#fff" : "#9a9a9e",
+            padding: ".35rem .6rem", textDecoration: "none",
+            fontWeight: sd === seed ? 700 : 400,
+          }}>seed {sd}</a>
         ))}
       </nav>
 
