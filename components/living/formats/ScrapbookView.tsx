@@ -79,7 +79,8 @@ export function ScrapbookView({
         <div className="sb-scatter">
           {cards.map((c, i) => {
             const r = (hash(`${seed}-r-${i}`) - 0.5) * 6.5;
-            const style = { ["--r" as string]: `${r.toFixed(2)}deg` } as React.CSSProperties;
+            const x = (hash(`${seed}-x-${i}`) - 0.5) * 3.2;
+            const style = { ["--r" as string]: `${r.toFixed(2)}deg`, ["--x" as string]: `${x.toFixed(2)}rem` } as React.CSSProperties;
             return (
               <div className="sb-card" style={style} key={i}>
                 <span className="sb-tape" aria-hidden="true" />

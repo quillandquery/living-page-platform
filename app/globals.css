@@ -1606,22 +1606,22 @@ a{ color: inherit; }
 .sb-stamp.small{ border-style: solid; transform: rotate(-3deg); }
 
 /* the board: a masonry pinboard */
-.sb-scatter{ column-count: 3; column-gap: clamp(1rem, 2.5vw, 1.8rem); max-width: 74rem; margin: 0 auto; }
-@media (max-width: 900px){ .sb-scatter{ column-count: 2; } }
-@media (max-width: 560px){ .sb-scatter{ column-count: 1; max-width: 30rem; } }
+.sb-scatter{ display: flex; flex-direction: column; gap: clamp(2rem, 6vh, 4rem); max-width: 44rem; margin: 0 auto; }
 
 .sb-card{
-  break-inside: avoid; display: block; width: 100%;
-  margin: 0 0 clamp(1.1rem, 2.5vw, 1.7rem);
   position: relative;
+  width: clamp(14rem, 74%, 23rem);
   background: color-mix(in oklab, var(--stock) 90%, #ffffff);
   color: var(--ink);
   padding: 1.15rem 1.2rem 1.25rem;
   border-radius: 2px;
   box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 10px 22px -12px rgba(0,0,0,.35);
-  transform: rotate(var(--r, 0deg));
+  transform: translateX(var(--x, 0)) rotate(var(--r, 0deg));
   transition: transform .2s ease, box-shadow .2s ease, opacity .55s ease;
 }
+.sb-card:nth-child(odd){ align-self: flex-start; }
+.sb-card:nth-child(even){ align-self: flex-end; }
+.sb-card:nth-child(3n){ width: clamp(16rem, 82%, 27rem); }
 
 /* the living core, kept: each card holds a real <Beat>, so collapse the
    beat's three-track grid to fill the card, and let the words behave. */
@@ -1631,8 +1631,8 @@ a{ color: inherit; }
 /* the board veils and reveals on scroll, same as the standard reader —
    a card resolves when its beat arrives (walking through the board). */
 .sb-board .flow.veiled .sb-card{ transition: opacity .55s ease, transform .55s ease; }
-.sb-board .flow.veiled .sb-card:not(:has(.beat.arrived)){ opacity: .1; transform: rotate(var(--r, 0deg)) translateY(10px); }
-.sb-card:hover{ transform: rotate(0deg) scale(1.035); box-shadow: 0 18px 34px -14px rgba(0,0,0,.45); z-index: 5; }
+.sb-board .flow.veiled .sb-card:not(:has(.beat.arrived)){ opacity: .08; transform: translateX(var(--x, 0)) rotate(var(--r, 0deg)) translateY(14px); }
+.sb-card:hover{ transform: translateX(var(--x, 0)) rotate(0deg) scale(1.03); box-shadow: 0 18px 34px -14px rgba(0,0,0,.45); z-index: 5; }
 @media (prefers-reduced-motion: reduce){ .sb-card{ animation: none; } }
 
 .sb-note p{ font-family: var(--f-body); font-size: 1.02rem; line-height: 1.5; margin: 0; }
