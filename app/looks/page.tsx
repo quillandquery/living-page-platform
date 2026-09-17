@@ -25,9 +25,9 @@ A stranger shared her umbrella and said nothing the whole way.
 I thought I wanted to leave. Turns out I just wanted someone to ask me to stay.`;
 
 export default async function LooksPreview(
-  { searchParams }: { searchParams: Promise<{ as?: string; look?: string; seed?: string }> },
+  { searchParams }: { searchParams: Promise<{ as?: string; look?: string; seed?: string; veil?: string }> },
 ) {
-  const { as, look, seed: seedRaw } = await searchParams;
+  const { as, look, seed: seedRaw, veil } = await searchParams;
   const seed = Number(seedRaw) || 7;
   const lookOverride = isFormatKey(look) ? undefined : (look as LookKey | undefined);
 
@@ -49,7 +49,7 @@ export default async function LooksPreview(
       fragment="a bad day with a good view"
       accent={ad.accent}
       backdrop={ad.environment.key}
-      veil={false}
+      veil={veil === "1"}
       blocks={blocks}
       chrome
       artDirection={ad}
