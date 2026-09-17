@@ -51,7 +51,7 @@ function hash(s: string): number {
 }
 
 export function ScrapbookView({
-  place, date, fragment, accent, blocks, author, chrome = true, seed = "preview", artDirection,
+  place, date, fragment, accent, blocks, author, chrome = true, seed = "preview", artDirection, veil = true,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#A66A3B";
   const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
@@ -75,7 +75,7 @@ export function ScrapbookView({
         </header>
       ) : null}
 
-      <StoryFrame veil accent={safeAccent}>
+      <StoryFrame veil={veil} accent={safeAccent}>
         <div className="sb-scatter">
           {cards.map((c, i) => {
             const r = (hash(`${seed}-r-${i}`) - 0.5) * 6.5;

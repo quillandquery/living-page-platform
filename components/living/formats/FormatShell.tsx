@@ -46,8 +46,9 @@ export function hashAt(s: string): number {
 }
 
 export function FormatShell({
-  variant, header, footer, wrap, flat = true, accent, artDirection, seed = "preview", blocks,
+  variant, header, footer, wrap, flat = true, veil = true, accent, artDirection, seed = "preview", blocks,
 }: Pick<StoryViewData, "accent" | "artDirection" | "seed" | "blocks"> & {
+  veil?: boolean;
   variant: string;
   header?: React.ReactNode;
   footer?: React.ReactNode;
@@ -64,7 +65,7 @@ export function FormatShell({
     <main className={`frame story-reading fmt-${variant} ${flat ? "fmt-flat" : ""} scheme-${scheme}`}>
       <style>{`:root{${vars}}`}</style>
       {header}
-      <StoryFrame veil accent={safeAccent}>
+      <StoryFrame veil={veil} accent={safeAccent}>
         {beats.map((b, i) => {
           const beat = (
             <Beat voice={b.voice} body={b.body} move={b.move} gesture={b.gesture} seed={i * 7 + 3}>
