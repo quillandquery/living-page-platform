@@ -28,6 +28,17 @@ export function FormatSelect({
     try { sessionStorage.setItem("lp-preview", JSON.stringify(data)); } catch { /* no-op */ }
   }, [data]);
 
+  // arrow-key flipping, like a console select
+  useEffect(() => {
+    const i = formats.indexOf(value);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); onSelect(formats[(i + 1) % formats.length]); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); onSelect(formats[(i - 1 + formats.length) % formats.length]); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [formats, value, onSelect]);
+
   const src = (k: FormatKey, chrome?: boolean) => `/preview-tile?as=${k}${chrome ? "&chrome=1" : ""}`;
 
   return (
@@ -48,7 +59,13 @@ export function FormatSelect({
           ))}
         </div>
         <div className="fs-stage">
-          <iframe key={value} className="fs-stage-if" src={src(value, true)} title="Preview" />
+          <div className="fs-screen" key={value}>
+            <iframe className="fs-stage-if" src={src(value, true)} title="Preview" />
+          </div>
+          <div className="fs-plate">
+            <span className="fs-plate-name">{FORMATS[value].label}</span>
+            <span className="fs-plate-blurb">{FORMATS[value].blurb}</span>
+          </div>
         </div>
       </div>
     </div>
