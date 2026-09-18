@@ -16,7 +16,7 @@ const code = (seed: string, i: number) => `NO ${String(Math.floor(hashAt(`${seed
 /* ── LETTER — correspondence: intimate column, dateline, a sign-off ── */
 export function LetterView(p: StoryViewData) {
   return (
-    <FormatShell variant="letter" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="letter" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="lt-head">
           <Back />
@@ -34,7 +34,7 @@ export function LetterView(p: StoryViewData) {
 /* ── POSTER — one enormous line, a few loud panels ── */
 export function PosterView(p: StoryViewData) {
   return (
-    <FormatShell variant="poster" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="poster" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="ps-head">
           <Back />
@@ -49,7 +49,7 @@ export function PosterView(p: StoryViewData) {
 /* ── BOARDING PASS — travel-native: each beat a perforated stub ── */
 export function TicketView(p: StoryViewData) {
   return (
-    <FormatShell variant="ticket" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="ticket" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="tk-head"><Back /><span className="tk-dest">{p.place}</span><span className="tk-tag">boarding pass</span></header>
       ) : null}
@@ -63,7 +63,7 @@ export function TicketView(p: StoryViewData) {
 /* ── FIELD NOTES — graph paper, numbered entries, margin sketches ── */
 export function NotebookView(p: StoryViewData) {
   return (
-    <FormatShell variant="notebook" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="notebook" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="nb-head"><Back /><h1 className="nb-title">{p.place}</h1>{p.date ? <span className="nb-date">{p.date}</span> : null}</header>
       ) : null}
@@ -81,7 +81,7 @@ export function NotebookView(p: StoryViewData) {
 /* ── GALLERY — each beat a captioned plate on a wall ── */
 export function GalleryView(p: StoryViewData) {
   return (
-    <FormatShell variant="gallery" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="gallery" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="gl-head"><Back /><h1 className="gl-title">{p.place}</h1>{p.fragment ? <p className="gl-sub">{p.fragment}</p> : null}</header>
       ) : null}
@@ -98,7 +98,7 @@ export function GalleryView(p: StoryViewData) {
 /* ── FILM — letterboxed dark, subtitle lines, a title card ── */
 export function FilmView(p: StoryViewData) {
   return (
-    <FormatShell variant="film" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="film" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="fl-head"><Back /><h1 className="fl-title">{p.place}</h1>{p.fragment ? <p className="fl-sub">{p.fragment}</p> : null}</header>
       ) : null}
@@ -109,7 +109,7 @@ export function FilmView(p: StoryViewData) {
 /* ── CUT-UP — ransom-note absurdist: the story escapes the grid ── */
 export function RansomView(p: StoryViewData) {
   return (
-    <FormatShell variant="ransom" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="ransom" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="rn-head"><Back /><h1 className="rn-title">{p.place}</h1></header>
       ) : null}
@@ -120,7 +120,7 @@ export function RansomView(p: StoryViewData) {
 /* ── MARQUEE — a lit sign at night, each line glowing ── */
 export function MarqueeView(p: StoryViewData) {
   return (
-    <FormatShell variant="marquee" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="marquee" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="mq-head"><Back /><h1 className="mq-title">{p.place}</h1></header>
       ) : null}
@@ -131,7 +131,7 @@ export function MarqueeView(p: StoryViewData) {
 /* ── POSTCARD — a stamped card, the message written across it ── */
 export function PostcardView(p: StoryViewData) {
   return (
-    <FormatShell variant="postcard-card" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil}
+    <FormatShell variant="postcard-card" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="pc-head">
           <Back />

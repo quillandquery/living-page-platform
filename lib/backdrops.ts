@@ -158,7 +158,7 @@ export function worldVars(b: Backdrop | null, accent: string): string {
     `--ink-base:${inkB}`, `--soft-base:${softB}`, `--mute-base:${muteB}`,
     `--grain:${dark ? ".055" : ".035"}`,
     `color-scheme:${dark ? "dark" : "light"}`,
-    `--paper:color-mix(in oklab, var(--accent) calc(${e.p}% + var(--depth) * 5%), var(--stock))`,
+    `--paper:color-mix(in oklab, var(--accent) calc(${e.p}% + var(--depth, 0) * 5%), var(--stock))`,
     `--paper-2:color-mix(in oklab, var(--accent) ${e.p2}%, var(--stock-2))`,
     `--paper-3:color-mix(in oklab, var(--accent) ${e.p3}%, var(--stock-3))`,
     `--ink:color-mix(in oklab, var(--accent) ${e.ink}%, var(--ink-base))`,

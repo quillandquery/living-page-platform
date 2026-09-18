@@ -2,6 +2,7 @@ import React, { Fragment } from "react";
 import { Beat } from "@/components/living/Beat";
 import { StoryFrame } from "@/components/living/StoryFrame";
 import { worldVars } from "@/lib/backdrops";
+import { paletteStyle } from "@/lib/palette-style";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
 import type { StoryViewData } from "@/components/living/StoryView";
 import type { Block } from "@/lib/story-blocks.mjs";
@@ -46,9 +47,10 @@ export function hashAt(s: string): number {
 }
 
 export function FormatShell({
-  variant, header, footer, wrap, flat = true, veil = true, accent, artDirection, seed = "preview", blocks,
+  variant, header, footer, wrap, flat = true, veil = true, scoped = false, accent, artDirection, seed = "preview", blocks,
 }: Pick<StoryViewData, "accent" | "artDirection" | "seed" | "blocks"> & {
   veil?: boolean;
+  scoped?: boolean;
   variant: string;
   header?: React.ReactNode;
   footer?: React.ReactNode;
@@ -62,8 +64,8 @@ export function FormatShell({
   const beats = beatsFrom(blocks);
 
   return (
-    <main className={`frame story-reading fmt-${variant} ${flat ? "fmt-flat" : ""} scheme-${scheme}`}>
-      <style>{`:root{${vars}}`}</style>
+    <main className={`frame story-reading fmt-${variant} ${flat ? "fmt-flat" : ""} scheme-${scheme}`} style={scoped ? paletteStyle(vars) : undefined}>
+      {scoped ? null : <style>{`:root{${vars}}`}</style>}
       {header}
       <StoryFrame veil={veil} accent={safeAccent}>
         {beats.map((b, i) => {

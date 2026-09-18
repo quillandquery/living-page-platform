@@ -106,7 +106,7 @@ export function paletteVars(p: Palette, seed = 0): string {
     `--ink-base:${p.inkBase}`, `--soft-base:${p.softBase}`, `--mute-base:${p.muteBase}`,
     `--grain:${p.grain}`,
     `color-scheme:${p.scheme}`,
-    `--paper:color-mix(in oklab, var(--accent) calc(${m.p}% + var(--depth) * 5%), var(--stock))`,
+    `--paper:color-mix(in oklab, var(--accent) calc(${m.p}% + var(--depth, 0) * 5%), var(--stock))`,
     `--paper-2:color-mix(in oklab, var(--accent) ${m.p2}%, var(--stock-2))`,
     `--paper-3:color-mix(in oklab, var(--accent) ${m.p3}%, var(--stock-3))`,
     `--ink:color-mix(in oklab, var(--accent) ${m.ink}%, var(--ink-base))`,

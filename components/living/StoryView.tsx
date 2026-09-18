@@ -6,6 +6,7 @@ import { Artwork } from "./Artwork";
 import { Signature } from "./Signature";
 import { Doodle } from "@/components/doodles/Doodle";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
+import { paletteStyle } from "@/lib/palette-style";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
@@ -33,6 +34,8 @@ export type StoryViewData = {
   author?: { handle: string; display_name: string; href?: string } | null;
   /** the studio preview turns the frontispiece and chrome off */
   chrome?: boolean;
+  /** scope the palette to this element (for many previews on one screen) */
+  scoped?: boolean;
   seed?: string;
   /** Story Visual System 2.0 — absent or `{}` for a row saved before it
    *  existed; the shell then renders exactly as it always has. */
@@ -46,7 +49,7 @@ export type StoryViewData = {
 
 export function StoryView({
   place, date, fragment, accent, backdrop, veil = true, blocks, author, chrome = true, seed = "preview", more,
-  artDirection,
+  artDirection, scoped = false,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
@@ -68,8 +71,8 @@ export function StoryView({
   const materialVars = ad ? `--material-grain:${ad.material.grain};--material-contrast:${ad.material.contrast};--art-rotate:${ad.typography.rotateBias}deg;` : "";
 
   return (
-    <main className={shellClass}>
-      <style>{`:root{${vars};${materialVars}}`}</style>
+    <main className={shellClass} style={scoped ? paletteStyle(`${vars};${materialVars}`) : undefined}>
+      {scoped ? null : <style>{`:root{${vars};${materialVars}}`}</style>}
       <Backdrop name={ad?.environment.key ?? (backdrop ?? undefined)} seed={seed} ambient={ad?.ambientMotion} scheme={ad?.palette?.scheme} />
       {ad ? <div className="material-layer" /> : null}
       {ad ? <Artwork pieces={ad.artwork} seed={seed} /> : null}

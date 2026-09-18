@@ -3,6 +3,7 @@ import { Beat } from "@/components/living/Beat";
 import { StoryFrame } from "@/components/living/StoryFrame";
 import { Doodle } from "@/components/doodles/Doodle";
 import { worldVars } from "@/lib/backdrops";
+import { paletteStyle } from "@/lib/palette-style";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
 import type { StoryViewData } from "@/components/living/StoryView";
 import type { Block } from "@/lib/story-blocks.mjs";
@@ -51,7 +52,7 @@ function hash(s: string): number {
 }
 
 export function ScrapbookView({
-  place, date, fragment, accent, blocks, author, chrome = true, seed = "preview", artDirection, veil = true,
+  place, date, fragment, accent, blocks, author, chrome = true, seed = "preview", artDirection, veil = true, scoped = false,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#A66A3B";
   const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
@@ -60,8 +61,8 @@ export function ScrapbookView({
   const cards = toCards(blocks);
 
   return (
-    <main className={`frame story-reading sb-board scheme-${scheme}`}>
-      <style>{`:root{${vars}}`}</style>
+    <main className={`frame story-reading sb-board scheme-${scheme}`} style={scoped ? paletteStyle(vars) : undefined}>
+      {scoped ? null : <style>{`:root{${vars}}`}</style>}
 
       {chrome ? (
         <header className="sb-head">

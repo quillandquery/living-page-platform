@@ -6,7 +6,7 @@ import { annotate, toBlocks } from "@/lib/annotate";
 import { Beat } from "@/components/living/Beat";
 import { Hold } from "@/components/living/Scene";
 import { Backdrop } from "@/components/living/Backdrop";
-import { StoryView } from "@/components/living/StoryView";
+import { FormatSelect } from "@/components/living/FormatSelect";
 import { getBackdrop } from "@/lib/backdrops";
 import { type Body, type Gesture, type Move, type Voice } from "@/lib/vocabulary";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
@@ -15,7 +15,6 @@ import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
 import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, type FormatKey } from "@/lib/formats";
-import { ScrapbookView } from "@/components/living/formats/ScrapbookView";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
@@ -166,7 +165,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
         <span className="ed-save">{pending ? "saving…" : status ? status.text : "draft"}</span>
         <span className="ed-bar-r">
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
-          <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); setReveal(true); }}>See it come alive →</button>
+          <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>See it come alive →</button>
           <button className="ed-ghost" disabled={pending} onClick={() => run(saveDraftAction, "save")}>Save</button>
           <button className="ed-pub" disabled={pending} onClick={() => run(publishAction, "publish", true)}>{published ? "Update" : "Publish"}</button>
         </span>
@@ -243,14 +242,16 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       </div>
       {reveal ? (
         <div className="ed-reveal">
-          <button className="ed-reveal-close" onClick={() => setReveal(false)}>← keep editing</button>
-          {format === "scrapbook"
-            ? <ScrapbookView place={place} date={date} fragment={fragment} accent={accent}
-                     backdrop={world} veil={veil} blocks={blocks} seed={story.id}
-                     artDirection={artDirection} chrome />
-            : <StoryView place={place} date={date} fragment={fragment} accent={accent}
-                     backdrop={world} veil={veil} blocks={blocks} seed={story.id}
-                     artDirection={artDirection} chrome />}
+          <FormatSelect
+            data={{ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection }}
+            formats={fitting}
+            value={format}
+            onSelect={(k) => setFmt(k)}
+            onClose={() => setReveal(false)}
+            onPublish={() => { run(publishAction, "publish", true); }}
+            publishing={pending}
+            published={published}
+          />
         </div>
       ) : null}
     </main>
