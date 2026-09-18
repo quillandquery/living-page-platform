@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { FORMATS, type FormatKey } from "@/lib/formats";
+import { FormatCover } from "@/components/living/FormatCover";
 import type { StoryViewData } from "@/components/living/StoryView";
 
 /**
@@ -41,9 +42,7 @@ export function FormatSelect({
           {formats.map((k) => (
             <button key={k} type="button" role="option" aria-selected={k === value}
               className={`fs-tile${k === value ? " is-active" : ""}`} onClick={() => onSelect(k)}>
-              <span className="fs-tile-frame">
-                <iframe className="fs-tile-if" src={src(k)} title={FORMATS[k].label} tabIndex={-1} scrolling="no" loading="lazy" />
-              </span>
+              <span className="fs-tile-frame"><FormatCover k={k} /></span>
               <span className="fs-tile-name">{FORMATS[k].label}</span>
             </button>
           ))}
