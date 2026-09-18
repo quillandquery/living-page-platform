@@ -1700,7 +1700,7 @@ a{ color: inherit; }
 
 /* ── POSTER ── */
 .fmt-poster{ text-align: center; }
-.ps-head{ max-width: 60rem; margin: 0 auto 4rem; padding-top: 3rem; }
+.ps-head{ max-width: 60rem; margin: 0 auto 2.4rem; padding-top: 2.4rem; }
 .ps-kicker{ font-family: var(--f-mono); letter-spacing: .28em; text-transform: uppercase; font-size: .72rem; color: var(--accent); }
 .ps-hero{ font-family: var(--f-disp); font-weight: 700; font-size: clamp(2.6rem, 9vw, 6rem); line-height: .98; margin: .6rem 0 0; color: var(--ink); text-wrap: balance; }
 .fmt-poster .flow{ max-width: 46rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(2.5rem, 8vh, 6rem); align-items: center; }
@@ -1768,7 +1768,7 @@ a{ color: inherit; }
 .mq-head{ text-align: center; margin: 0 auto 6vh; }
 .mq-title{ font-family: var(--f-disp); font-weight: 700; font-size: clamp(2.4rem, 8vw, 5rem); color: var(--accent); text-transform: uppercase; text-shadow: 0 0 12px var(--accent), 0 0 34px color-mix(in oklab, var(--accent) 60%, transparent); }
 .fmt-marquee .flow{ max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(2rem, 8vh, 4rem); text-align: center; }
-.fmt-marquee .words{ font-family: var(--f-mono); font-size: clamp(1.1rem, 2.4vw, 1.6rem); letter-spacing: .04em; color: #fff; text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 70%, transparent); }
+.fmt-marquee .words{ font-family: var(--f-mono); font-size: clamp(1.1rem, 2.4vw, 1.6rem); letter-spacing: .04em; color: color-mix(in oklab, var(--accent) 30%, #fff); text-shadow: 0 0 6px var(--accent), 0 0 20px color-mix(in oklab, var(--accent) 75%, transparent); }
 
 /* ── POSTCARD ── */
 .fmt-postcard-card{ padding-block: clamp(2rem, 6vw, 4rem) 8rem; }
@@ -1829,6 +1829,6 @@ a{ color: inherit; }
 .fmt-poster .v-shout .word, .fmt-poster .b-scattered .word, .fmt-poster .v-drift .word{ transform: none; } /* keep the hero legible */
 
 /* MARQUEE — force a true neon of the story's own hue so the sign glows */
-.fmt-marquee{ --accent: oklch(from var(--accent) 0.76 0.27 h); }
-.fmt-marquee .mq-title{ text-shadow: 0 0 10px var(--accent), 0 0 28px var(--accent), 0 0 60px color-mix(in oklab, var(--accent) 70%, transparent); }
+.fmt-marquee{ --accent: oklch(from var(--accent) 0.72 0.32 h); background: radial-gradient(120% 80% at 50% 0%, color-mix(in oklab, var(--accent) 14%, #0b0a10), #0b0a10 70%); }
+.fmt-marquee .mq-title{ color: #fff; text-shadow: 0 0 6px #fff, 0 0 16px var(--accent), 0 0 34px var(--accent), 0 0 70px var(--accent); }
 .fmt-marquee .words{ color: #fff; text-shadow: 0 0 6px var(--accent), 0 0 18px color-mix(in oklab, var(--accent) 60%, transparent); }
