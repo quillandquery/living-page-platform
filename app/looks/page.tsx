@@ -1,4 +1,5 @@
 import { StoryStage } from "@/components/living/StoryStage";
+import { FormatSelectDemo } from "@/components/living/FormatSelectDemo";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection } from "@/lib/art-direction/generate";
 import { isFormatKey, fittingFormats, resolveFormat } from "@/lib/formats";
@@ -25,9 +26,9 @@ A stranger shared her umbrella and said nothing the whole way.
 I thought I wanted to leave. Turns out I just wanted someone to ask me to stay.`;
 
 export default async function LooksPreview(
-  { searchParams }: { searchParams: Promise<{ as?: string; look?: string; seed?: string; veil?: string }> },
+  { searchParams }: { searchParams: Promise<{ as?: string; look?: string; seed?: string; veil?: string; select?: string }> },
 ) {
-  const { as, look, seed: seedRaw, veil } = await searchParams;
+  const { as, look, seed: seedRaw, veil, select } = await searchParams;
   const seed = Number(seedRaw) || 7;
   const lookOverride = isFormatKey(look) ? undefined : (look as LookKey | undefined);
 
@@ -38,6 +39,16 @@ export default async function LooksPreview(
   const fitting = fittingFormats(blocks);
   const format = resolveFormat(as, blocks, { look: ad.look });
   const qs = look ? `?look=${look}` : "";
+
+  if (select === "1") {
+    return (
+      <FormatSelectDemo
+        data={{ place: "Somewhere", date: "", fragment: "a bad day with a good view", accent: ad.accent, backdrop: ad.environment.key, blocks, seed: "looks-preview", artDirection: ad }}
+        formats={fitting}
+        initial={format}
+      />
+    );
+  }
 
   return (
     <StoryStage
