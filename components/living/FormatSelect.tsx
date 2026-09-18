@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { FORMATS, type FormatKey } from "@/lib/formats";
-import { FormatCover } from "@/components/living/FormatCover";
+import { FormatWheel } from "@/components/living/FormatWheel";
 import type { StoryViewData } from "@/components/living/StoryView";
 
 /**
@@ -12,11 +12,12 @@ import type { StoryViewData } from "@/components/living/StoryView";
  * Picking one sets the story's format; Publish keeps it.
  */
 export function FormatSelect({
-  data, formats, value, onSelect, onClose, onPublish, publishing, published,
+  data, formats, value, autoKey, onSelect, onClose, onPublish, publishing, published,
 }: {
   data: StoryViewData;
   formats: FormatKey[];
   value: FormatKey;
+  autoKey: FormatKey;
   onSelect: (k: FormatKey) => void;
   onClose: () => void;
   onPublish: () => void;
@@ -49,14 +50,8 @@ export function FormatSelect({
         <button className="fs-pub" onClick={onPublish} disabled={publishing}>{published ? "Update" : "Publish"}</button>
       </div>
       <div className="fs-body">
-        <div className="fs-rail" role="listbox" aria-label="Format">
-          {formats.map((k) => (
-            <button key={k} type="button" role="option" aria-selected={k === value}
-              className={`fs-tile${k === value ? " is-active" : ""}`} onClick={() => onSelect(k)}>
-              <span className="fs-tile-frame"><FormatCover k={k} /></span>
-              <span className="fs-tile-name">{FORMATS[k].label}</span>
-            </button>
-          ))}
+        <div className="fs-wheelpane">
+          <FormatWheel formats={formats} value={value} autoKey={autoKey} onSelect={onSelect} />
         </div>
         <div className="fs-stage">
           <div className="fs-screen" key={value}>

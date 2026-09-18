@@ -2,7 +2,7 @@ import { StoryStage } from "@/components/living/StoryStage";
 import { FormatSelectDemo } from "@/components/living/FormatSelectDemo";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection } from "@/lib/art-direction/generate";
-import { isFormatKey, fittingFormats, resolveFormat } from "@/lib/formats";
+import { isFormatKey, fittingFormats, curatedFormats, resolveFormat } from "@/lib/formats";
 import type { LookKey } from "@/lib/art-direction/looks";
 import { annotate, toBlocks } from "@/lib/annotate";
 
@@ -37,14 +37,16 @@ export default async function LooksPreview(
   const blocks = toBlocks(annotate(SAMPLE, { doodleDensity: 6, voiceBudget: 0.4, seed }));
 
   const fitting = fittingFormats(blocks);
-  const format = resolveFormat(as, blocks, { look: ad.look });
+  const curated = curatedFormats(blocks, ad.atmosphere?.mood);
+  const rawFormat = resolveFormat(as, blocks, { look: ad.look });
+  const format = curated.includes(rawFormat) ? rawFormat : curated[0];
   const qs = look ? `?look=${look}` : "";
 
   if (select === "1") {
     return (
       <FormatSelectDemo
         data={{ place: "Somewhere", date: "", fragment: "a bad day with a good view", accent: ad.accent, backdrop: ad.environment.key, blocks, seed: "looks-preview", artDirection: ad }}
-        formats={fitting}
+        formats={curated}
         initial={format}
       />
     );
@@ -53,7 +55,7 @@ export default async function LooksPreview(
   return (
     <StoryStage
       format={format}
-      formats={fitting}
+      formats={Array.from(new Set([format, ...curated]))}
       basePath={`/looks${qs}`}
       place="Somewhere"
       date=""

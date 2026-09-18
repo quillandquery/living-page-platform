@@ -60,3 +60,34 @@ export function resolveFormat(
   if (isFormatKey(opts.authorDefault) && fit.includes(opts.authorDefault)) return opts.authorDefault;
   return inferFormat(blocks, opts.look);
 }
+
+/* ── curation: offer a story its best few formats, not all eleven ────── */
+const AFFINITY: Record<FormatKey, string[]> = {
+  standard: [],
+  scrapbook: ["playful", "chaotic", "warm"],
+  letter: ["quiet", "romantic", "raw"],
+  poster: ["raw", "cinematic", "restless"],
+  ticket: ["restless", "warm", "cinematic"],
+  notebook: ["quiet", "warm", "playful"],
+  gallery: ["cinematic", "quiet", "romantic"],
+  film: ["cinematic", "raw", "dreamy"],
+  ransom: ["chaotic", "playful", "restless"],
+  marquee: ["restless", "chaotic", "cinematic"],
+  postcard: ["warm", "romantic", "dreamy"],
+};
+const BASE: Partial<Record<FormatKey, number>> = {
+  scrapbook: 1.0, letter: 0.9, poster: 0.8, postcard: 0.8, film: 0.7,
+  ticket: 0.7, gallery: 0.6, notebook: 0.5, marquee: 0.5, ransom: 0.4,
+};
+
+/** the story's best ~n formats (standard always first), ranked by how well
+ *  each medium suits the story's mood — so the picker stays a tasteful few. */
+export function curatedFormats(blocks: Block[], mood?: string, n = 6): FormatKey[] {
+  const fit = new Set(fittingFormats(blocks));
+  const others = FORMAT_KEYS.filter((k) => k !== "standard" && fit.has(k))
+    .map((k) => ({ k, s: (mood && AFFINITY[k].includes(mood) ? 2 : 0) + (BASE[k] ?? 0.3) }))
+    .sort((a, b) => b.s - a.s)
+    .slice(0, Math.max(0, n - 1))
+    .map((x) => x.k);
+  return ["standard", ...others];
+}

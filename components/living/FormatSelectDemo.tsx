@@ -10,10 +10,11 @@ export function FormatSelectDemo({
   data, formats, initial,
 }: { data: StoryViewData; formats: FormatKey[]; initial: FormatKey }) {
   const [value, setValue] = useState<FormatKey>(initial);
+  const autoKey = formats[1] ?? formats[0];
   return (
     <div style={{ position: "fixed", inset: 0 }}>
       <FormatSelect
-        data={data} formats={formats} value={value}
+        data={data} formats={formats} value={value} autoKey={autoKey}
         onSelect={setValue} onClose={() => {}} onPublish={() => {}}
         publishing={false} published={false}
       />

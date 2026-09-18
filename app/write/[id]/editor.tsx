@@ -14,7 +14,7 @@ import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
-import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, type FormatKey } from "@/lib/formats";
+import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, curatedFormats, type FormatKey } from "@/lib/formats";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
@@ -135,7 +135,10 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
 
   // Format is the one explicit choice now (palette/style follow automatically).
   const fitting = useMemo(() => fittingFormats(blocks), [blocks]);
+  const curated = useMemo(() => curatedFormats(blocks, artDirection.atmosphere?.mood), [blocks, artDirection]);
   const format = resolveFormat(fmtSel === "auto" ? undefined : fmtSel, blocks, { look: artDirection.look });
+  const selValue = curated.includes(format) ? format : curated[0];
+  const autoKey = curated[1] ?? curated[0];
 
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
@@ -167,7 +170,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
           <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>See it come alive →</button>
           <button className="ed-ghost" disabled={pending} onClick={() => run(saveDraftAction, "save")}>Save</button>
-          <button className="ed-pub" disabled={pending} onClick={() => run(publishAction, "publish", true)}>{published ? "Update" : "Publish"}</button>
+          <button className="ed-pub" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>{published ? "Update" : "Publish"}</button>
         </span>
       </header>
 
@@ -244,8 +247,9 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
         <div className="ed-reveal">
           <FormatSelect
             data={{ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection }}
-            formats={fitting}
-            value={format}
+            formats={curated}
+            value={selValue}
+            autoKey={autoKey}
             onSelect={(k) => setFmt(k)}
             onClose={() => setReveal(false)}
             onPublish={() => { run(publishAction, "publish", true); }}
