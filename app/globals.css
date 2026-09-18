@@ -1778,3 +1778,57 @@ a{ color: inherit; }
 .fmt-postcard-card .flow{ max-width: 44rem; margin: 0 auto; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 5px; padding: clamp(1.6rem, 4vw, 3rem); box-shadow: 0 16px 32px -18px rgba(0,0,0,.4); }
 .fmt-postcard-card .beat{ padding-block: 0; margin-block: clamp(.8rem, 4vh, 1.8rem); }
 .fmt-postcard-card .words{ font-family: var(--f-hand); font-size: 1.3rem; line-height: 1.5; }
+
+/* ══ FORMAT PICKER — a character-select for "Read as —" ══════════════ */
+.fp-trigger{
+  position: fixed; z-index: 200; left: 50%; bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: .6rem;
+  padding: .5rem .9rem; border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(20,18,16,.86); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 10px 26px -10px rgba(0,0,0,.55);
+}
+.fp-tg{ display: grid; place-items: center; color: #fff; }
+.fp-tl{ display: flex; flex-direction: column; line-height: 1.05; text-align: left; font-family: var(--f-mono); font-size: .82rem; }
+.fp-tl small{ font-size: .54rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.fp-tc{ color: rgba(255,255,255,.6); font-size: .8rem; }
+
+.fp-scrim{
+  position: fixed; inset: 0; z-index: 300; display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(10,9,8,.5); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  animation: fp-fade .2s ease both;
+}
+@keyframes fp-fade{ from{ opacity: 0; } to{ opacity: 1; } }
+.fp-panel{
+  width: min(46rem, 100%); max-height: 82vh; overflow-y: auto;
+  background: #17140f; color: #f4f1ea; border-radius: 18px 18px 0 0;
+  padding: 1.2rem 1.2rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -20px 50px -20px rgba(0,0,0,.6);
+  animation: fp-rise .28s cubic-bezier(.2,.8,.25,1) both;
+}
+@media (min-width: 720px){ .fp-scrim{ align-items: center; } .fp-panel{ border-radius: 18px; } }
+@keyframes fp-rise{ from{ transform: translateY(14px); opacity: 0; } to{ transform: none; opacity: 1; } }
+.fp-head{ display: flex; align-items: center; justify-content: space-between; margin: .2rem .3rem 1rem; font-family: var(--f-mono); font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.fp-x{ background: none; border: 0; color: rgba(255,255,255,.6); font-size: .9rem; cursor: pointer; }
+.fp-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .7rem; }
+.fp-card{
+  display: flex; flex-direction: column; gap: .35rem; text-decoration: none;
+  padding: .9rem .85rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.03); color: #f4f1ea; transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.fp-card:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.07); }
+.fp-card.is-active{ border-color: #fff; background: rgba(255,255,255,.12); }
+.fp-card-g{ color: #fff; opacity: .92; }
+.fp-card-n{ font-family: var(--f-disp); font-size: 1.05rem; }
+.fp-card-b{ font-family: var(--f-mono); font-size: .6rem; line-height: 1.35; letter-spacing: .02em; color: rgba(255,255,255,.5); }
+
+/* ══ TUNING ═══════════════════════════════════════════════════════════ */
+/* POSTER — tighter, every line big and inked (no watery/shrunk voices) */
+.fmt-poster .flow{ gap: clamp(1.6rem, 4vh, 3rem); }
+.fmt-poster .words{ font-family: var(--f-disp) !important; font-size: clamp(1.5rem, 3.8vw, 2.7rem) !important; line-height: 1.15 !important; color: var(--ink) !important; font-style: normal !important; max-width: 20ch; }
+.fmt-poster .v-shout .word, .fmt-poster .b-scattered .word, .fmt-poster .v-drift .word{ transform: none; } /* keep the hero legible */
+
+/* MARQUEE — force a true neon of the story's own hue so the sign glows */
+.fmt-marquee{ --accent: oklch(from var(--accent) 0.76 0.27 h); }
+.fmt-marquee .mq-title{ text-shadow: 0 0 10px var(--accent), 0 0 28px var(--accent), 0 0 60px color-mix(in oklab, var(--accent) 70%, transparent); }
+.fmt-marquee .words{ color: #fff; text-shadow: 0 0 6px var(--accent), 0 0 18px color-mix(in oklab, var(--accent) 60%, transparent); }

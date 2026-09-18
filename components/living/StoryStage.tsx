@@ -4,7 +4,7 @@ import {
   LetterView, PosterView, TicketView, NotebookView, GalleryView,
   FilmView, RansomView, MarqueeView, PostcardView,
 } from "@/components/living/formats/library";
-import { FormatSwitcher } from "@/components/living/FormatSwitcher";
+import { FormatPicker } from "@/components/living/FormatPicker";
 import type { FormatKey } from "@/lib/formats";
 
 const RENDERERS: Partial<Record<FormatKey, (p: StoryViewData) => React.ReactNode>> = {
@@ -32,7 +32,7 @@ export function StoryStage({
   return (
     <>
       {Render ? Render(data) : <StoryView {...data} />}
-      <FormatSwitcher formats={formats} active={format} basePath={basePath} />
+      <FormatPicker formats={formats} active={format} basePath={basePath} />
     </>
   );
 }
