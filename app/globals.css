@@ -63,7 +63,7 @@
 }
 
 @media (prefers-color-scheme: dark){
-  :root:not(:has(.story-reading)):not(:has(.wander)){
+  :root:not(:has(.story-reading)):not(:has(.wander)):not(:has(.author-page)){
     /* only the bases move; every derivation above still holds, so the
        story's colour tints the dark ground the same way it tints paper */
     --stock:     #131417;
