@@ -6,20 +6,26 @@ import type { StorySeed, SeedForm } from "./discover";
  * `buildSeed()` (lib/discover.ts) picks each story's archetype from that
  * story's own content signals -- the same function Wander uses to build its
  * field, deliberately left untouched here so nothing about Wander changes.
- * A field of many strangers' stories absorbs a run of similar archetypes
- * without anyone noticing; a single author's small, intimate archive does
- * not -- three of someone's nine stories landing on bare "giant word" reads
- * as repetition, not honesty to the content (design treatment §5.2: "a
- * thirty-story archive that renders thirty identical cards is the failure
- * mode this whole system exists to prevent" -- the same logic just shows up
- * sooner at nine).
+ * A field of many strangers' stories absorbs several seeds landing on the
+ * same archetype without anyone noticing; a single author's small archive
+ * does not -- several of an author's punchy one-line stories can easily all
+ * score highest on bare "giant word", which reads as repetition rather than
+ * honesty to the content once it's someone's own shelf instead of Wander's
+ * open field (design treatment §5.2).
  *
- * This never invents a new archetype and never randomizes: it only steps in
- * once three ADJACENT seeds would render identically, and only reassigns
- * the middle one, to a form the seed's own already-computed signals still
- * plausibly support. Two of a kind is left alone -- the doc is explicit
- * that "a three-story archive that happens to produce three postcards is
- * fine ... that's honest to the content."
+ * First version of this only reassigned a form when three ADJACENT array
+ * entries matched. That under-fired in practice: an archive can have, say,
+ * four of nine stories land on "giant-word" while never having three of
+ * them literally back-to-back in story order (a couple of floating-thought
+ * or handwritten pieces sitting between them is enough to dodge the
+ * adjacency check) -- so the repetition a visitor actually sees on the page
+ * went untouched. This version instead caps how many times any ONE
+ * archetype may appear across the WHOLE archive: the first two uses of a
+ * form are left alone (the doc: "a three-story archive that happens to
+ * produce three postcards is fine ... honest to the content"), and every
+ * use after that gets reassigned to whichever eligible alternate form has
+ * been used least so far, so no single archetype can come to dominate a
+ * small archive no matter how it's distributed through the story list.
  *
  * Every field a form's SeedBody switch reads (place, date, hook,
  * chargedWord, dominantVoice, doodle, secondDoodle, themes) is populated on
@@ -41,30 +47,45 @@ function tierFor(form: SeedForm, energy: StorySeed["energy"]): StorySeed["tier"]
   return "mid";
 }
 
-/** A deterministic, content-aware alternative to `exclude` -- richer
- * signals (a second doodle, a real backdrop) earn first claim on the forms
- * built to show them off; every seed can always fall through to the plain
- * forms. */
-function alternateFormFor(seed: StorySeed, exclude: SeedForm): SeedForm {
+const ALL_FORMS: SeedForm[] = [
+  "paper-scrap", "typographic", "floating-thought", "micro-scene", "postcard", "collage", "giant-word",
+];
+
+/** A deterministic, content-aware alternative to `exclude`, preferring
+ * whichever eligible form has been used least so far in THIS archive (so
+ * reassignments spread out rather than piling onto a second favourite).
+ * Richer signals (a second doodle, a real backdrop) earn first claim on the
+ * forms built to show them off; every seed can always fall through to the
+ * plain forms that only need what every seed already has. */
+function alternateFormFor(seed: StorySeed, exclude: SeedForm, used: Map<SeedForm, number>): SeedForm {
   const candidates: SeedForm[] = [];
   if (seed.secondDoodle) candidates.push("collage", "micro-scene");
   if (seed.backdrop) candidates.push("postcard");
-  candidates.push("paper-scrap", "typographic", "floating-thought", "micro-scene", "postcard", "collage", "giant-word");
+  candidates.push(...ALL_FORMS);
   const pool = candidates.filter((f) => f !== exclude);
-  return pool[hash(seed.key) % pool.length];
+
+  let bestCount = Infinity;
+  for (const f of pool) bestCount = Math.min(bestCount, used.get(f) ?? 0);
+  const tied = pool.filter((f) => (used.get(f) ?? 0) === bestCount);
+  return tied[hash(seed.key) % tied.length];
 }
 
-/** Walk the archive once; wherever three seeds in a row share a form,
- * reassign the middle one. A single left-to-right pass is enough -- fixing
- * seed i can only ever create a NEW run starting at i, never resurrect the
- * one just broken, so longer runs (four, five, ...) resolve correctly too. */
+/** Walk the archive once, left to right, tracking how many times each
+ * archetype has been used. A form's 3rd (and every later) appearance gets
+ * reassigned; its first two are left exactly as buildSeed chose them. */
 export function diversifyArchetypes(seeds: StorySeed[]): StorySeed[] {
   if (seeds.length < 3) return seeds;
   const out = seeds.slice();
-  for (let i = 1; i < out.length - 1; i++) {
-    if (out[i - 1].form === out[i].form && out[i].form === out[i + 1].form) {
-      const form = alternateFormFor(out[i], out[i].form);
+  const used = new Map<SeedForm, number>();
+  for (let i = 0; i < out.length; i++) {
+    const original = out[i].form;
+    const priorUses = used.get(original) ?? 0;
+    if (priorUses >= 2) {
+      const form = alternateFormFor(out[i], original, used);
       out[i] = { ...out[i], form, tier: tierFor(form, out[i].energy) };
+      used.set(form, (used.get(form) ?? 0) + 1);
+    } else {
+      used.set(original, priorUses + 1);
     }
   }
   return out;
