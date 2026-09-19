@@ -13,6 +13,16 @@ import type { StoryViewData } from "@/components/living/StoryView";
 const Back = () => <Link href="/" className="back">back</Link>;
 const code = (seed: string, i: number) => `NO ${String(Math.floor(hashAt(`${seed}-${i}`) * 900 + 100))}`;
 
+/** Story → author, in every format the reader might have switched to —
+ *  not just the standard/scrapbook views. Same relationship, same
+ *  target (`/@handle`), just dressed to match each stage. */
+const FormatByline = ({ author }: Pick<StoryViewData, "author">) =>
+  author ? (
+    <p className="byline">
+      by <Link href={author.href ?? `/@${author.handle}`}>{author.display_name || `@${author.handle}`}</Link>
+    </p>
+  ) : null;
+
 /* ── LETTER — correspondence: intimate column, dateline, a sign-off ── */
 export function LetterView(p: StoryViewData) {
   return (
@@ -25,7 +35,11 @@ export function LetterView(p: StoryViewData) {
         </header>
       ) : null}
       footer={p.chrome ? (
-        <footer className="lt-foot"><p className="lt-sign">— {p.author ? `@${p.author.handle}` : "me"}</p></footer>
+        <footer className="lt-foot">
+          <p className="lt-sign">
+            — {p.author ? <Link href={p.author.href ?? `/@${p.author.handle}`}>@{p.author.handle}</Link> : "me"}
+          </p>
+        </footer>
       ) : null}
     />
   );
@@ -40,6 +54,7 @@ export function PosterView(p: StoryViewData) {
           <Back />
           <p className="ps-kicker">{p.place}</p>
           {p.fragment ? <h1 className="ps-hero">{p.fragment}</h1> : null}
+          <FormatByline author={p.author} />
         </header>
       ) : null}
     />
@@ -51,7 +66,10 @@ export function TicketView(p: StoryViewData) {
   return (
     <FormatShell variant="ticket" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="tk-head"><Back /><span className="tk-dest">{p.place}</span><span className="tk-tag">boarding pass</span></header>
+        <header className="tk-head">
+          <Back /><span className="tk-dest">{p.place}</span><span className="tk-tag">boarding pass</span>
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
       wrap={(beat, _info, i) => (
         <div className="tk-stub"><span className="tk-code">{code(String(p.seed), i)}</span><div className="tk-body">{beat}</div></div>
@@ -65,7 +83,10 @@ export function NotebookView(p: StoryViewData) {
   return (
     <FormatShell variant="notebook" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="nb-head"><Back /><h1 className="nb-title">{p.place}</h1>{p.date ? <span className="nb-date">{p.date}</span> : null}</header>
+        <header className="nb-head">
+          <Back /><h1 className="nb-title">{p.place}</h1>{p.date ? <span className="nb-date">{p.date}</span> : null}
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
       wrap={(beat, info, i) => (
         <div className="nb-entry">
@@ -83,7 +104,10 @@ export function GalleryView(p: StoryViewData) {
   return (
     <FormatShell variant="gallery" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="gl-head"><Back /><h1 className="gl-title">{p.place}</h1>{p.fragment ? <p className="gl-sub">{p.fragment}</p> : null}</header>
+        <header className="gl-head">
+          <Back /><h1 className="gl-title">{p.place}</h1>{p.fragment ? <p className="gl-sub">{p.fragment}</p> : null}
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
       wrap={(beat, info, i) => (
         <figure className="gl-plate">
@@ -100,7 +124,10 @@ export function FilmView(p: StoryViewData) {
   return (
     <FormatShell variant="film" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="fl-head"><Back /><h1 className="fl-title">{p.place}</h1>{p.fragment ? <p className="fl-sub">{p.fragment}</p> : null}</header>
+        <header className="fl-head">
+          <Back /><h1 className="fl-title">{p.place}</h1>{p.fragment ? <p className="fl-sub">{p.fragment}</p> : null}
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
     />
   );
@@ -111,7 +138,10 @@ export function RansomView(p: StoryViewData) {
   return (
     <FormatShell variant="ransom" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="rn-head"><Back /><h1 className="rn-title">{p.place}</h1></header>
+        <header className="rn-head">
+          <Back /><h1 className="rn-title">{p.place}</h1>
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
     />
   );
@@ -122,7 +152,10 @@ export function MarqueeView(p: StoryViewData) {
   return (
     <FormatShell variant="marquee" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
-        <header className="mq-head"><Back /><h1 className="mq-title">{p.place}</h1></header>
+        <header className="mq-head">
+          <Back /><h1 className="mq-title">{p.place}</h1>
+          <FormatByline author={p.author} />
+        </header>
       ) : null}
     />
   );
@@ -137,6 +170,7 @@ export function PostcardView(p: StoryViewData) {
           <Back />
           <span className="pc-stamp"><Doodle name={p.artDirection && "signature" in p.artDirection ? (p.artDirection.signature?.doodle ?? "spiral") : "spiral"} seed={19} size={36} ink="var(--accent)" /></span>
           <span className="pc-dest">{p.place}{p.date ? ` · ${p.date}` : ""}</span>
+          <FormatByline author={p.author} />
         </header>
       ) : null}
     />

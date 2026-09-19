@@ -1,18 +1,51 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Doodle } from "@/components/doodles/Doodle";
-import { writerStories } from "@/lib/db";
+import { writerStories, currentUser } from "@/lib/db";
+import { buildSeeds } from "@/lib/discover";
+import { getArchiveVibe, getArchiveLabel } from "@/lib/archive-vibe";
+import { AuthorArchive } from "@/components/profile/AuthorArchive";
+import type { StoryWithAuthor } from "@/lib/types";
 
-/** `/@handle` — a writer's shelf. Also answers `/handle` without the @. */
+/** `/@handle` — a writer's public page. Also answers `/handle` without the @. */
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const { handle } = await params;
   const data = await writerStories(clean(handle));
   if (!data) return {};
-  const name = data.author.display_name || `@${data.author.handle}`;
-  return { title: `${name} — The Living Page`, description: data.author.bio || `Travel writing by @${data.author.handle}.` };
+  const { author, stories } = data;
+  const name = author.display_name?.trim() && author.display_name.trim() !== author.handle
+    ? author.display_name.trim()
+    : `@${author.handle}`;
+  const title = `${name} — Living Page`;
+  const description = author.bio?.trim()
+    ? author.bio.trim()
+    : stories.length
+      ? `${name}'s Living Page — ${stories.length} ${stories.length === 1 ? "story" : "stories"}.`
+      : `${name}'s Living Page.`;
+  const url = `${SITE_URL}/@${author.handle}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Living Page",
+      type: "profile",
+      ...(author.avatar_url ? { images: [author.avatar_url] } : {}),
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function WriterPage({ params }: { params: Promise<{ handle: string }> }) {
@@ -21,34 +54,65 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
   if (!data) notFound();
   const { author, stories } = data;
 
+  const user = await currentUser();
+  const isOwner = user?.id === author.id;
+
+  const hasDisplayName = !!author.display_name?.trim() && author.display_name.trim() !== author.handle;
+  const name = hasDisplayName ? author.display_name.trim() : `@${author.handle}`;
+  const bio = author.bio?.trim() || "";
+
+  const withAuthor: StoryWithAuthor[] = stories.map((s) => ({ ...s, author }));
+  const seeds = buildSeeds(withAuthor);
+  const vibe = getArchiveVibe(stories);
+  const label = getArchiveLabel(vibe, author.id);
+
+  const url = `${SITE_URL}/@${author.handle}`;
+  const personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url,
+    ...(author.avatar_url ? { image: author.avatar_url } : {}),
+    ...(bio ? { description: bio } : {}),
+  };
+
   return (
-    <main className="frame">
-      <nav className="topnav"><Link href="/" className="topnav-link">all pages</Link></nav>
+    <main className="frame author-page">
+      {/* Person structured data — only what's actually known about this
+          profile; nothing invented (no fabricated sameAs links, no fake
+          socials). See docs in the SEO strategy note on E-E-A-T. */}
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd).replace(/</g, "\\u003c") }}
+      />
 
-      <section className="archive">
-        <h1 className="archive-title">
-          {author.display_name || `@${author.handle}`}
-          <span className="archive-sub">@{author.handle}{author.bio ? ` · ${author.bio}` : ""}</span>
-        </h1>
+      <nav className="topnav">
+        <Link href="/wander" className="topnav-link">wander</Link>
+      </nav>
 
-        {stories.length === 0 ? (
-          <p className="hint">@{author.handle} hasn&rsquo;t published anything yet.</p>
+      <section className="author-head">
+        {author.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={author.avatar_url} alt="" className="author-avatar" />
         ) : null}
-
-        <ul className="doorways">
-          {stories.map((s) => (
-            <li key={s.id}>
-              <Link href={`/@${author.handle}/${s.slug}`} className="doorway" style={{ ["--accent" as string]: s.accent }}>
-                <span className="place">{s.place}</span>
-                <span className="doorway-line">{s.fragment}</span>
-                <span className="doorway-mark" aria-hidden="true">
-                  <Doodle name="arrow" seed={s.slug.length * 13} size={64} ink="var(--accent)" />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <h1 className="author-name">{name}</h1>
+        {hasDisplayName ? <p className="author-handle">@{author.handle}</p> : null}
+        {bio ? <p className="author-bio">{bio}</p> : null}
       </section>
+
+      {stories.length === 0 ? (
+        <section className="author-empty">
+          <p className="author-empty-line">Nothing here yet.</p>
+          <p className="author-empty-sub">Which is probably about to change.</p>
+          {isOwner ? <Link href="/make" className="author-empty-cta">write something →</Link> : null}
+        </section>
+      ) : (
+        <>
+          <p className="archive-label">{label}</p>
+          <AuthorArchive seeds={seeds} />
+        </>
+      )}
     </main>
   );
 }

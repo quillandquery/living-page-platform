@@ -1707,7 +1707,7 @@ a{ color: inherit; }
 .fmt-poster .words{ font-family: var(--f-disp); font-size: clamp(1.4rem, 3.4vw, 2.4rem); line-height: 1.2; }
 
 /* ── BOARDING PASS ── */
-.tk-head{ max-width: 40rem; margin: 0 auto 2rem; padding-top: 2rem; display: flex; align-items: baseline; gap: 1rem; }
+.tk-head{ max-width: 40rem; margin: 0 auto 2rem; padding-top: 2rem; display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
 .tk-dest{ font-family: var(--f-disp); font-size: 1.8rem; color: var(--ink); }
 .tk-tag{ margin-left: auto; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
 .fmt-ticket .flow{ max-width: 40rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(1.8rem, 6vh, 3.4rem); }
@@ -1719,7 +1719,7 @@ a{ color: inherit; }
 
 /* ── FIELD NOTES ── */
 .fmt-notebook{ background-image: linear-gradient(var(--rule-2) 1px, transparent 1px), linear-gradient(90deg, var(--rule-2) 1px, transparent 1px); background-size: 1.5rem 1.5rem; }
-.nb-head{ max-width: 42rem; margin: 0 auto 2rem; padding-top: 2rem; display: flex; align-items: baseline; gap: 1rem; }
+.nb-head{ max-width: 42rem; margin: 0 auto 2rem; padding-top: 2rem; display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
 .nb-title{ font-family: var(--f-hand); font-size: 2.2rem; color: var(--ink); }
 .nb-date{ margin-left: auto; font-family: var(--f-mono); font-size: .66rem; color: var(--mute); }
 .fmt-notebook .flow{ max-width: 42rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(1.8rem, 6vh, 3.4rem); }
@@ -1751,6 +1751,8 @@ a{ color: inherit; }
 .fmt-film .flow{ max-width: 42rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(3rem, 12vh, 8rem); text-align: center; }
 .fmt-film .words{ font-family: var(--f-body); font-size: clamp(1.2rem, 2.6vw, 1.7rem); line-height: 1.4; color: #f2f0ea; }
 .fmt-film .back, .fmt-marquee .back{ color: rgba(255,255,255,.6); }
+.fmt-film .byline, .fmt-marquee .byline{ color: rgba(255,255,255,.55); }
+.fmt-film .byline a, .fmt-marquee .byline a{ color: rgba(255,255,255,.85); }
 
 /* ── CUT-UP (ransom) ── */
 .rn-head{ margin: 0 auto 3rem; padding-top: 2rem; text-align: center; }
@@ -1772,7 +1774,7 @@ a{ color: inherit; }
 
 /* ── POSTCARD ── */
 .fmt-postcard-card{ padding-block: clamp(2rem, 6vw, 4rem) 8rem; }
-.pc-head{ max-width: 44rem; margin: 0 auto 1.2rem; display: flex; align-items: center; gap: 1rem; }
+.pc-head{ max-width: 44rem; margin: 0 auto 1.2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .pc-stamp{ margin-left: auto; border: 1px solid var(--rule); padding: .3rem; transform: rotate(4deg); }
 .pc-dest{ font-family: var(--f-mono); font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
 .fmt-postcard-card .flow{ max-width: 44rem; margin: 0 auto; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 5px; padding: clamp(1.6rem, 4vw, 3rem); box-shadow: 0 16px 32px -18px rgba(0,0,0,.4); }
@@ -1904,3 +1906,93 @@ a{ color: inherit; }
 .fs-hub:hover{ border-color: rgba(244,238,228,.5); box-shadow: 0 18px 38px -14px rgba(46,42,36,.7); transform: translate(-50%,-50%) scale(1.05); }
 .fs-hub-t{ font-family: var(--f-disp); font-size: 1rem; line-height: 1.05; }
 .fs-hub-s{ font-family: var(--f-mono); font-size: .52rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(244,238,228,.62); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE AUTHOR PAGE — /@handle
+   A person's own corner, not a directory listing and not Wander's field.
+   Reuses the Story Seed unit (see components/wander/StorySeed.tsx) inside
+   a narrower, quieter composition: a shelf, not a gallery. The header
+   feels like the top of a page in someone's notebook; the archive grows
+   out of it rather than sitting below it in a separate box.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.author-page{ padding: 12vh 0 10vh; }
+
+.author-head{
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: .35rem; margin-bottom: 4.5rem; max-width: 40rem;
+}
+.author-avatar{
+  width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover;
+  margin-bottom: .75rem;
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--rule-2);
+}
+.author-name{
+  font-family: var(--f-disp); font-weight: 400;
+  font-size: clamp(2.25rem, 5.5vw, 3.75rem); line-height: 1.02;
+  letter-spacing: -.02em; margin: 0;
+}
+.author-handle{
+  font-family: var(--f-mono); font-size: .75rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute); margin: .1rem 0 0;
+}
+.author-bio{
+  font-family: var(--f-hand); font-size: clamp(1.1rem, 2vw, 1.4rem);
+  color: var(--ink-soft); line-height: 1.5; margin: .8rem 0 0;
+  max-width: 32ch; white-space: pre-line;
+}
+
+.archive-label{
+  font-family: var(--f-hand); font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  color: var(--mute); margin: 0 0 2.75rem; padding-top: 1.75rem;
+  border-top: 1px solid var(--rule-2);
+}
+
+.author-empty{ padding: 3rem 0 10vh; max-width: 28rem; }
+.author-empty-line{
+  font-family: var(--f-disp); font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--ink-soft); margin: 0 0 .3rem;
+}
+.author-empty-sub{ font-family: var(--f-hand); font-size: 1.1rem; color: var(--mute); margin: 0 0 1.6rem; }
+.author-empty-cta{
+  font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent); text-decoration: none;
+}
+.author-empty-cta:hover{ text-decoration: underline; }
+
+/* — the archive itself: CSS multi-column, no grid measuring, reflows free — */
+.author-archive{
+  list-style: none; margin: 0; padding: 0 0 8vh;
+  column-count: 2; column-gap: 3rem;
+}
+.author-archive > .scrap{
+  width: 100%; break-inside: avoid; -webkit-column-break-inside: avoid;
+  margin: 0 0 2.2rem;
+  transform: translateX(calc(var(--nudge, 0) * 1.6rem));
+}
+.author-archive.density-sparse{ column-count: 1; max-width: 34rem; }
+.author-archive.density-sparse > .scrap{ margin-bottom: calc(2.6rem + var(--lift, 0rem)); }
+.author-archive.density-grown > .scrap{ margin-bottom: calc(1.9rem + var(--lift, 0rem) * .7); }
+.author-archive.density-full{ column-gap: 2.2rem; }
+.author-archive.density-full > .scrap{ margin-bottom: calc(1.3rem + var(--lift, 0rem) * .5); }
+@media (min-width: 1100px){ .author-archive.density-full{ column-count: 3; } }
+@media (max-width: 720px){
+  .author-archive{ column-count: 1 !important; }
+  .author-archive > .scrap{ transform: none; margin-bottom: 2rem; }
+}
+
+/* seeds here render without Wander's IntersectionObserver (there's no field
+   to scroll into) — visible by default, a plain CSS entrance instead of a
+   JS-gated one, so the stories are never invisible without JS. Author is
+   already implicit on this page, so the seed's own author/read-time line
+   is redundant here; the place + "Read →" affordance stays. */
+.author-archive .seed{ opacity: 1; animation: scrap-in .6s cubic-bezier(.2,.8,.3,1); }
+.author-archive .seed:not(.arrived){ transform: rotate(var(--rot, 0deg)); }
+.author-archive .seed-meta{ display: none; }
+@keyframes scrap-in{
+  from{ opacity: 0; transform: rotate(var(--rot, 0deg)) translateY(.5em); }
+  to{ opacity: 1; transform: rotate(var(--rot, 0deg)); }
+}
+@media (prefers-reduced-motion: reduce){
+  .author-archive .seed{ animation: none; }
+}

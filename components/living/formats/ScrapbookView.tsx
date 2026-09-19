@@ -102,7 +102,7 @@ export function ScrapbookView({
       {chrome ? (
         <footer className="sb-foot">
           <span className="sb-stamp small" aria-hidden="true"><em>{place}{date ? ` · ${date}` : ""}</em></span>
-          {author ? <Link href={`/@${author.handle}`} className="back sb-back">@{author.handle}</Link> : null}
+          {author ? <Link href={author.href ?? `/@${author.handle}`} className="back sb-back">@{author.handle}</Link> : null}
           <Link href="/" className="back sb-back">the rest of them</Link>
         </footer>
       ) : null}
