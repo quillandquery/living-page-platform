@@ -21,11 +21,11 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
     ? author.display_name.trim()
     : `@${author.handle}`;
   const title = `${name} — Living Page`;
+  // Doc §12: bio verbatim where present; otherwise a neutral, non-generic
+  // fallback — never a story count (that's UI chrome, not identity).
   const description = author.bio?.trim()
     ? author.bio.trim()
-    : stories.length
-      ? `${name}'s Living Page — ${stories.length} ${stories.length === 1 ? "story" : "stories"}.`
-      : `${name}'s Living Page.`;
+    : "A Living Page author profile.";
   const url = `${SITE_URL}/@${author.handle}`;
 
   return {

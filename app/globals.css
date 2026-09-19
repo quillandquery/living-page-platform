@@ -1909,23 +1909,28 @@ a{ color: inherit; }
 
 /* ══════════════════════════════════════════════════════════════════════
    THE AUTHOR PAGE — /@handle
-   A person's own corner, not a directory listing and not Wander's field.
-   Reuses the Story Seed unit (see components/wander/StorySeed.tsx) inside
-   a narrower, quieter composition: a shelf, not a gallery. The header
-   feels like the top of a page in someone's notebook; the archive grows
-   out of it rather than sitting below it in a separate box.
+   The governing metaphor: Wander is a gallery — expansive, many worlds
+   colliding. This is a room — one person's corner, intimate, accumulated.
+   The header is a centred "title page" (name → handle → bio), narrowing
+   toward the collection label rather than sitting in a divided card above
+   a grid, so the archive reads as growing out of the person. Every piece
+   below wears a small strip of tape in its own accent colour — the one
+   mark Wander's field never has — and the field itself is capped at two
+   columns always; it gets denser through tighter whitespace as the author
+   publishes more, never through an added column or a count.
    ══════════════════════════════════════════════════════════════════════ */
 
 .author-page{ padding: 12vh 0 10vh; }
 
 .author-head{
-  display: flex; flex-direction: column; align-items: flex-start;
-  gap: .35rem; margin-bottom: 4.5rem; max-width: 40rem;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: .35rem; margin: 0 auto 3.5rem; max-width: 32rem;
 }
+/* a contact-sheet photo, not an app avatar: no ring, no drop shadow, no
+   circular crop — just a small, slightly placed rectangle. */
 .author-avatar{
-  width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover;
-  margin-bottom: .75rem;
-  box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--rule-2);
+  width: 4.5rem; height: 5.4rem; object-fit: cover; display: block;
+  margin: 0 auto .9rem; transform: rotate(-1.4deg);
 }
 .author-name{
   font-family: var(--f-disp); font-weight: 400;
@@ -1938,17 +1943,24 @@ a{ color: inherit; }
 }
 .author-bio{
   font-family: var(--f-hand); font-size: clamp(1.1rem, 2vw, 1.4rem);
-  color: var(--ink-soft); line-height: 1.5; margin: .8rem 0 0;
-  max-width: 32ch; white-space: pre-line;
+  color: var(--ink-soft); line-height: 1.5; margin: .8rem auto 0;
+  max-width: 30ch; white-space: pre-line;
 }
 
+/* the collection label: an editor's section title, not a UI chrome label —
+   a different voice again from the name (display serif) and the bio
+   (handwritten), so the hierarchy reads name → bio → editorial aside. No
+   divider rule: the whitespace above narrows on purpose, so this feels
+   like it grows out of the header rather than a card and then a grid. */
 .archive-label{
-  font-family: var(--f-hand); font-size: clamp(1.3rem, 2.4vw, 1.9rem);
-  color: var(--mute); margin: 0 0 2.75rem; padding-top: 1.75rem;
-  border-top: 1px solid var(--rule-2);
+  font-family: var(--f-disp); font-style: italic; font-weight: 400;
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--mute); text-align: center;
+  margin: 0 auto 3rem; padding-top: 2.5rem; max-width: 30rem;
 }
 
-.author-empty{ padding: 3rem 0 10vh; max-width: 28rem; }
+.author-empty{ padding: 1rem 0 10vh; max-width: 28rem; margin: 0 auto; text-align: center; }
 .author-empty-line{
   font-family: var(--f-disp); font-size: clamp(1.5rem, 3vw, 2rem);
   color: var(--ink-soft); margin: 0 0 .3rem;
@@ -1960,39 +1972,63 @@ a{ color: inherit; }
 }
 .author-empty-cta:hover{ text-decoration: underline; }
 
-/* — the archive itself: CSS multi-column, no grid measuring, reflows free — */
+/* — the archive: capped at two columns always. Density is felt through
+   tighter whitespace as it grows, never an added column or a counter. — */
 .author-archive{
   list-style: none; margin: 0; padding: 0 0 8vh;
-  column-count: 2; column-gap: 3rem;
+  column-count: 2; column-gap: 2.4rem;
 }
+.author-archive.density-sparse{ column-count: 1; max-width: 32rem; }
+
 .author-archive > .scrap{
+  position: relative;
   width: 100%; break-inside: avoid; -webkit-column-break-inside: avoid;
-  margin: 0 0 2.2rem;
   transform: translateX(calc(var(--nudge, 0) * 1.6rem));
 }
-.author-archive.density-sparse{ column-count: 1; max-width: 34rem; }
-.author-archive.density-sparse > .scrap{ margin-bottom: calc(2.6rem + var(--lift, 0rem)); }
-.author-archive.density-grown > .scrap{ margin-bottom: calc(1.9rem + var(--lift, 0rem) * .7); }
-.author-archive.density-full{ column-gap: 2.2rem; }
-.author-archive.density-full > .scrap{ margin-bottom: calc(1.3rem + var(--lift, 0rem) * .5); }
-@media (min-width: 1100px){ .author-archive.density-full{ column-count: 3; } }
-@media (max-width: 720px){
-  .author-archive{ column-count: 1 !important; }
-  .author-archive > .scrap{ transform: none; margin-bottom: 2rem; }
+.author-archive.density-sparse > .scrap{ margin: 0 0 calc(2.8rem + var(--lift, 0rem)); }
+.author-archive.density-grown > .scrap{ margin: 0 0 calc(1.8rem + var(--lift, 0rem) * .7); }
+.author-archive.density-full > .scrap{ margin: 0 0 calc(1.2rem + var(--lift, 0rem) * .5); }
+
+/* the tape — the one mark Wander's field never has. A strip in the piece's
+   own accent colour, pinning it in place; flat, no shadow-heavy realism,
+   just a graphic mark in keeping with the rest of the site's restraint. */
+.scrap-tape{
+  position: absolute; z-index: 3; left: var(--tape-x, 20%);
+  width: 2.6rem; height: .8rem;
+  background: color-mix(in oklab, var(--accent, var(--ink)) 55%, var(--paper) 25%);
+  opacity: .68; transform: rotate(var(--tape-rot, -4deg));
+  pointer-events: none;
 }
+.scrap-tape-top .scrap-tape{ top: -.4rem; }
+.scrap-tape-corner .scrap-tape{ top: -.35rem; left: auto; right: 8%; width: 2.1rem; }
 
 /* seeds here render without Wander's IntersectionObserver (there's no field
-   to scroll into) — visible by default, a plain CSS entrance instead of a
-   JS-gated one, so the stories are never invisible without JS. Author is
-   already implicit on this page, so the seed's own author/read-time line
-   is redundant here; the place + "Read →" affordance stays. */
+   to scroll through) — visible by default, a plain CSS entrance instead of
+   a JS-gated one, so a piece is never invisible without JS. */
 .author-archive .seed{ opacity: 1; animation: scrap-in .6s cubic-bezier(.2,.8,.3,1); }
 .author-archive .seed:not(.arrived){ transform: rotate(var(--rot, 0deg)); }
-.author-archive .seed-meta{ display: none; }
+
+/* Wander's rest → approach → hover cycle stays (the object notices you),
+   just quieter: no "Read →" affordance and no author/read-time (both
+   redundant on the author's own page), and the place caption reads
+   hand-set rather than a mono field-discovery chip. */
+.author-archive .seed-peek{ font-family: var(--f-hand); }
+.author-archive .seed-place{
+  font-family: var(--f-hand); font-size: 1rem; letter-spacing: 0;
+  text-transform: none; color: var(--mute);
+}
+.author-archive .seed-meta,
+.author-archive .seed-cta{ display: none; }
+
 @keyframes scrap-in{
   from{ opacity: 0; transform: rotate(var(--rot, 0deg)) translateY(.5em); }
   to{ opacity: 1; transform: rotate(var(--rot, 0deg)); }
 }
 @media (prefers-reduced-motion: reduce){
   .author-archive .seed{ animation: none; }
+}
+@media (max-width: 720px){
+  .author-archive{ column-count: 1 !important; }
+  .author-archive > .scrap{ transform: none; margin: 0 0 2rem !important; }
+  .scrap-tape{ width: 2.1rem; }
 }
