@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { writerStories, currentUser } from "@/lib/db";
 import { buildSeeds } from "@/lib/discover";
 import { getArchiveVibe, getArchiveLabel } from "@/lib/archive-vibe";
+import { diversifyArchetypes } from "@/lib/archive-composition";
 import { AuthorArchive } from "@/components/profile/AuthorArchive";
 import type { StoryWithAuthor } from "@/lib/types";
 
@@ -62,7 +63,7 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
   const bio = author.bio?.trim() || "";
 
   const withAuthor: StoryWithAuthor[] = stories.map((s) => ({ ...s, author }));
-  const seeds = buildSeeds(withAuthor);
+  const seeds = diversifyArchetypes(buildSeeds(withAuthor));
   const vibe = getArchiveVibe(stories);
   const label = getArchiveLabel(vibe, author.id);
 
