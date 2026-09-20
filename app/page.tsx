@@ -3,6 +3,24 @@ import Link from "next/link";
 import { Doodle } from "@/components/doodles/Doodle";
 import { TryIt } from "@/components/home/TryIt";
 
+/** The four writer entry points — same copy/hrefs as the shipped Phase 1
+ *  homepage (commit 83c0c44), restored per feedback. All four go to /make;
+ *  which mode you land in is /make's own concern, not re-implemented here. */
+const MODES = [
+  { key: "story", label: "Something happened.", cta: "Start a story" },
+  { key: "moment", label: "Something tiny you can't forget.", cta: "Capture a moment" },
+  { key: "thought", label: "Something sitting in your head.", cta: "Put it somewhere" },
+  { key: "freeform", label: "Don't know yet? That's fine.", cta: "Just start" },
+] as const;
+
+/** Three real-feeling glimpses of what a page can look like — restored
+ *  alongside the mode grid. All three point at /wander (né /explore). */
+const EXAMPLES = [
+  { place: "GOKARNA", line: "The night bus, and the ten minutes after I got down.", accent: "var(--electric)" },
+  { place: "A KITCHEN, 2AM", line: "Everyone was asleep. I wasn't.", accent: "var(--tomato)" },
+  { place: "THE 6:40 TRAIN", line: "I didn't expect to miss this place.", accent: "var(--grass)" },
+] as const;
+
 /**
  * THE FRONT DOOR (homepage P0 pass, see the P0 brief this session was
  * scoped from). Three jobs only: make the visitor understand what Living
@@ -74,6 +92,32 @@ export default function Home() {
           <TryIt />
         </div>
       </header>
+
+      {/* ── the four modes (restored, unchanged from the shipped homepage) ── */}
+      <section className="lp-sec">
+        <h2 className="lp-sec-h">You don&rsquo;t have to write a whole thing.</h2>
+        <div className="lp-modes">
+          {MODES.map((m) => (
+            <Link key={m.key} href="/make" className="lp-mode">
+              <span className="lp-mode-label">{m.label}</span>
+              <span className="lp-mode-cta">{m.cta} →</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── or just read something (restored) ── */}
+      <section className="lp-sec">
+        <h2 className="lp-sec-h">Or just read something.</h2>
+        <div className="lp-examples">
+          {EXAMPLES.map((e) => (
+            <Link key={e.place} href="/wander" className="lp-example" style={{ ["--a" as string]: e.accent }}>
+              <span className="ex-place">{e.place}</span>
+              <span className="ex-line">{e.line}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ── closing ── */}
       <section className="lp-close">
@@ -154,9 +198,10 @@ const CSS = `
 .lp-demo-kick{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--mute); margin:0 0 .9rem; }
 .tryit{ display:flex; flex-direction:column; gap:1rem; }
 
-.hero-page{ position:relative; background:var(--paper-2); border:1px solid var(--line); border-radius:18px;
-  padding:2.4rem 2.2rem; min-height:14rem; box-shadow:0 8px 20px rgba(26,24,22,.05); overflow:hidden;
-  display:flex; flex-direction:column; justify-content:center; }
+.hero-page{ position:relative; background:var(--paper-2); border:1px solid rgba(231,223,206,.55); border-radius:26px;
+  padding:2.4rem 2.2rem; min-height:14rem;
+  box-shadow:0 1px 2px rgba(26,24,22,.03), 0 24px 48px -14px rgba(26,24,22,.16), 0 10px 22px rgba(26,24,22,.05);
+  overflow:hidden; display:flex; flex-direction:column; justify-content:center; }
 .hero-line{ font-family:var(--f-body); font-size:1.35rem; line-height:1.5; margin:.2rem 0; color:var(--ink);
   transition:all .9s cubic-bezier(.2,.8,.3,1); }
 .ph-0 .hero-line{ color:var(--mute); font-size:1.15rem; letter-spacing:0; }
@@ -164,8 +209,9 @@ const CSS = `
 .ph-2 .hl-0{ font-family:var(--f-hand); font-size:1.5rem; color:var(--electric); transform:rotate(-1.5deg); }
 .ph-2 .hl-1{ color:var(--electric); font-style:italic; letter-spacing:.02em; opacity:.85; }
 .ph-2 .hl-2{ font-family:var(--f-disp); font-size:2.6rem; line-height:1.1; color:var(--tomato); }
-.hero-doodle{ position:absolute; right:1.4rem; top:1.2rem; width:56px; height:56px; opacity:0;
-  background:radial-gradient(circle at 50% 50%, var(--sun) 0%, transparent 62%); transition:opacity .8s ease; }
+.hero-doodle{ position:absolute; right:-1.4rem; top:-1.4rem; width:130px; height:130px; opacity:0;
+  background:radial-gradient(circle at 55% 45%, var(--sun) 0%, rgba(255,197,61,.45) 34%, transparent 72%);
+  transition:opacity .8s ease; }
 .ph-2 .hero-doodle{ opacity:1; animation:hb 3s ease-in-out infinite; }
 @keyframes hb{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.15); } }
 .hero-caret{ display:inline-block; width:.5em; height:1em; margin-left:.15em; background:var(--mute); vertical-align:-.15em;
@@ -219,6 +265,24 @@ const CSS = `
 .try-life:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(45,107,240,.4); }
 @keyframes try-life-pulse{ 0%,100%{ box-shadow:0 6px 16px rgba(45,107,240,.28); } 50%{ box-shadow:0 6px 20px rgba(45,107,240,.45); } }
 
+/* the four modes + read-something (restored from the shipped homepage) */
+.lp-sec{ max-width:66rem; margin:0 auto; padding:5vh max(1rem,4vw); border-top:1px solid var(--line); }
+.lp-sec-h{ font-family:var(--f-disp); font-weight:400; font-size:clamp(1.7rem,4vw,2.6rem); margin:0 0 1.6rem; }
+
+.lp-modes{ display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+.lp-mode{ background:var(--paper-2); border:1px solid var(--line); border-radius:14px; padding:1.4rem 1.5rem;
+  display:flex; flex-direction:column; gap:.8rem; transition:transform .2s cubic-bezier(.2,1.25,.3,1), border-color .2s; }
+.lp-mode:hover{ transform:translateY(-3px); border-color:var(--electric); }
+.lp-mode-label{ font-family:var(--f-disp); font-size:1.4rem; }
+.lp-mode-cta{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--electric); }
+
+.lp-examples{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.lp-example{ background:var(--paper-2); border:1px solid var(--line); border-left:3px solid var(--a,var(--electric));
+  border-radius:12px; padding:1.3rem 1.4rem; display:flex; flex-direction:column; gap:.6rem; transition:transform .2s; }
+.lp-example:hover{ transform:translateY(-3px); }
+.ex-place{ font-family:var(--f-mono); font-size:.68rem; letter-spacing:.1em; color:color-mix(in oklab,var(--a,var(--electric)) 70%,var(--ink)); }
+.ex-line{ font-family:var(--f-disp); font-size:1.25rem; line-height:1.25; }
+
 /* closing */
 .lp-close{ text-align:center; padding:12vh max(1rem,4vw) 8vh; border-top:1px solid var(--line); }
 .lp-close-kick{ font-family:var(--f-mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); margin:0; }
@@ -229,6 +293,8 @@ const CSS = `
 
 @media (max-width:820px){
   .lp-hero{ grid-template-columns:1fr; gap:2rem; }
+  .lp-modes{ grid-template-columns:1fr; }
+  .lp-examples{ grid-template-columns:1fr; }
 }
 @media (prefers-reduced-motion:reduce){
   .hero-line, .per-line, .hero-doodle, .hero-caret, .stage-tab, .lp-door, .try-life{ transition:none !important; animation:none !important; }
