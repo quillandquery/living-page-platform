@@ -86,7 +86,9 @@ export async function createProfileAction(_prev: AuthState, form: FormData): Pro
     return { error: error.code === "23505" ? `@${handle} is taken.` : error.message };
   }
 
-  redirect("/write");
+  // where they were headed before onboarding got in the way
+  const next = String(form.get("next") ?? "") || "/write";
+  redirect(next.startsWith("/") ? next : "/write");
 }
 
 export async function updateProfileAction(_prev: AuthState, form: FormData): Promise<AuthState> {

@@ -7,11 +7,18 @@ import { OnboardingForm } from "./form";
  * The one thing every writer does once: choose the name they write under.
  * If they already have a profile there is nothing to do here.
  */
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next: rawNext } = await searchParams;
+  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/write";
+
   const user = await currentUser();
   if (!user) redirect("/login");
   const profile = await myProfile();
-  if (profile) redirect("/write");
+  if (profile) redirect(next);
 
   const suggestion = (user.email ?? "").split("@")[0].toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
 
@@ -21,7 +28,7 @@ export default async function OnboardingPage() {
         <Link href="/" className="back">places</Link>
         <h1 className="gate-title">Pick a name to write under.</h1>
         <p className="gate-sub">It becomes your address on the site — living.page/@you — and it&rsquo;s hard to change later, so choose one you&rsquo;d sign.</p>
-        <OnboardingForm suggestion={suggestion} />
+        <OnboardingForm suggestion={suggestion} next={next} />
       </div>
     </main>
   );

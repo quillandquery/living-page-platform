@@ -34,7 +34,11 @@ export type StoryMode = "story" | "moment" | "thought" | "freeform";
  *  (a plain "new piece" from the desk), which still defaults to "story". */
 export async function createStoryAction(mode: StoryMode = "story") {
   const profile = await myProfile();
-  if (!profile) redirect("/onboarding");
+  // No profile yet (signed out, or signed in but never finished onboarding)
+  // — send them through onboarding/login and carry /make + the mode they
+  // picked along, so logging back in resumes the piece they were starting
+  // instead of dropping them on the desk.
+  if (!profile) redirect(`/onboarding?next=${encodeURIComponent(`/make?mode=${mode}`)}`);
 
   const supabase = await supabaseServer();
   // a placeholder slug unique to this row; the writer names it properly on save

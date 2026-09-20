@@ -39,9 +39,15 @@ export async function updateSession(request: NextRequest) {
   const protectedRoute = path.startsWith("/write") || path.startsWith("/settings") || path === "/onboarding";
 
   if (!user && protectedRoute) {
+    // Carry the FULL original destination (path + its own query — e.g. an
+    // /onboarding?next=/make already set by createStoryAction) through to
+    // login, not just the bare path, or a chained redirect loses whatever
+    // it was trying to get back to.
+    const dest = path + request.nextUrl.search;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", path);
+    url.search = "";
+    url.searchParams.set("next", dest);
     return NextResponse.redirect(url);
   }
 

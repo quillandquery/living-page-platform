@@ -3,11 +3,12 @@
 import { useActionState } from "react";
 import { createProfileAction, type AuthState } from "@/app/auth/actions";
 
-export function OnboardingForm({ suggestion }: { suggestion: string }) {
+export function OnboardingForm({ suggestion, next }: { suggestion: string; next?: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(createProfileAction, {});
 
   return (
     <form action={action} className="gate-form">
+      <input type="hidden" name="next" value={next ?? ""} />
       <label className="lab">handle
         <span className="handle-field">
           <span className="handle-at">@</span>

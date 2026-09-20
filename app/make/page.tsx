@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { createStoryAction } from "@/app/write/actions";
 import { track } from "@/lib/analytics/client";
 
@@ -10,6 +11,13 @@ import { track } from "@/lib/analytics/client";
  * before a word is written. Each starts a draft and drops the writer into the
  * editor. Client-driven with a pending state so a click always does something
  * (if you're not signed in, it routes you to sign in first).
+ *
+ * A click that needs auth doesn't dead-end here: createStoryAction sends the
+ * signed-out (or not-yet-onboarded) writer through login/onboarding with
+ * `?next=/make?mode=<mode>`, and coming back here with that `mode` in the
+ * URL replays the same click automatically — so logging in resumes the
+ * piece they were starting instead of stranding them on this picker (or,
+ * worse, on the desk).
  */
 
 const MODES = [
@@ -19,9 +27,11 @@ const MODES = [
   { label: "Don't know yet? That's fine.", prompt: "Type whatever is in your head.", cta: "Just start", mode: "freeform" as const },
 ];
 
-export default function Make() {
+function MakeInner() {
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const autoFired = useRef(false);
 
   const go = (i: number) => {
     setBusy(i);
@@ -30,6 +40,19 @@ export default function Make() {
     track("make_mode_selected", { mode: MODES[i].mode, label: MODES[i].label });
     start(() => { createStoryAction(MODES[i].mode); });
   };
+
+  // Coming back from login/onboarding mid-click: replay the mode the writer
+  // originally picked instead of stranding them on the picker again.
+  useEffect(() => {
+    if (autoFired.current) return;
+    const mode = searchParams.get("mode");
+    const i = MODES.findIndex((m) => m.mode === mode);
+    if (i >= 0) {
+      autoFired.current = true;
+      go(i);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <main className="mk">
@@ -53,6 +76,14 @@ export default function Make() {
       </div>
       {pending ? <div className="mk-loading">Opening your desk…</div> : null}
     </main>
+  );
+}
+
+export default function Make() {
+  return (
+    <Suspense fallback={<main className="mk" />}>
+      <MakeInner />
+    </Suspense>
   );
 }
 
