@@ -148,7 +148,6 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     .eq("author_id", profile.id);
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath("/write");
   revalidatePath(`/write/${input.id}`);
   revalidatePath("/");
   revalidatePath(`/@${profile.handle}`);
@@ -169,10 +168,6 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   return { ok: true, slug };
 }
 
-/** Bindable as a plain `<form action={...}>` (no args) — used by the
- *  dashboard's "start a new piece", which has no /make mode to report. */
-export async function createStoryFormAction() { return createStoryAction(); }
-
 export async function saveDraftAction(input: SaveInput) { return persist(input, null); }
 export async function publishAction(input: SaveInput) { return persist(input, true); }
 export async function unpublishAction(input: SaveInput) { return persist(input, false); }
@@ -182,6 +177,6 @@ export async function deleteStoryAction(id: string) {
   if (!profile) redirect("/login");
   const supabase = await supabaseServer();
   await supabase.from("stories").delete().eq("id", id).eq("author_id", profile.id);
-  revalidatePath("/write");
-  redirect("/write");
+  revalidatePath(`/@${profile.handle}`);
+  redirect(`/@${profile.handle}`);
 }

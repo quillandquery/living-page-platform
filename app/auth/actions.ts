@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
+import { myProfile } from "@/lib/db";
 
 /**
  * AUTH, AS SERVER ACTIONS.
@@ -28,8 +29,13 @@ export async function signInAction(_prev: AuthState, form: FormData): Promise<Au
   if (error) return { error: error.message };
 
   // where they were headed before the wall
-  const next = String(form.get("next") ?? "") || "/write";
-  redirect(next.startsWith("/") ? next : "/write");
+  const rawNext = String(form.get("next") ?? "");
+  if (rawNext.startsWith("/")) redirect(rawNext);
+
+  // no specific destination — their own page if they have one, or finish
+  // setting one up if they don't
+  const profile = await myProfile();
+  redirect(profile ? `/@${profile.handle}` : "/onboarding");
 }
 
 export async function signUpAction(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -87,8 +93,8 @@ export async function createProfileAction(_prev: AuthState, form: FormData): Pro
   }
 
   // where they were headed before onboarding got in the way
-  const next = String(form.get("next") ?? "") || "/write";
-  redirect(next.startsWith("/") ? next : "/write");
+  const rawNext = String(form.get("next") ?? "");
+  redirect(rawNext.startsWith("/") ? rawNext : `/@${handle}`);
 }
 
 export async function updateProfileAction(_prev: AuthState, form: FormData): Promise<AuthState> {

@@ -13,12 +13,12 @@ export default async function OnboardingPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next: rawNext } = await searchParams;
-  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/write";
+  const next = rawNext && rawNext.startsWith("/") ? rawNext : "";
 
   const user = await currentUser();
   if (!user) redirect("/login");
   const profile = await myProfile();
-  if (profile) redirect(next);
+  if (profile) redirect(next || `/@${profile.handle}`);
 
   const suggestion = (user.email ?? "").split("@")[0].toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
 

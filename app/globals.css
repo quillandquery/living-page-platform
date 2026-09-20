@@ -898,31 +898,6 @@ a{ color: inherit; }
 .lab-check{ flex-direction: row; align-items: center; gap: .5rem; text-transform: none; letter-spacing: 0; font-size: .8rem; color: var(--ink-soft); }
 .lab-check input{ width: auto !important; }
 
-/* — the desk: a writer's own pieces — */
-.desk{ max-width: 52rem; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
-.desk-bar{
-  display: flex; align-items: center; gap: 1.1rem;
-  padding-bottom: 1rem; border-bottom: 1px solid var(--rule);
-}
-.desk-mark{ font-family: var(--f-hand); font-size: 1.3rem; color: var(--ink); }
-.desk-bar .back, .desk-bar .linklike{ font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .08em; text-transform: uppercase; }
-.desk-head{ display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 3rem 0 1rem; }
-.desk-title{ font-family: var(--f-disp); font-weight: 400; font-size: clamp(2rem, 6vw, 3rem); margin: 0; color: var(--ink); }
-.desk-empty{ margin-top: 2rem; }
-.desk-section{ font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 2.4rem 0 .6rem; }
-.desk-list{ list-style: none; margin: 0; padding: 0; }
-.desk-item{
-  display: grid; grid-template-columns: 12rem 1fr auto; align-items: baseline; gap: 1rem;
-  padding: 1rem .4rem; border-bottom: 1px solid var(--rule-2); text-decoration: none;
-}
-.desk-item:hover{ background: color-mix(in oklab, var(--accent) 5%, transparent); }
-.desk-place{ font-family: var(--f-disp); font-size: 1.35rem; color: color-mix(in oklab, var(--accent) 55%, var(--ink)); }
-.desk-frag{ font-size: .95rem; color: var(--ink-soft); line-height: 1.5; }
-.desk-badge{ font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .45rem; border-radius: 2px; white-space: nowrap; }
-.desk-badge.draft{ color: var(--mute); border: 1px solid var(--rule); }
-.desk-badge.live{ color: var(--accent); }
-@media (max-width: 640px){ .desk-item{ grid-template-columns: 1fr; gap: .3rem; } }
-
 /* — editor extras — */
 .mode-seg{ display: inline-flex; gap: .25rem; border: 1px solid var(--rule); border-radius: 3px; padding: .2rem; width: max-content; }
 .mode-seg button{

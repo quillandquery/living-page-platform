@@ -165,7 +165,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       <style>{CSS}</style>
 
       <header className="ed-bar">
-        <Link href="/write" className="ed-logo">Living Page</Link>
+        <Link href={`/@${handle}`} className="ed-logo">Living Page</Link>
         <span className="ed-save">{pending ? "saving…" : status ? status.text : "draft"}</span>
         <span className="ed-bar-r">
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
