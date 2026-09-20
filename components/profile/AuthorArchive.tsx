@@ -2,29 +2,61 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { StorySeed } from "@/components/wander/StorySeed";
+import { Beat } from "@/components/living/Beat";
+import { Doodle } from "@/components/doodles/Doodle";
 import type { StorySeed as Seed } from "@/lib/discover";
 
 /**
- * THE DECK — an author's stories as a fanned deck you flip through, one in
- * focus at a time, the rest trailing off to the right.
+ * THE DECK — an author's stories as a fanned deck of POLAROIDS you flip
+ * through, one in focus at a time, the rest trailing off to the right.
  *
- * Each card carries a little consistent "furniture" around the Story Seed
- * interior — an index + place/date up top, a "read" cue at the foot — so
- * that even a one-word story reads as a full, finished card rather than a
- * word stranded in an empty field, and so a first-time visitor can see at a
- * glance that a card is a thing to read and the fan is a thing to flip.
+ * The card is a polaroid: a consistent white frame (which reads instantly
+ * as "a personal photo / a collected moment" — the thing that tells a
+ * first-time visitor these are stories to look at, not UI) wrapped around a
+ * "photo" that wears the STORY'S OWN WORLD — the tinted paper, accent and
+ * ink `buildSeed` derives from its place and mood (lib/backdrops.ts). So
+ * flipping the deck is flipping through different places: a coast reads warm
+ * and bright, a monsoon dark and teal, a café amber. The handwritten caption
+ * is the writing on the polaroid's white lip.
  *
- * Wander's StorySeed is reused untouched for the interior (its own archetype
- * shape + its own link to the story). Because StorySeed is itself an <a> we
- * never nest anchors: non-focused cards intercept clicks to come forward,
- * and the focused card's own link (plus the "read" link at its foot) does
- * the reading. With JS off nothing intercepts and every card is simply its
- * own link — which is also what a crawler or link preview sees.
+ * Reuses the living primitives (Beat for voice→type, Doodle) rather than
+ * Wander's field renderer, so nothing about Wander changes. Each card scopes
+ * its world via a tiny inline <style> keyed to its own class. The whole
+ * focused card is a real link (and every card is a link with JS off), so a
+ * crawler or link preview still sees a plain list of story links.
  */
 
-function metaLine(seed: Seed): string {
+function captionOf(seed: Seed): string {
   return [seed.place, seed.date].map((s) => (s || "").trim()).filter(Boolean).join(" · ");
+}
+
+function Polaroid({ seed, index }: { seed: Seed; index: number }) {
+  const cls = `pol-${seed.key}`;
+  const caption = captionOf(seed);
+  return (
+    <div className={`polaroid ${cls}`} style={{ ["--accent" as string]: seed.accent } as CSSProperties}>
+      {/* the story's world, scoped to this card only */}
+      <style>{`.${cls}{${seed.worldCss}}`}</style>
+      <div className="polaroid-photo">
+        <span className="polaroid-idx">{String(index + 1).padStart(2, "0")}</span>
+        {seed.place ? <span className="polaroid-stamp">{seed.place}</span> : null}
+        <div className="polaroid-hook">
+          <Beat voice={seed.dominantVoice} doodle={seed.doodle} side="right" seed={index} ink="var(--ink)">
+            {seed.hook}
+          </Beat>
+        </div>
+        {seed.secondDoodle ? (
+          <span className="polaroid-doodle2" aria-hidden="true">
+            <Doodle name={seed.secondDoodle} seed={index + 3} size={40} ink="var(--accent)" />
+          </span>
+        ) : null}
+      </div>
+      <div className="polaroid-caption">
+        <span className="polaroid-cap">{caption || "a page"}</span>
+        <span className="polaroid-read">read →</span>
+      </div>
+    </div>
+  );
 }
 
 export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
@@ -62,7 +94,6 @@ export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
           const offset = i - current;
           const state = offset === 0 ? "focus" : offset < 0 ? "past" : "ahead";
           const focused = offset === 0;
-          const meta = metaLine(seed);
           const style = {
             ["--offset" as string]: offset,
             ["--abs" as string]: Math.abs(offset),
@@ -74,22 +105,15 @@ export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
               className={`deck-card is-${state}`}
               style={style}
               aria-hidden={focused ? undefined : true}
-              onClickCapture={(e) => {
-                if (!focused) { e.preventDefault(); e.stopPropagation(); setCurrent(i); }
-              }}
             >
-              <div className="deck-card-inner">
-                <div className="deck-card-top">
-                  <span className="deck-card-idx">{String(i + 1).padStart(2, "0")}</span>
-                  {meta ? <span className="deck-card-meta">{meta}</span> : null}
-                </div>
-                <div className="deck-card-body">
-                  <StorySeed seed={seed} index={i} />
-                </div>
-                <a href={seed.href} className="deck-card-foot" tabIndex={focused ? 0 : -1}>
-                  read <span aria-hidden="true">→</span>
-                </a>
-              </div>
+              <a
+                href={seed.href}
+                className="deck-card-link"
+                tabIndex={focused ? 0 : -1}
+                onClick={(e) => { if (!focused) { e.preventDefault(); setCurrent(i); } }}
+              >
+                <Polaroid seed={seed} index={i} />
+              </a>
             </li>
           );
         })}
@@ -97,7 +121,7 @@ export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
 
       {n > 1 ? (
         <div className="deck-controls">
-          <p className="deck-hint">Tap a card to read · swipe or use ‹ › to flip through</p>
+          <p className="deck-hint">Tap a card to read the story · swipe or use ‹ › to flip</p>
           <nav className="deck-nav" aria-label="Move through the deck">
             <button className="deck-arrow" onClick={() => go(-1)} disabled={current === 0} aria-label="Previous story">‹</button>
             <span className="deck-ticks" aria-hidden="true">

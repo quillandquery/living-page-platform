@@ -1918,14 +1918,13 @@ a{ color: inherit; }
 
 /* ══════════════════════════════════════════════════════════════════════
    THE AUTHOR PAGE — /@handle
-   Not a field and not a grid: a DECK. The author's stories are a fanned
-   stack you flip through — one card upright in focus, the rest trailing
-   off to the right, smaller and turned, their shapes and accent colours
-   showing so the whole collection is present at once. Each card wears a
-   little furniture (an index, place/date, a "read" cue) so even a
-   one-word story reads as a finished card and a newcomer can see it's a
-   thing to read and a thing to flip. Wander is a gallery you wander; this
-   is a hand of postcards held out to you, one at a time.
+   A fanned deck of POLAROIDS. One card in focus, the rest trailing off to
+   the right. The white polaroid frame is consistent (it reads instantly as
+   a personal photo — that's what tells a stranger these are moments to look
+   at, not UI); the "photo" inside wears each STORY'S OWN WORLD — the tinted
+   paper, accent and ink derived from its place and mood — so flipping the
+   deck is flipping through different places. The handwritten line on the
+   white lip is the caption.
    ══════════════════════════════════════════════════════════════════════ */
 
 .author-page{
@@ -1933,166 +1932,138 @@ a{ color: inherit; }
   padding: 4vh 0 3vh; overflow: hidden;
 }
 
-/* — the persistent header: name → handle → bio, centred, always up top — */
+/* — persistent header — */
 .author-head{
   display: flex; flex-direction: column; align-items: center; text-align: center;
   gap: .25rem; margin: 0 auto 1rem; max-width: 32rem; flex: none;
 }
-.author-avatar{
-  width: 3.6rem; height: 4.3rem; object-fit: cover; display: block;
-  margin: 0 auto .6rem; transform: rotate(-1.4deg);
-}
-.author-name{
-  font-family: var(--f-disp); font-weight: 400;
-  font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.02;
-  letter-spacing: -.02em; margin: 0;
-}
-.author-handle{
-  font-family: var(--f-mono); font-size: .7rem; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--mute); margin: .1rem 0 0;
-}
-.author-bio{
-  font-family: var(--f-hand); font-size: clamp(1rem, 1.7vw, 1.25rem);
-  color: var(--ink-soft); line-height: 1.45; margin: .55rem auto 0;
-  max-width: 30ch; white-space: pre-line;
-}
+.author-avatar{ width: 3.6rem; height: 4.3rem; object-fit: cover; display: block; margin: 0 auto .6rem; transform: rotate(-1.4deg); }
+.author-name{ font-family: var(--f-disp); font-weight: 400; font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.02; letter-spacing: -.02em; margin: 0; }
+.author-handle{ font-family: var(--f-mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: .1rem 0 0; }
+.author-bio{ font-family: var(--f-hand); font-size: clamp(1rem, 1.7vw, 1.25rem); color: var(--ink-soft); line-height: 1.45; margin: .55rem auto 0; max-width: 30ch; white-space: pre-line; }
 
-/* the collection label — an editorial section title, quiet, tracked */
 .archive-label{
   font-family: var(--f-disp); font-style: italic; font-weight: 400;
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
-  letter-spacing: .06em; text-transform: uppercase;
-  color: var(--mute); text-align: center;
-  margin: 0 auto .6rem; flex: none;
+  font-size: clamp(1rem, 1.6vw, 1.2rem); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--mute); text-align: center; margin: 0 auto .6rem; flex: none;
 }
 
-/* — the deck fills the space under the header — */
-.deck{
-  position: relative; flex: 1 1 auto; min-height: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1.4rem;
-}
+/* — the deck — */
+.deck{ position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4rem; }
+.deck-stack{ list-style: none; margin: 0; padding: 0; position: relative; width: clamp(15rem, 29vw, 18.5rem); height: clamp(19rem, 46vh, 25rem); }
 
-/* the fanned stack: focused card centred + upright; each card AHEAD steps
-   right, tips over, shrinks and fades; PAST cards slide off left and out. */
-.deck-stack{
-  list-style: none; margin: 0; padding: 0;
-  position: relative;
-  width: clamp(15rem, 30vw, 19rem);
-  height: clamp(18rem, 44vh, 24rem);
-}
 .deck-card{
   position: absolute; inset: 0; margin: 0;
-  transform-origin: 50% 80%;
+  transform-origin: 50% 82%;
   transition: transform .55s cubic-bezier(.2,.8,.3,1), opacity .55s ease;
   will-change: transform, opacity;
 }
+.deck-card-link{ display: block; width: 100%; height: 100%; text-decoration: none; color: inherit; }
 .deck-card.is-focus{ transform: translateX(0) scale(1) rotate(0deg); opacity: 1; }
 .deck-card.is-ahead{
   transform:
-    translateX(calc(var(--offset) * 2.6rem + var(--abs) * .3rem))
+    translateX(calc(var(--offset) * 2.5rem + var(--abs) * .3rem))
     translateY(calc(var(--abs) * .7rem))
-    scale(calc(1 - var(--abs) * .055))
-    rotate(calc(var(--offset) * 2.4deg));
-  opacity: max(0, calc(1 - var(--abs) * .19));
+    scale(calc(1 - var(--abs) * .05))
+    rotate(calc(var(--offset) * 2.6deg));
+  opacity: max(0, calc(1 - var(--abs) * .17));
   cursor: pointer;
 }
 .deck-card.is-ahead:hover{
   transform:
-    translateX(calc(var(--offset) * 2.6rem + var(--abs) * .3rem - .5rem))
-    translateY(calc(var(--abs) * .7rem - .4rem))
-    scale(calc(1 - var(--abs) * .055 + .015))
-    rotate(calc(var(--offset) * 2.4deg));
+    translateX(calc(var(--offset) * 2.5rem + var(--abs) * .3rem - .5rem))
+    translateY(calc(var(--abs) * .7rem - .5rem))
+    scale(calc(1 - var(--abs) * .05 + .02))
+    rotate(calc(var(--offset) * 2.6deg));
 }
-.deck-card.is-past{
-  transform: translateX(-62%) translateY(-.4rem) scale(.92) rotate(-7deg);
-  opacity: 0; pointer-events: none;
-}
+.deck-card.is-past{ transform: translateX(-64%) translateY(-.4rem) scale(.9) rotate(-8deg); opacity: 0; pointer-events: none; }
 
-/* the physical card surface + its three zones (top / body / foot) */
-.deck-card-inner{
+/* — the polaroid — */
+.polaroid{
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
-  box-sizing: border-box; padding: 1.1rem 1.2rem 1rem;
-  background: var(--paper);
-  border: 1px solid var(--rule-2);
-  box-shadow: 0 18px 40px -22px rgba(40,36,30,.5);
-  border-radius: 3px; overflow: hidden;
+  box-sizing: border-box;
+  background: #F7F4EE;
+  padding: .7rem .7rem 0;
+  border-radius: 2px;
+  box-shadow: 0 20px 44px -22px rgba(40,36,30,.5), 0 2px 6px -2px rgba(40,36,30,.18);
 }
-.deck-card.is-focus .deck-card-inner{ box-shadow: 0 26px 60px -26px rgba(40,36,30,.6); cursor: pointer; }
+.deck-card.is-focus .polaroid{ box-shadow: 0 30px 64px -26px rgba(40,36,30,.62), 0 3px 8px -2px rgba(40,36,30,.2); }
 
-.deck-card-top{
-  flex: none; display: flex; align-items: baseline; justify-content: space-between;
-  gap: .75rem; font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--mute);
-  padding-bottom: .8rem; border-bottom: 1px solid var(--rule-2);
-}
-.deck-card-idx{ color: color-mix(in oklab, var(--accent) 55%, var(--mute)); letter-spacing: .16em; }
-.deck-card-meta{ text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.deck-card-body{
-  flex: 1 1 auto; min-height: 0;
+.polaroid-photo{
+  flex: 1 1 auto; min-height: 0; position: relative; overflow: hidden;
+  border-radius: 1px;
+  background:
+    radial-gradient(130% 100% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 62%),
+    var(--paper);
   display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem 1.25rem;
 }
-/* the seed interior sits transparent inside the card (the card is the
-   surface now); its Wander entrance + rotation + discovery chrome are off. */
-.deck-card-body .seed{
-  position: relative; opacity: 1 !important; transform: none !important;
-  width: 100%; background: none; border: none; box-shadow: none; padding: 0;
+.polaroid-idx{
+  position: absolute; top: .7rem; left: .8rem;
+  font-family: var(--f-mono); font-size: .58rem; letter-spacing: .16em;
+  color: color-mix(in oklab, var(--accent) 55%, var(--mute));
 }
-.deck-card-body .seed-peek{ display: none; }
+.polaroid-stamp{
+  position: absolute; top: .7rem; right: .8rem; max-width: 60%;
+  font-family: var(--f-mono); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
+  color: color-mix(in oklab, var(--accent) 62%, var(--ink)); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.polaroid-doodle2{ position: absolute; bottom: .7rem; left: .8rem; opacity: .8; }
 
-.deck-card-foot{
-  flex: none; align-self: flex-end; margin-top: .8rem;
-  font-family: var(--f-mono); font-size: .64rem; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--accent); text-decoration: none;
-  opacity: 0; transition: opacity .3s ease; pointer-events: none;
+/* the hook: living type, in the story's ink, words forced visible (no
+   IntersectionObserver here to trigger the arrival animation) */
+.polaroid-hook{ width: 100%; text-align: center; }
+.polaroid-hook .beat{ display: flex !important; align-items: center; justify-content: center; gap: .5rem; }
+.polaroid-hook .words{
+  font-size: clamp(1.15rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink);
 }
-/* the read cue only shows on the card in focus — the one you can act on */
-.deck-card.is-focus .deck-card-foot{ opacity: .9; pointer-events: auto; }
-.deck-card.is-focus:hover .deck-card-foot{ opacity: 1; }
-.deck-card-foot span{ transition: transform .2s ease; display: inline-block; }
-.deck-card.is-focus:hover .deck-card-foot span{ transform: translateX(3px); }
+.polaroid-hook .word{ opacity: 1 !important; transform: none !important; }
+.polaroid-hook .doodle{ width: 2.3rem !important; }
+.polaroid-hook .margin{ flex: none; }
 
-/* — the flip controls: an explicit hint, quiet arrows, and a row of ticks
-   (a physical sense of place in the stack, never a "7 of 12" number) — */
+/* the white lip: a handwritten caption + a quiet read cue */
+.polaroid-caption{
+  flex: none; height: 2.9rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .5rem .3rem .2rem;
+}
+.polaroid-cap{
+  font-family: var(--f-hand); font-size: 1.05rem; color: #2B2926;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.polaroid-read{
+  flex: none; font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent); opacity: .85;
+}
+.deck-card.is-focus .polaroid-read{ opacity: 1; }
+
+/* — flip controls — */
 .deck-controls{ flex: none; display: flex; flex-direction: column; align-items: center; gap: .7rem; }
-.deck-hint{
-  margin: 0; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--mute); opacity: .8;
-}
+.deck-hint{ margin: 0; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); opacity: .85; }
 .deck-nav{ display: flex; align-items: center; gap: 1.1rem; }
-.deck-arrow{
-  appearance: none; background: none; border: none; cursor: pointer;
-  font-family: var(--f-disp); font-size: 1.7rem; line-height: 1;
-  color: var(--ink-soft); padding: .1rem .5rem; border-radius: 999px;
-  transition: color .2s ease, background .2s ease;
-}
+.deck-arrow{ appearance: none; background: none; border: none; cursor: pointer; font-family: var(--f-disp); font-size: 1.7rem; line-height: 1; color: var(--ink-soft); padding: .1rem .5rem; border-radius: 999px; transition: color .2s ease, background .2s ease; }
 .deck-arrow:hover:not(:disabled){ color: var(--accent); background: var(--shade); }
 .deck-arrow:disabled{ opacity: .22; cursor: default; }
 .deck-ticks{ display: flex; align-items: center; gap: .4rem; }
-.deck-tick{
-  width: .42rem; height: .42rem; border-radius: 50%;
-  background: var(--rule); transition: background .3s ease, transform .3s ease;
-}
+.deck-tick{ width: .42rem; height: .42rem; border-radius: 50%; background: var(--rule); transition: background .3s ease, transform .3s ease; }
 .deck-tick.is-here{ background: var(--accent); transform: scale(1.5); }
 
-/* — empty state: same header, a quiet line where the deck would be — */
+/* — empty state — */
 .author-empty{ flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .3rem; }
 .author-empty-line{ font-family: var(--f-disp); font-size: clamp(1.5rem, 3vw, 2rem); color: var(--ink-soft); margin: 0; }
 .author-empty-sub{ font-family: var(--f-hand); font-size: 1.1rem; color: var(--mute); margin: 0 0 1.2rem; }
 .author-empty-cta{ font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
 .author-empty-cta:hover{ text-decoration: underline; }
 
-@media (prefers-reduced-motion: reduce){
-  .deck-card{ transition: none; }
-}
+@media (prefers-reduced-motion: reduce){ .deck-card{ transition: none; } }
 @media (max-width: 720px){
   .author-page{ padding: 3vh 0 2vh; }
-  .deck-stack{ width: min(80vw, 19rem); height: clamp(18rem, 46vh, 23rem); }
+  .deck-stack{ width: min(80vw, 19rem); height: clamp(19rem, 48vh, 24rem); }
   .deck-card.is-ahead{
     transform:
-      translateX(calc(var(--offset) * 1.7rem + var(--abs) * .2rem))
+      translateX(calc(var(--offset) * 1.6rem + var(--abs) * .2rem))
       translateY(calc(var(--abs) * .5rem))
       scale(calc(1 - var(--abs) * .06))
       rotate(calc(var(--offset) * 2deg));
