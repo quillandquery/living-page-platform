@@ -45,8 +45,15 @@ export function buildStoryMetadata(input: StoryMetadataInput): Metadata {
       ...(input.authorHandle ? { authors: [absoluteUrl(`/@${input.authorHandle}`)] } : {}),
       ...(images ? { images } : {}),
     },
+    // Every caller of this builder has a co-located opengraph-image.tsx
+    // route (Part 4), so a 1200x630 image is always present at request
+    // time even though it's never passed in as `imageUrl` here — Next
+    // merges it in via the file convention *after* this function returns.
+    // The card type must not depend on the local `images` var, or it
+    // always resolves to "summary" and every story renders as a small
+    // Twitter/X card despite having a full-size image.
     twitter: {
-      card: images ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: input.title,
       description: input.description,
       ...(images ? { images: images.map((i) => i.url) } : {}),
