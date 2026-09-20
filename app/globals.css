@@ -457,20 +457,34 @@ a{ color: inherit; }
    Sits in the normal reading column, un-veiled, immediately visible —
    see components/living/StoryHero.tsx for why. A little extra room above
    it than a mid-story beat gets, so it still reads as an opening. */
-.story-hero-headline{
-  margin-top: .5rem; margin-bottom: 1.5rem;
-  /* The backdrop (rain-on-window, or any other environment) is
-     position:fixed and drawn independent of scroll/content height, so
-     its lines can land anywhere behind the top of the page depending on
-     viewport size — nothing about spacing fixes that. Give the hero its
-     own paper ground so it always reads clean regardless of what's
-     rendering behind it. */
+/* MASTHEAD — on hero pages, the frontispiece and the Story Hero merge
+   into one solid title section that sits above the story, instead of
+   each floating as its own translucent island over whatever backdrop
+   art happens to be rendering behind the top of the page (the backdrop
+   is position:fixed, so its lines land wherever the viewport's midpoint
+   happens to fall — that's independent of scroll or content height).
+   The negative margin + matching padding bleeds the panel out to
+   .frame's own edges (same width the header rule and body text already
+   use), not the viewport's, so it lines up with everything else. */
+.frontispiece:has(+ .story-hero-headline){
   background: var(--paper);
-  padding-block: .75rem;
-  border-radius: 6px;
+  margin-bottom: 0;
+  width: calc(100% + 3rem);
+  margin-inline: -1.5rem;
+  padding-inline: 1.5rem;
+}
+.story-hero-headline{
+  margin-top: 0; margin-bottom: 0;
+  background: var(--paper);
+  width: calc(100% + 3rem);
+  margin-inline: -1.5rem;
+  padding-inline: 1.5rem;
+  padding-block: 1.5rem 2.5rem;
+  border-radius: 0;
+  border-bottom: 1px solid var(--rule);
 }
 @media (max-width: 900px){
-  .story-hero-headline{ margin-top: .25rem; }
+  .story-hero-headline{ padding-block: .75rem 2rem; }
 }
 .back{
   font-family: var(--f-mono); font-size: .625rem; letter-spacing: .28em;
