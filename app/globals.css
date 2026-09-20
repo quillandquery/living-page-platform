@@ -457,9 +457,9 @@ a{ color: inherit; }
    Sits in the normal reading column, un-veiled, immediately visible —
    see components/living/StoryHero.tsx for why. A little extra room above
    it than a mid-story beat gets, so it still reads as an opening. */
-.story-hero-headline{ margin-top: -1.5rem; margin-bottom: 1rem; }
+.story-hero-headline{ margin-top: .5rem; margin-bottom: 1.5rem; }
 @media (max-width: 900px){
-  .story-hero-headline{ margin-top: -0.75rem; }
+  .story-hero-headline{ margin-top: .25rem; }
 }
 .back{
   font-family: var(--f-mono); font-size: .625rem; letter-spacing: .28em;
