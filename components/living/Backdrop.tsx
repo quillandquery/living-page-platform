@@ -180,13 +180,27 @@ function Field({ seed }: { seed: string }) {
 }
 
 /* An interior frame — the story looks out. Pairs with rain for the classic
-   rainy-window world. */
+   rainy-window world. The cross-bars are deliberately part of `.backdrop`
+   (z-index 0) so the masthead's opaque panel (z-index 2, see globals.css)
+   sits above them and they never fall across the title. The outer sill
+   (WindowFrame, below) is drawn separately, above the masthead, so the
+   frame around the whole page doesn't look cut off at the top. */
 function Window() {
   return (
     <svg className="bd-window" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <rect className="bd-window-pane" x="8" y="6" width="84" height="88" rx="1.5" />
       <line className="bd-window-bar" x1="50" y1="6" x2="50" y2="94" />
       <line className="bd-window-bar" x1="8" y1="50" x2="92" y2="50" />
+    </svg>
+  );
+}
+
+/* The window's outer sill, re-drawn above the masthead. Same rect as
+   Window() used to include — pulled out so it can outrank the masthead's
+   opaque background (z-index 2) while the cross-bars stay behind it. */
+function WindowFrame() {
+  return (
+    <svg className="bd-window-frame" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <rect className="bd-window-pane" x="8" y="6" width="84" height="88" rx="1.5" />
     </svg>
   );
 }
@@ -359,12 +373,16 @@ export function Backdrop({
   if (!b) return null;
   const sch = scheme ?? b.scheme;
   const motifs = ambient ?? (["bloom", "motes"] as const);
+  const hasWindowFrame = b.layers.includes("window");
   return (
-    <div className={`backdrop bd-${name} bd-${sch}`} aria-hidden="true">
-      {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
-      {motifs.map((m) => <Fragment key={m}>{AMBIENT_RENDER[m](seed)}</Fragment>)}
-      <div className={`bd-scrim ${sch === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
-    </div>
+    <>
+      <div className={`backdrop bd-${name} bd-${sch}`} aria-hidden="true">
+        {b.layers.map((l) => <span className={`bd-layer bd-l-${l}`} key={l}>{RENDER[l]({ seed, dawn: b.dawn })}</span>)}
+        {motifs.map((m) => <Fragment key={m}>{AMBIENT_RENDER[m](seed)}</Fragment>)}
+        <div className={`bd-scrim ${sch === "light" ? "bd-scrim-light" : "bd-scrim-dark"}`} />
+      </div>
+      {hasWindowFrame ? <WindowFrame /> : null}
+    </>
   );
 }
 

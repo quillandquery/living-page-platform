@@ -960,6 +960,10 @@ a{ color: inherit; }
 .bd-window{ position:absolute; inset:0; }
 .bd-window-pane{ fill: oklch(from var(--accent) 0.9 0.03 h / 0.12); stroke: oklch(from var(--accent) 0.45 0.06 h / 0.5); stroke-width:.5; }
 .bd-window-bar{ stroke: oklch(from var(--accent) 0.45 0.06 h / 0.5); stroke-width:.5; }
+/* The window's outer sill, drawn above the masthead (z-index 2 in the
+   Story Hero rules below) so the frame around the page doesn't look
+   truncated at the top when the masthead's opaque panel is in the way. */
+.bd-window-frame{ position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 .bd-glow{ position:absolute; inset:-20%;
   background:
     radial-gradient(ellipse 50% 45% at 30% 35%, oklch(from var(--accent) 0.6 0.18 h / 0.5) 0%, transparent 60%),
