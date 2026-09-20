@@ -13,9 +13,20 @@
 
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { initAnalytics } from "@/lib/analytics/client";
+import { initAnalytics, identify } from "@/lib/analytics/client";
 import { trackGaPageview } from "@/lib/analytics/ga";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import posthog from "posthog-js";
+
+// Runs once, at module import time — not inside an effect. React runs a
+// child's effects (PostHogIdentify below) before its parent's, so an
+// `initAnalytics()` call in Providers' own useEffect would still be
+// pending the first time PostHogIdentify tries to `identify()`, making
+// that call silently no-op. Module-scope init runs before anything
+// mounts. `initAnalytics()` itself is idempotent and a no-op during SSR
+// (`typeof window === "undefined"`), so this is safe to run unconditionally
+// on both server and client bundles.
+initAnalytics();
 
 function PostHogPageview() {
   const pathname = usePathname();
@@ -28,6 +39,47 @@ function PostHogPageview() {
     // infrastructure (which URL), not one of the curated activity events.
     posthog.capture("$pageview", { $current_url: url });
   }, [pathname, searchParams]);
+
+  return null;
+}
+
+/**
+ * IDENTITY — links a browser's anonymous PostHog history to the real
+ * Supabase user once we know who they are.
+ *
+ * Without this, every event fired before this component ever ran
+ * (`make_mode_selected`, `story_viewed`, etc.) is attached to a random
+ * anonymous id PostHog invents per browser — it never learns that browser
+ * belongs to a real writer, so the same person's activity across sessions
+ * or devices never rolls up into one Person, and their server-side events
+ * (captureServer, keyed by `profile.id` in app/write/actions.ts) end up as
+ * a *different* Person than their client-side ones.
+ *
+ * `profiles.id` IS the Supabase auth user id (lib/db.ts's myProfile() looks
+ * it up by `.eq("id", user.id)`), so `identify(user.id)` here lines up
+ * exactly with the id server actions already use — one Person, not two.
+ *
+ * PostHog merges this browser's prior anonymous events into the identified
+ * Person automatically the first time `identify` runs for it. `posthog.
+ * reset()` on sign-out starts a fresh anonymous id for whoever uses the
+ * browser next, so a shared/public machine doesn't attribute the next
+ * person's clicks to the previous writer.
+ */
+function PostHogIdentify() {
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) identify(user.id);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) identify(session.user.id);
+      if (event === "SIGNED_OUT") posthog.reset();
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   return null;
 }
@@ -50,10 +102,9 @@ function GaPageview() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  useEffect(() => { initAnalytics(); }, []);
-
   return (
     <>
+      <PostHogIdentify />
       <Suspense fallback={null}>
         <PostHogPageview />
         <GaPageview />
