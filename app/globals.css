@@ -2069,3 +2069,48 @@ a{ color: inherit; }
       rotate(calc(var(--offset) * 2deg));
   }
 }
+
+/* ── AUTHOR PAGE — additions: scene art, featured bio, ambient personality ── */
+
+/* the artwork inside the polaroid: the story's real world scene (or, with no
+   backdrop, its doodle enlarged as the photo's subject) sits behind the hook */
+.polaroid-photo{ position: relative; }
+.polaroid-scene{ position: absolute; inset: 0; overflow: hidden; border-radius: 1px; opacity: .95; }
+.polaroid-scene .backdrop{ position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; }
+.polaroid-art{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .15; }
+.polaroid-art .doodle{ width: 9.5rem !important; }
+
+/* the hook rides above the artwork, with a soft halo so it reads over a scene */
+.polaroid-hook{ position: relative; z-index: 2; }
+.polaroid-hook .words{
+  text-shadow:
+    0 1px 12px color-mix(in oklab, var(--paper) 74%, transparent),
+    0 0 3px color-mix(in oklab, var(--paper) 62%, transparent);
+}
+.polaroid-idx, .polaroid-stamp{ z-index: 2; }
+
+/* identity: the name a touch larger, the bio featured — it's the line that
+   turns a handle into a person, so it gets room and presence */
+.author-name{ font-size: clamp(2.1rem, 5vw, 3.4rem); }
+.author-bio{
+  font-family: var(--f-hand); font-size: clamp(1.15rem, 2vw, 1.5rem);
+  color: var(--ink-soft); line-height: 1.45; max-width: 34ch; margin: .7rem auto 0;
+}
+
+/* ambient personality art — a traveller who disappears into books. Fixed to
+   the whole viewport, faint, behind everything, so the far margins around the
+   deck are furnished instead of empty. */
+.author-ambient{ position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.author-ambient .am{ position: absolute; opacity: .12; }
+.author-ambient .am-1{ top: 15%; left: 5%;  transform: rotate(-9deg); }
+.author-ambient .am-2{ top: 22%; right: 7%; transform: rotate(7deg); }
+.author-ambient .am-3{ bottom: 15%; left: 6%; transform: rotate(5deg); }
+.author-ambient .am-4{ top: 48%; left: 3%;  transform: rotate(-6deg); }
+.author-ambient .am-5{ bottom: 20%; right: 5%; transform: rotate(-8deg); }
+.author-ambient .am-6{ top: 62%; right: 4%; transform: rotate(10deg); }
+.author-ambient .am-7{ bottom: 7%; right: 20%; transform: rotate(3deg); }
+.author-ambient .am-8{ top: 8%; left: 22%; transform: rotate(-5deg); }
+@media (max-width: 860px){
+  .author-ambient .am-4, .author-ambient .am-6, .author-ambient .am-8{ display: none; }
+  .author-ambient .am{ opacity: .09; }
+}

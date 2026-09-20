@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Beat } from "@/components/living/Beat";
 import { Doodle } from "@/components/doodles/Doodle";
+import { Backdrop } from "@/components/living/Backdrop";
 import type { StorySeed as Seed } from "@/lib/discover";
 
 /**
@@ -30,24 +31,37 @@ function captionOf(seed: Seed): string {
   return [seed.place, seed.date].map((s) => (s || "").trim()).filter(Boolean).join(" · ");
 }
 
-function Polaroid({ seed, index }: { seed: Seed; index: number }) {
+function Polaroid({ seed, index, scene }: { seed: Seed; index: number; scene: boolean }) {
   const cls = `pol-${seed.key}`;
   const caption = captionOf(seed);
+  const hasWorld = !!seed.backdrop;
   return (
     <div className={`polaroid ${cls}`} style={{ ["--accent" as string]: seed.accent } as CSSProperties}>
       {/* the story's world, scoped to this card only */}
       <style>{`.${cls}{${seed.worldCss}}`}</style>
       <div className="polaroid-photo">
+        {/* the artwork: the story's actual world scene when it has one
+            (rendered only for cards near focus, to keep a big deck light),
+            otherwise its own doodle enlarged as the photo's subject. */}
+        {hasWorld && scene ? (
+          <div className="polaroid-scene" aria-hidden="true">
+            <Backdrop name={seed.backdrop ?? undefined} seed={seed.slug} />
+          </div>
+        ) : (
+          <span className="polaroid-art" aria-hidden="true">
+            <Doodle name={seed.doodle} seed={index} size={150} ink="var(--accent)" />
+          </span>
+        )}
         <span className="polaroid-idx">{String(index + 1).padStart(2, "0")}</span>
         {seed.place ? <span className="polaroid-stamp">{seed.place}</span> : null}
         <div className="polaroid-hook">
-          <Beat voice={seed.dominantVoice} doodle={seed.doodle} side="right" seed={index} ink="var(--ink)">
+          <Beat voice={seed.dominantVoice} seed={index} ink="var(--ink)">
             {seed.hook}
           </Beat>
         </div>
-        {seed.secondDoodle ? (
+        {seed.secondDoodle && !hasWorld ? (
           <span className="polaroid-doodle2" aria-hidden="true">
-            <Doodle name={seed.secondDoodle} seed={index + 3} size={40} ink="var(--accent)" />
+            <Doodle name={seed.secondDoodle} seed={index + 3} size={38} ink="var(--accent)" />
           </span>
         ) : null}
       </div>
@@ -112,7 +126,7 @@ export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
                 tabIndex={focused ? 0 : -1}
                 onClick={(e) => { if (!focused) { e.preventDefault(); setCurrent(i); } }}
               >
-                <Polaroid seed={seed} index={i} />
+                <Polaroid seed={seed} index={i} scene={Math.abs(offset) <= 3} />
               </a>
             </li>
           );
