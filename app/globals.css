@@ -482,7 +482,7 @@ a{ color: inherit; }
 }
 .story-hero-headline{
   position: relative; z-index: 2;
-  margin-top: 0; margin-bottom: 0;
+  margin-top: 0; margin-bottom: 3rem;
   background: var(--paper);
   width: calc(100% + 3rem);
   margin-inline: -1.5rem;
@@ -492,7 +492,7 @@ a{ color: inherit; }
   border-bottom: 1px solid var(--rule);
 }
 @media (max-width: 900px){
-  .story-hero-headline{ padding-block: .75rem 2rem; }
+  .story-hero-headline{ margin-bottom: 2rem; padding-block: .75rem 2rem; }
 }
 .back{
   font-family: var(--f-mono); font-size: .625rem; letter-spacing: .28em;
