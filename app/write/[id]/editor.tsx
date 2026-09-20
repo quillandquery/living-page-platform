@@ -20,6 +20,7 @@ import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
   type SaveInput,
 } from "../actions";
+import { track } from "@/lib/analytics/client";
 
 /**
  * THE STUDIO — write-first (PRD v2 §10, §13, §14).
@@ -186,22 +187,22 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <div className="ed-details-body">
               <div className="ed-row">
                 <label className="ed-ctl">Format
-                  <select value={fmtSel} onChange={(e) => setFmt(e.target.value as FmtSel)}>
+                  <select value={fmtSel} onChange={(e) => { const v = e.target.value as FmtSel; setFmt(v); track("engine_control_changed", { control: "format", value: v, story_id: story.id }); }}>
                     {FORMATS_UI.map((f) => <option key={f} value={f}>{f === "auto" ? `auto (${FORMATS[format].label})` : FORMATS[f as FormatKey].label}{f !== "auto" && !fitting.includes(f as FormatKey) ? " — n/a" : ""}</option>)}
                   </select>
                 </label>
                 <label className="ed-ctl">Mood
-                  <select value={moodSel} onChange={(e) => setMood(e.target.value as Mood)}>
+                  <select value={moodSel} onChange={(e) => { const v = e.target.value as Mood; setMood(v); track("engine_control_changed", { control: "mood", value: v, story_id: story.id }); }}>
                     {MOODS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </label>
                 <label className="ed-ctl">Visuals
-                  <select value={visSel} onChange={(e) => setVis(e.target.value as Visual)}>
+                  <select value={visSel} onChange={(e) => { const v = e.target.value as Visual; setVis(v); track("engine_control_changed", { control: "visuals", value: v, story_id: story.id }); }}>
                     {VISUALS.map((v) => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </label>
                 <label className="ed-ctl">World
-                  <select value={worldSel} onChange={(e) => setWorld(e.target.value)}>
+                  <select value={worldSel} onChange={(e) => { const v = e.target.value; setWorld(v); track("engine_control_changed", { control: "world", value: v, story_id: story.id }); }}>
                     <option value="auto">auto ({world})</option>
                     {BACKDROP_NAMES.map((n) => <option key={n} value={n}>{BACKDROPS[n].label}</option>)}
                   </select>

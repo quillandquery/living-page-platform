@@ -8,6 +8,7 @@ import type { Block } from "@/lib/story-blocks.mjs";
 import { resolveImagery } from "@/lib/media";
 import { deriveSlugBase } from "@/lib/slug";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
+import { captureServer } from "@/lib/analytics/server";
 
 /**
  * THE STUDIO'S HANDS, on a platform.
@@ -22,8 +23,16 @@ import type { StoryArtDirection } from "@/lib/art-direction/types";
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
-/** Create a blank draft and open its editor. */
-export async function createStoryAction() {
+/** The four /make entry modes — mirrors the `stories_type_check` constraint. */
+export type StoryMode = "story" | "moment" | "thought" | "freeform";
+
+/** Create a blank draft and open its editor. `mode` is the /make card the
+ *  writer picked (D3's Story/Moment/Thought/Just start); it is cosmetic to
+ *  rendering today (per the 0002 migration's own comment) but is exactly
+ *  the core-loop signal analytics needs, so it is captured here rather
+ *  than inferred later. `app/write/page.tsx` calls this with no argument
+ *  (a plain "new piece" from the desk), which still defaults to "story". */
+export async function createStoryAction(mode: StoryMode = "story") {
   const profile = await myProfile();
   if (!profile) redirect("/onboarding");
 
@@ -32,10 +41,13 @@ export async function createStoryAction() {
   const slug = `untitled-${Date.now().toString(36)}`;
   const { data, error } = await supabase
     .from("stories")
-    .insert({ author_id: profile.id, slug, place: "", date: "", fragment: "", status: "draft" })
+    .insert({ author_id: profile.id, slug, place: "", date: "", fragment: "", status: "draft", type: mode })
     .select("id")
     .single();
   if (error || !data) throw new Error(error?.message ?? "Could not create the piece.");
+  // best-effort — a failed capture (missing key, network hiccup) never
+  // blocks a writer from reaching the editor.
+  await captureServer("draft_created", profile.id, { story_id: data.id, mode }).catch(() => {});
   redirect(`/write/${data.id}`);
 }
 
@@ -137,8 +149,25 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   revalidatePath("/");
   revalidatePath(`/@${profile.handle}`);
   revalidatePath(`/@${profile.handle}/${slug}`);
+
+  if (publish === true) {
+    await captureServer("story_published", profile.id, {
+      story_id: input.id,
+      format: input.art_direction?.format ?? "standard",
+      mood: input.art_direction?.atmosphere?.mood ?? "auto",
+      has_imagery: Boolean(input.imagery),
+      is_first_publish: !existing?.published_at,
+    }).catch(() => {});
+  } else if (publish === false) {
+    await captureServer("story_unpublished", profile.id, { story_id: input.id }).catch(() => {});
+  }
+
   return { ok: true, slug };
 }
+
+/** Bindable as a plain `<form action={...}>` (no args) — used by the
+ *  dashboard's "start a new piece", which has no /make mode to report. */
+export async function createStoryFormAction() { return createStoryAction(); }
 
 export async function saveDraftAction(input: SaveInput) { return persist(input, null); }
 export async function publishAction(input: SaveInput) { return persist(input, true); }

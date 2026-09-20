@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { myProfile, myStories } from "@/lib/db";
-import { createStoryAction } from "./actions";
+import { createStoryFormAction } from "./actions";
 import { signOutAction } from "@/app/auth/actions";
 
 /**
@@ -29,7 +29,7 @@ export default async function Dashboard() {
 
       <section className="desk-head">
         <h1 className="desk-title">Your desk</h1>
-        <form action={createStoryAction}>
+        <form action={createStoryFormAction}>
           <button className="act">start a new piece</button>
         </form>
       </section>

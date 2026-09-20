@@ -8,6 +8,7 @@ import { deriveStoryContext } from "@/lib/story-context";
 import { buildStoryMetadata } from "@/lib/metadata";
 import { articleJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
 import { absoluteUrl } from "@/lib/site";
+import { ReaderTracking } from "@/components/analytics/ReaderTracking";
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
 
@@ -108,6 +109,7 @@ export default async function StoryReaderPage(
   return (
     <>
     <script type="application/ld+json" {...jsonLdScriptProps(articleLd)} />
+    <ReaderTracking storyId={story.id} authorHandle={story.author.handle} slug={slug} format={format} />
     <StoryStage
       format={format}
       formats={fitting}

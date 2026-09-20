@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTransition, useState } from "react";
 import { createStoryAction } from "@/app/write/actions";
+import { track } from "@/lib/analytics/client";
 
 /**
  * WRITER ENTRY (PRD v2 §11). Four ways in — the point is to lower the barrier
@@ -12,10 +13,10 @@ import { createStoryAction } from "@/app/write/actions";
  */
 
 const MODES = [
-  { label: "Something happened.", prompt: "A trip, a person, a strange night, a day you still remember.", cta: "Start a story" },
-  { label: "Something tiny you can't forget.", prompt: "A look. A sentence. A smell. Five minutes that stayed with you.", cta: "Capture a moment" },
-  { label: "Something sitting in your head.", prompt: "An observation, a feeling, a question, a tiny rant.", cta: "Put it somewhere" },
-  { label: "Don't know yet? That's fine.", prompt: "Type whatever is in your head.", cta: "Just start" },
+  { label: "Something happened.", prompt: "A trip, a person, a strange night, a day you still remember.", cta: "Start a story", mode: "story" as const },
+  { label: "Something tiny you can't forget.", prompt: "A look. A sentence. A smell. Five minutes that stayed with you.", cta: "Capture a moment", mode: "moment" as const },
+  { label: "Something sitting in your head.", prompt: "An observation, a feeling, a question, a tiny rant.", cta: "Put it somewhere", mode: "thought" as const },
+  { label: "Don't know yet? That's fine.", prompt: "Type whatever is in your head.", cta: "Just start", mode: "freeform" as const },
 ];
 
 export default function Make() {
@@ -24,7 +25,10 @@ export default function Make() {
 
   const go = (i: number) => {
     setBusy(i);
-    start(() => { createStoryAction(); });
+    // fire-and-forget: the mode picked, before the server action redirects
+    // into /write/[id] and unmounts this component.
+    track("make_mode_selected", { mode: MODES[i].mode, label: MODES[i].label });
+    start(() => { createStoryAction(MODES[i].mode); });
   };
 
   return (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Newsreader, Instrument_Serif, Caveat, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { metadataBaseUrl, SITE_NAME } from "@/lib/site";
+import { Providers } from "./providers";
 
 const body = Newsreader({ subsets: ["latin"], weight: ["200", "300", "400", "500"], style: ["normal", "italic"], variable: "--font-body", display: "swap" });
 const disp = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-disp", display: "swap" });
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${body.variable} ${disp.variable} ${hand.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body><Providers>{children}</Providers></body>
     </html>
   );
 }
