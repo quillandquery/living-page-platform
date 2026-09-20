@@ -452,6 +452,15 @@ a{ color: inherit; }
   border-bottom: 1px solid var(--rule);
   margin-bottom: 5rem;
 }
+
+/* ── the story hero (Module 4) — the fragment, shown as the opening beat.
+   Sits in the normal reading column, un-veiled, immediately visible —
+   see components/living/StoryHero.tsx for why. A little extra room above
+   it than a mid-story beat gets, so it still reads as an opening. */
+.story-hero-headline{ margin-top: -1.5rem; margin-bottom: 1rem; }
+@media (max-width: 900px){
+  .story-hero-headline{ margin-top: -0.75rem; }
+}
 .back{
   font-family: var(--f-mono); font-size: .625rem; letter-spacing: .28em;
   text-transform: uppercase; color: var(--mute); text-decoration: none;
@@ -1912,38 +1921,39 @@ a{ color: inherit; }
    Not a field and not a grid: a DECK. The author's stories are a fanned
    stack you flip through — one card upright in focus, the rest trailing
    off to the right, smaller and turned, their shapes and accent colours
-   showing so the whole collection is present at once. Wander is a gallery
-   you wander; this is a hand of postcards someone is holding out to you,
-   one at a time. Each card's interior is a real Story Seed (its own
-   archetype shape), reused from Wander untouched.
+   showing so the whole collection is present at once. Each card wears a
+   little furniture (an index, place/date, a "read" cue) so even a
+   one-word story reads as a finished card and a newcomer can see it's a
+   thing to read and a thing to flip. Wander is a gallery you wander; this
+   is a hand of postcards held out to you, one at a time.
    ══════════════════════════════════════════════════════════════════════ */
 
 .author-page{
   min-height: 100vh; display: flex; flex-direction: column;
-  padding: 7vh 0 4vh; overflow: hidden;
+  padding: 4vh 0 3vh; overflow: hidden;
 }
 
 /* — the persistent header: name → handle → bio, centred, always up top — */
 .author-head{
   display: flex; flex-direction: column; align-items: center; text-align: center;
-  gap: .3rem; margin: 0 auto 1.4rem; max-width: 32rem; flex: none;
+  gap: .25rem; margin: 0 auto 1rem; max-width: 32rem; flex: none;
 }
 .author-avatar{
-  width: 4.2rem; height: 5rem; object-fit: cover; display: block;
-  margin: 0 auto .8rem; transform: rotate(-1.4deg);
+  width: 3.6rem; height: 4.3rem; object-fit: cover; display: block;
+  margin: 0 auto .6rem; transform: rotate(-1.4deg);
 }
 .author-name{
   font-family: var(--f-disp); font-weight: 400;
-  font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.02;
+  font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.02;
   letter-spacing: -.02em; margin: 0;
 }
 .author-handle{
-  font-family: var(--f-mono); font-size: .72rem; letter-spacing: .14em;
+  font-family: var(--f-mono); font-size: .7rem; letter-spacing: .14em;
   text-transform: uppercase; color: var(--mute); margin: .1rem 0 0;
 }
 .author-bio{
-  font-family: var(--f-hand); font-size: clamp(1.05rem, 1.8vw, 1.3rem);
-  color: var(--ink-soft); line-height: 1.5; margin: .7rem auto 0;
+  font-family: var(--f-hand); font-size: clamp(1rem, 1.7vw, 1.25rem);
+  color: var(--ink-soft); line-height: 1.45; margin: .55rem auto 0;
   max-width: 30ch; white-space: pre-line;
 }
 
@@ -1953,93 +1963,113 @@ a{ color: inherit; }
   font-size: clamp(1rem, 1.6vw, 1.2rem);
   letter-spacing: .06em; text-transform: uppercase;
   color: var(--mute); text-align: center;
-  margin: 0 auto 1rem; flex: none;
+  margin: 0 auto .6rem; flex: none;
 }
 
-/* — the deck itself: fills the space under the header — */
+/* — the deck fills the space under the header — */
 .deck{
-  position: relative; flex: 1 1 auto;
+  position: relative; flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 0;
+  gap: 1.4rem;
 }
 
-/* the fanned stack. Cards are absolutely stacked; the focused one sits
-   centred, upright; each card AHEAD of it steps to the right, tips over a
-   little, shrinks and fades, so the remaining deck fans out to one side.
-   Cards already PAST slide off to the left and out. */
+/* the fanned stack: focused card centred + upright; each card AHEAD steps
+   right, tips over, shrinks and fades; PAST cards slide off left and out. */
 .deck-stack{
   list-style: none; margin: 0; padding: 0;
   position: relative;
-  width: clamp(16rem, 34vw, 21rem);
-  height: clamp(21rem, 52vh, 28rem);
+  width: clamp(15rem, 30vw, 19rem);
+  height: clamp(18rem, 44vh, 24rem);
 }
 .deck-card{
   position: absolute; inset: 0; margin: 0;
-  display: flex; align-items: center; justify-content: center;
-  transform-origin: 50% 78%;
+  transform-origin: 50% 80%;
   transition: transform .55s cubic-bezier(.2,.8,.3,1), opacity .55s ease;
   will-change: transform, opacity;
 }
-.deck-card.is-focus{
-  transform: translateX(0) scale(1) rotate(0deg);
-  opacity: 1; cursor: pointer;
-}
+.deck-card.is-focus{ transform: translateX(0) scale(1) rotate(0deg); opacity: 1; }
 .deck-card.is-ahead{
   transform:
-    translateX(calc(var(--offset) * 2.7rem + var(--abs) * .3rem))
+    translateX(calc(var(--offset) * 2.6rem + var(--abs) * .3rem))
     translateY(calc(var(--abs) * .7rem))
     scale(calc(1 - var(--abs) * .055))
     rotate(calc(var(--offset) * 2.4deg));
   opacity: max(0, calc(1 - var(--abs) * .19));
   cursor: pointer;
 }
+.deck-card.is-ahead:hover{
+  transform:
+    translateX(calc(var(--offset) * 2.6rem + var(--abs) * .3rem - .5rem))
+    translateY(calc(var(--abs) * .7rem - .4rem))
+    scale(calc(1 - var(--abs) * .055 + .015))
+    rotate(calc(var(--offset) * 2.4deg));
+}
 .deck-card.is-past{
   transform: translateX(-62%) translateY(-.4rem) scale(.92) rotate(-7deg);
   opacity: 0; pointer-events: none;
 }
 
-/* the card interior is a Story Seed; give it a physical card surface so the
-   fan reads as a stack of real cards. The seed's own form treatment
-   (postcard border, torn edge, giant type…) sits inside this. */
-.deck-card .seed{
-  position: relative; opacity: 1 !important; transform: none !important;
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column; justify-content: center;
-  box-sizing: border-box;
-  padding: 1.8rem 1.6rem;
+/* the physical card surface + its three zones (top / body / foot) */
+.deck-card-inner{
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  box-sizing: border-box; padding: 1.1rem 1.2rem 1rem;
   background: var(--paper);
   border: 1px solid var(--rule-2);
   box-shadow: 0 18px 40px -22px rgba(40,36,30,.5);
-  border-radius: 3px;
+  border-radius: 3px; overflow: hidden;
 }
-.deck-card.is-focus .seed{ box-shadow: 0 26px 60px -26px rgba(40,36,30,.6); }
+.deck-card.is-focus .deck-card-inner{ box-shadow: 0 26px 60px -26px rgba(40,36,30,.6); cursor: pointer; }
 
-/* the seed's Wander discovery chrome isn't wanted here: no author line, no
-   "Read →" (the focused card is already the read link), and its hover peek
-   becomes a quiet always-on place caption at the foot of the card. */
-.deck-card .seed-meta,
-.deck-card .seed-cta{ display: none; }
-.deck-card .seed-peek{
-  position: static; opacity: 1; transform: none; margin-top: 1rem;
+.deck-card-top{
+  flex: none; display: flex; align-items: baseline; justify-content: space-between;
+  gap: .75rem; font-family: var(--f-mono); font-size: .6rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mute);
+  padding-bottom: .8rem; border-bottom: 1px solid var(--rule-2);
 }
-.deck-card .seed-place{
-  font-family: var(--f-hand); font-size: 1rem; letter-spacing: 0;
-  text-transform: none; color: var(--mute);
-}
+.deck-card-idx{ color: color-mix(in oklab, var(--accent) 55%, var(--mute)); letter-spacing: .16em; }
+.deck-card-meta{ text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* — the flip controls: quiet arrows and a row of ticks (a physical sense of
-   where you are in the stack, never a "7 of 12" number) — */
-.deck-nav{
-  flex: none; display: flex; align-items: center; gap: 1.1rem;
-  margin-top: 2.2rem;
+.deck-card-body{
+  flex: 1 1 auto; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
 }
+/* the seed interior sits transparent inside the card (the card is the
+   surface now); its Wander entrance + rotation + discovery chrome are off. */
+.deck-card-body .seed{
+  position: relative; opacity: 1 !important; transform: none !important;
+  width: 100%; background: none; border: none; box-shadow: none; padding: 0;
+}
+.deck-card-body .seed-peek{ display: none; }
+
+.deck-card-foot{
+  flex: none; align-self: flex-end; margin-top: .8rem;
+  font-family: var(--f-mono); font-size: .64rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent); text-decoration: none;
+  opacity: 0; transition: opacity .3s ease; pointer-events: none;
+}
+/* the read cue only shows on the card in focus — the one you can act on */
+.deck-card.is-focus .deck-card-foot{ opacity: .9; pointer-events: auto; }
+.deck-card.is-focus:hover .deck-card-foot{ opacity: 1; }
+.deck-card-foot span{ transition: transform .2s ease; display: inline-block; }
+.deck-card.is-focus:hover .deck-card-foot span{ transform: translateX(3px); }
+
+/* — the flip controls: an explicit hint, quiet arrows, and a row of ticks
+   (a physical sense of place in the stack, never a "7 of 12" number) — */
+.deck-controls{ flex: none; display: flex; flex-direction: column; align-items: center; gap: .7rem; }
+.deck-hint{
+  margin: 0; font-family: var(--f-mono); font-size: .62rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--mute); opacity: .8;
+}
+.deck-nav{ display: flex; align-items: center; gap: 1.1rem; }
 .deck-arrow{
   appearance: none; background: none; border: none; cursor: pointer;
-  font-family: var(--f-disp); font-size: 1.8rem; line-height: 1;
-  color: var(--ink-soft); padding: .1rem .4rem; transition: color .2s ease, opacity .2s ease;
+  font-family: var(--f-disp); font-size: 1.7rem; line-height: 1;
+  color: var(--ink-soft); padding: .1rem .5rem; border-radius: 999px;
+  transition: color .2s ease, background .2s ease;
 }
-.deck-arrow:hover{ color: var(--accent); }
-.deck-arrow:disabled{ opacity: .25; cursor: default; }
+.deck-arrow:hover:not(:disabled){ color: var(--accent); background: var(--shade); }
+.deck-arrow:disabled{ opacity: .22; cursor: default; }
 .deck-ticks{ display: flex; align-items: center; gap: .4rem; }
 .deck-tick{
   width: .42rem; height: .42rem; border-radius: 50%;
@@ -2047,7 +2077,7 @@ a{ color: inherit; }
 }
 .deck-tick.is-here{ background: var(--accent); transform: scale(1.5); }
 
-/* — the empty state: same header, a quiet line where the deck would be — */
+/* — empty state: same header, a quiet line where the deck would be — */
 .author-empty{ flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .3rem; }
 .author-empty-line{ font-family: var(--f-disp); font-size: clamp(1.5rem, 3vw, 2rem); color: var(--ink-soft); margin: 0; }
 .author-empty-sub{ font-family: var(--f-hand); font-size: 1.1rem; color: var(--mute); margin: 0 0 1.2rem; }
@@ -2058,8 +2088,8 @@ a{ color: inherit; }
   .deck-card{ transition: none; }
 }
 @media (max-width: 720px){
-  .author-page{ padding: 5vh 0 3vh; }
-  .deck-stack{ width: min(78vw, 20rem); height: clamp(20rem, 50vh, 25rem); }
+  .author-page{ padding: 3vh 0 2vh; }
+  .deck-stack{ width: min(80vw, 19rem); height: clamp(18rem, 46vh, 23rem); }
   .deck-card.is-ahead{
     transform:
       translateX(calc(var(--offset) * 1.7rem + var(--abs) * .2rem))
