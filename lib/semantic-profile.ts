@@ -149,6 +149,11 @@ export const TEMPORAL_CUES: [string, RegExp][] = [
 
 /* ── NARRATIVE ─────────────────────────────────────────────────────── */
 export const NARRATIVE_CUES: [string, RegExp][] = [
+  // a life-transition beat distinct from a plain "departure" (leaving a
+  // person or a place): quitting work, dropping out, selling everything —
+  // the kind of turn Module 4's own "quit my job and drove across
+  // Rajasthan" example hinges on, which no existing cue here caught.
+  ["transition", /\b(quit(?:ting)? my job|quit(?:ting)? (her|his|their) job|left my job|resigned|handed in my notice|gave notice|dropped out|sold everything|moved (away|abroad|across the country))\b/i],
   ["departure", /\b(left (him|her|them|home|without)|leaving (for good|forever)|departure|said goodbye|drove away)\b/i],
   ["arrival", /\b(arrived|arrival|landed|first time (in|at))\b/i],
   ["breakup", /\b(broke up|breakup|stopped fighting|ex-|no longer together)\b/i],

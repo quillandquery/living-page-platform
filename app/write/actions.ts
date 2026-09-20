@@ -6,6 +6,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { myProfile } from "@/lib/db";
 import type { Block } from "@/lib/story-blocks.mjs";
 import { resolveImagery } from "@/lib/media";
+import { deriveSlugBase } from "@/lib/slug";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
 
 /**
@@ -84,8 +85,23 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     return { ok: false, message: `A published piece needs: ${missing.join(", ")}.` };
   }
 
-  const slug = await uniqueSlug(profile.id, input.id, input.place || "untitled");
   const supabase = await supabaseServer();
+
+  // PUBLISHED URLS ARE PERMANENT (module PART 3): a story that has gone
+  // out at least once keeps the slug it went out under, no matter what
+  // the writer changes on a later save — recomputing it from `place` on
+  // every save (the previous behaviour) meant an autosave could silently
+  // move a link that was already shared. Only a story that has never been
+  // published gets a freshly-derived slug.
+  const { data: existing } = await supabase
+    .from("stories")
+    .select("slug, published_at")
+    .eq("id", input.id)
+    .eq("author_id", profile.id)
+    .maybeSingle();
+  const slug = existing?.published_at
+    ? existing.slug
+    : await uniqueSlug(profile.id, input.id, deriveSlugBase({ fragment: input.fragment, place: input.place }));
 
   // image-forward register: resolve photos into the blocks. Guarded so a
   // missing key or a provider hiccup never blocks a save.

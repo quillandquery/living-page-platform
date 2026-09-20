@@ -4,6 +4,8 @@ import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
 import { Artwork } from "./Artwork";
 import { Signature } from "./Signature";
+import { StoryHero } from "./StoryHero";
+import { deriveHeroDirection } from "@/lib/story-hero";
 import { Doodle } from "@/components/doodles/Doodle";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
 import { paletteStyle } from "@/lib/palette-style";
@@ -57,6 +59,7 @@ export function StoryView({
   const vars = ad0?.palette?.vars ?? worldVars(world, safeAccent);
 
   const ad = ad0;
+  const hero = deriveHeroDirection({ title: fragment, mood: ad?.atmosphere.mood });
   const shellClass = [
     "frame", "story-reading",
     ad ? `material-${ad.material.key}` : "",
@@ -90,6 +93,13 @@ export function StoryView({
           ) : null}
         </header>
       ) : null}
+
+      {/* THE STORY HERO — the writer's own hook line, shown as the first
+          thing a reader sees (module: "the writer never has to understand
+          this happened"). Sits outside <StoryFrame>'s veiled flow on
+          purpose: it is part of the frontispiece the piece opens on, not a
+          beat that resolves on scroll. */}
+      {chrome ? <StoryHero hero={hero} /> : null}
 
       <StoryFrame veil={veil} accent={safeAccent}>
         <StoryRender blocks={blocks} />
