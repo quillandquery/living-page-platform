@@ -467,6 +467,13 @@ a{ color: inherit; }
    .frame's own edges (same width the header rule and body text already
    use), not the viewport's, so it lines up with everything else. */
 .frontispiece:has(+ .story-hero-headline){
+  /* .backdrop is position:fixed with z-index:0, which — per the CSS
+     painting-order spec — puts it in a LATER paint layer than plain
+     non-positioned content, even though it's earlier in the DOM. An
+     opaque background on a static element like this one does nothing:
+     the backdrop still paints on top of it. Give the masthead its own
+     stacking context above the backdrop's so the paper actually wins. */
+  position: relative; z-index: 2;
   background: var(--paper);
   margin-bottom: 0;
   width: calc(100% + 3rem);
@@ -474,6 +481,7 @@ a{ color: inherit; }
   padding-inline: 1.5rem;
 }
 .story-hero-headline{
+  position: relative; z-index: 2;
   margin-top: 0; margin-bottom: 0;
   background: var(--paper);
   width: calc(100% + 3rem);
