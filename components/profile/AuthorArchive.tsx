@@ -1,57 +1,107 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { StorySeed } from "@/components/wander/StorySeed";
 import type { StorySeed as Seed } from "@/lib/discover";
 
-function hash(str: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return h >>> 0;
-}
-
 /**
- * THE ARCHIVE — a person's own corner, not Wander's field.
+ * THE DECK — an author's stories as a fanned deck you flip through, one in
+ * focus at a time, the rest trailing off to the right.
  *
- * Renders through the same Story Seed unit Wander uses (lib/discover.ts's
- * buildSeed + components/wander/StorySeed.tsx) for a seed's own content —
- * a story never gets a second renderer for its hook/doodle/voice. But the
- * composition around it is deliberately not Wander's: capped at two
- * columns always (Wander grows to three or four as it fills), and density
- * is felt through tighter whitespace as the archive grows rather than more
- * columns or a counter. Every piece wears a small strip of tape in its own
- * accent colour — the one mark Wander's field never has, which alone does
- * most of the work of reading as things pinned to a board rather than
- * objects scattered in open space.
+ * This replaces the earlier scattered "field" composition. The field's
+ * problem wasn't the seed shapes, it was showing all of them at once with
+ * no body: a wall of bare words read as confetti. A deck fixes that by
+ * construction — there is exactly one card in focus, so it can't help but
+ * have presence, and the varied seed SHAPES (postcard, torn scrap, giant
+ * word, ticket, drifting line) read as delight in sequence rather than mess
+ * in a scatter. Two stories that happen to share a shape are separated by a
+ * flip, so repetition barely registers.
  *
- * Every per-item value below is seeded off the story's own id, so the wall
- * is stable across requests rather than reshuffled per render.
+ * Wander's StorySeed is reused untouched for each card's interior (its own
+ * archetype treatment and its own link to the story). Because StorySeed is
+ * itself an <a>, we never wrap it in another anchor: instead the card
+ * intercepts clicks on NON-focused cards to bring them forward, and lets the
+ * focused card's own link do the reading. With JS off, no interception
+ * happens and every card is simply its own link to its story — a plain
+ * stack of links, which is also exactly what a crawler or link preview sees.
  */
+
+const FOCUS = "focus";
+const AHEAD = "ahead";
+const PAST = "past";
+
 export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
-  const density = seeds.length <= 3 ? "sparse" : seeds.length <= 14 ? "grown" : "full";
+  const n = seeds.length;
+  const [current, setCurrent] = useState(0);
+  const touchX = useRef<number | null>(null);
+
+  const go = useCallback(
+    (dir: 1 | -1) => setCurrent((c) => Math.min(Math.max(c + dir, 0), n - 1)),
+    [n],
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); go(1); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); go(-1); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go]);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (dx < -45) go(1);
+    else if (dx > 45) go(-1);
+    touchX.current = null;
+  };
 
   return (
-    <ul className={`author-archive density-${density}`}>
-      {seeds.map((seed, i) => {
-        const h = hash(seed.key);
-        const lift = ((h >> 3) % 100) / 100; // 0..1 — vertical rhythm per piece
-        const nudge = (h >> 11) % 5 === 0 ? (h % 2 ? 1 : -1) : 0; // rare horizontal offset (whitespace only)
-        const tapeRot = ((h >> 6) % 17) - 8; // -8..8deg
-        const tapeX = 10 + ((h >> 15) % 55); // 10%..65% across the piece
-        const tapeSide = h % 2 === 0 ? "top" : "corner";
-        const style = {
-          ["--lift" as string]: `${(lift * 2.4).toFixed(2)}rem`,
-          ["--nudge" as string]: nudge,
-          ["--tape-rot" as string]: `${tapeRot}deg`,
-          ["--tape-x" as string]: `${tapeX}%`,
-          ["--accent" as string]: seed.accent,
-        } as CSSProperties;
-        return (
-          <li key={seed.key} className={`scrap scrap-tape-${tapeSide}`} style={style}>
-            <span className="scrap-tape" aria-hidden="true" />
-            <StorySeed seed={seed} index={i} />
-          </li>
-        );
-      })}
-    </ul>
+    <div className="deck" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <ul className="deck-stack" style={{ ["--n" as string]: n } as CSSProperties}>
+        {seeds.map((seed, i) => {
+          const offset = i - current;
+          const state = offset === 0 ? FOCUS : offset < 0 ? PAST : AHEAD;
+          const style = {
+            ["--offset" as string]: offset,
+            ["--abs" as string]: Math.abs(offset),
+            zIndex: n - Math.abs(offset),
+          } as CSSProperties;
+          return (
+            <li
+              key={seed.key}
+              className={`deck-card is-${state}`}
+              style={style}
+              aria-hidden={offset === 0 ? undefined : true}
+              // Bring a trailing card forward on click; the focused card is
+              // left alone so its own inner link reads the story. Capture so
+              // this runs before StorySeed's <Link> would navigate. With JS
+              // off, none of this fires and the inner link just works.
+              onClickCapture={(e) => {
+                if (offset !== 0) { e.preventDefault(); e.stopPropagation(); setCurrent(i); }
+              }}
+            >
+              <StorySeed seed={seed} index={i} />
+            </li>
+          );
+        })}
+      </ul>
+
+      {n > 1 ? (
+        <nav className="deck-nav" aria-label="Move through the deck">
+          <button className="deck-arrow" onClick={() => go(-1)} disabled={current === 0} aria-label="Previous story">‹</button>
+          <span className="deck-ticks" aria-hidden="true">
+            {seeds.map((s, i) => (
+              <span key={s.key} className={`deck-tick${i === current ? " is-here" : ""}`} />
+            ))}
+          </span>
+          <button className="deck-arrow" onClick={() => go(1)} disabled={current === n - 1} aria-label="Next story">›</button>
+        </nav>
+      ) : null}
+    </div>
   );
 }
 
