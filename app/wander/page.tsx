@@ -1,11 +1,38 @@
+import type { Metadata } from "next";
+
 import { publishedFeed } from "@/lib/db";
 import { buildField } from "@/lib/discover";
 import { SAMPLE_STORIES } from "@/lib/wander-samples";
 import { WanderField } from "@/components/wander/WanderField";
+import { absoluteUrl, SITE_NAME } from "@/lib/site";
 
-export const metadata = {
-  title: "Wander — The Living Page",
-  description: "You don't have to know what you're looking for.",
+/**
+ * SEO audit, Sept 2026: this previously read "Wander — The Living Page",
+ * a leftover pre-repositioning wordmark (docs/COPY.md's `[NAV.LOGO]` is
+ * "Living Page", never "The Living Page") — it also bypassed the layout's
+ * title template instead of using it. It also had no canonical URL and no
+ * openGraph/twitter fields, so a shared Wander link had no preview card.
+ * The image comes from the co-located opengraph-image.tsx.
+ */
+const WANDER_TITLE = "Wander";
+const WANDER_DESCRIPTION = "You don't have to know what you're looking for.";
+
+export const metadata: Metadata = {
+  title: WANDER_TITLE,
+  description: WANDER_DESCRIPTION,
+  alternates: { canonical: absoluteUrl("/wander") },
+  openGraph: {
+    title: WANDER_TITLE,
+    description: WANDER_DESCRIPTION,
+    url: absoluteUrl("/wander"),
+    siteName: SITE_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: WANDER_TITLE,
+    description: WANDER_DESCRIPTION,
+  },
 };
 
 /**

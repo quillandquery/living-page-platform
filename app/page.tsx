@@ -1,7 +1,38 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { Doodle } from "@/components/doodles/Doodle";
 import { TryIt } from "@/components/home/TryIt";
+import { absoluteUrl, SITE_NAME } from "@/lib/site";
+
+/**
+ * HOMEPAGE METADATA (SEO audit, Sept 2026). The homepage previously set no
+ * metadata of its own — it inherited the root layout's title/description,
+ * which is fine for search snippets, but it had no `openGraph`/`twitter`
+ * fields or canonical URL, so a shared homepage link (the highest-traffic
+ * SEO asset the product has, per the pre-launch strategy doc) rendered as a
+ * bare text link everywhere instead of a card. The image comes from the
+ * co-located opengraph-image.tsx via Next's file convention.
+ */
+const HOME_TITLE = "Living Page — A new way to tell a story";
+const HOME_DESCRIPTION =
+  "You have a story. It shouldn't look like a blog post. Write it normally — Living Page works out the typography, motion and colour it wants, automatically.";
+
+export const metadata: Metadata = {
+  alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    url: absoluteUrl("/"),
+    siteName: SITE_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
+};
 
 /** The four writer entry points — same copy/hrefs as the shipped Phase 1
  *  homepage (commit 83c0c44), restored per feedback. All four go to /make;
