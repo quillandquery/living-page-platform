@@ -1,20 +1,7 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 
 import { Doodle } from "@/components/doodles/Doodle";
 import { TryIt } from "@/components/home/TryIt";
-
-/**
- * The homepage's own metadata (SEO strategy doc, finding #1): it sets no
- * metadata of its own today, so it silently inherits the root layout's
- * default — an absolute title, since the home page is never "X — Living
- * Page", it just IS Living Page.
- */
-export const metadata: Metadata = {
-  title: { absolute: "Living Page — A new way to tell a story" },
-  description:
-    "Write your story normally. Living Page works out the typography, motion, colour and pacing it wants — automatically. No templates, no design decisions, no SEO to think about.",
-};
 
 /**
  * THE FRONT DOOR (homepage P0 pass, see the P0 brief this session was
