@@ -14,6 +14,7 @@
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { initAnalytics } from "@/lib/analytics/client";
+import { trackGaPageview } from "@/lib/analytics/ga";
 import posthog from "posthog-js";
 
 function PostHogPageview() {
@@ -31,6 +32,23 @@ function PostHogPageview() {
   return null;
 }
 
+/* Same reasoning as PostHogPageview: gtag.js's own `gtag('config', ...)`
+   call (app/layout.tsx) only ever fires once, on the first script load, so
+   an App Router client-side navigation needs its own pageview reported by
+   hand. trackGaPageview() is a silent no-op when GA isn't configured. */
+function GaPageview() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!pathname) return;
+    const url = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+    trackGaPageview(url);
+  }, [pathname, searchParams]);
+
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => { initAnalytics(); }, []);
 
@@ -38,6 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <>
       <Suspense fallback={null}>
         <PostHogPageview />
+        <GaPageview />
       </Suspense>
       {children}
     </>
