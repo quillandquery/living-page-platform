@@ -4,8 +4,6 @@ import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
 import { Artwork } from "./Artwork";
 import { Signature } from "./Signature";
-import { StoryHero } from "./StoryHero";
-import { deriveHeroDirection } from "@/lib/story-hero";
 import { Doodle } from "@/components/doodles/Doodle";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
 import { paletteStyle } from "@/lib/palette-style";
@@ -59,7 +57,6 @@ export function StoryView({
   const vars = ad0?.palette?.vars ?? worldVars(world, safeAccent);
 
   const ad = ad0;
-  const hero = deriveHeroDirection({ title: fragment, mood: ad?.atmosphere.mood });
   const shellClass = [
     "frame", "story-reading",
     ad ? `material-${ad.material.key}` : "",
@@ -85,6 +82,12 @@ export function StoryView({
         <header className="frontispiece">
           <Link href="/" className="back">back</Link>
           <p className="place">{place}</p>
+          {/* THE STORY HERO (Module 4) — the writer's own hook line. Used
+              to open as its own big beat below the frontispiece; folded in
+              here instead, as one more small-caps tag alongside place/date/
+              author, so it reads as part of the byline row rather than a
+              second title competing with `place`. */}
+          {fragment ? <p className="hero-tag">{fragment.trim()}</p> : null}
           <p className="stamp">{date}</p>
           {author ? (
             <p className="byline">
@@ -93,13 +96,6 @@ export function StoryView({
           ) : null}
         </header>
       ) : null}
-
-      {/* THE STORY HERO — the writer's own hook line, shown as the first
-          thing a reader sees (module: "the writer never has to understand
-          this happened"). Sits outside <StoryFrame>'s veiled flow on
-          purpose: it is part of the frontispiece the piece opens on, not a
-          beat that resolves on scroll. */}
-      {chrome ? <StoryHero hero={hero} /> : null}
 
       <StoryFrame veil={veil} accent={safeAccent}>
         <StoryRender blocks={blocks} />
