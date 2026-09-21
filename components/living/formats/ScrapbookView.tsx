@@ -67,8 +67,8 @@ export function ScrapbookView({
       {chrome ? (
         <header className="sb-head">
           <Link href="/" className="back sb-back">back</Link>
-          <h1 className="sb-title">{place}</h1>
-          {fragment ? <p className="sb-frag">{fragment}</p> : null}
+          <p className="sb-title">{place}</p>
+          {fragment ? <h1 className="sb-frag">{fragment}</h1> : null}
           <span className="sb-stamp" aria-hidden="true">
             <Doodle name={ad?.signature.doodle ?? "spiral"} seed={19} size={40} ink="var(--accent)" />
             <em>{date || place}</em>

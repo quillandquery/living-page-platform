@@ -31,6 +31,7 @@ export function LetterView(p: StoryViewData) {
         <header className="lt-head">
           <Back />
           <div className="lt-meta"><span className="lt-place">{p.place}</span>{p.date ? <span className="lt-date">{p.date}</span> : null}</div>
+          {p.fragment ? <h1 className="lt-frag">{p.fragment}</h1> : null}
           <p className="lt-open">Dear —</p>
         </header>
       ) : null}
@@ -68,6 +69,7 @@ export function TicketView(p: StoryViewData) {
       header={p.chrome ? (
         <header className="tk-head">
           <Back /><span className="tk-dest">{p.place}</span><span className="tk-tag">boarding pass</span>
+          {p.fragment ? <h1 className="tk-frag">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -84,7 +86,8 @@ export function NotebookView(p: StoryViewData) {
     <FormatShell variant="notebook" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="nb-head">
-          <Back /><h1 className="nb-title">{p.place}</h1>{p.date ? <span className="nb-date">{p.date}</span> : null}
+          <Back /><p className="nb-title">{p.place}</p>{p.date ? <span className="nb-date">{p.date}</span> : null}
+          {p.fragment ? <h1 className="nb-frag">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -105,7 +108,7 @@ export function GalleryView(p: StoryViewData) {
     <FormatShell variant="gallery" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="gl-head">
-          <Back /><h1 className="gl-title">{p.place}</h1>{p.fragment ? <p className="gl-sub">{p.fragment}</p> : null}
+          <Back /><p className="gl-title">{p.place}</p>{p.fragment ? <h1 className="gl-sub">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -125,7 +128,7 @@ export function FilmView(p: StoryViewData) {
     <FormatShell variant="film" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="fl-head">
-          <Back /><h1 className="fl-title">{p.place}</h1>{p.fragment ? <p className="fl-sub">{p.fragment}</p> : null}
+          <Back /><p className="fl-title">{p.place}</p>{p.fragment ? <h1 className="fl-sub">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -139,7 +142,7 @@ export function RansomView(p: StoryViewData) {
     <FormatShell variant="ransom" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="rn-head">
-          <Back /><h1 className="rn-title">{p.place}</h1>
+          <Back /><p className="rn-title">{p.place}</p>{p.fragment ? <h1 className="rn-frag">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -153,7 +156,7 @@ export function MarqueeView(p: StoryViewData) {
     <FormatShell variant="marquee" accent={p.accent} artDirection={p.artDirection} seed={p.seed} blocks={p.blocks} veil={p.veil} scoped={p.scoped}
       header={p.chrome ? (
         <header className="mq-head">
-          <Back /><h1 className="mq-title">{p.place}</h1>
+          <Back /><p className="mq-title">{p.place}</p>{p.fragment ? <h1 className="mq-frag">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}
@@ -170,6 +173,7 @@ export function PostcardView(p: StoryViewData) {
           <Back />
           <span className="pc-stamp"><Doodle name={p.artDirection && "signature" in p.artDirection ? (p.artDirection.signature?.doodle ?? "spiral") : "spiral"} seed={19} size={36} ink="var(--accent)" /></span>
           <span className="pc-dest">{p.place}{p.date ? ` · ${p.date}` : ""}</span>
+          {p.fragment ? <h1 className="pc-frag">{p.fragment}</h1> : null}
           <FormatByline author={p.author} />
         </header>
       ) : null}

@@ -100,6 +100,11 @@ export default async function StoryReaderPage(
     headline: context.title,
     description: context.summary,
     url: articleUrl,
+    // The co-located opengraph-image.tsx route always serves a real image
+    // for this exact path (confirmed in the Twitter Card fix) — Article/
+    // BlogPosting JSON-LD supports `image` too, so give it the same one
+    // instead of leaving rich-result eligibility to guess.
+    imageUrl: absoluteUrl(`${basePath}/opengraph-image`),
     authorName: story.author.display_name || `@${story.author.handle}`,
     authorUrl: absoluteUrl(`/@${story.author.handle}`),
     datePublished: story.published_at,

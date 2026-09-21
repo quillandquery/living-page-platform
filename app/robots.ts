@@ -20,6 +20,10 @@ export default function robots(): MetadataRoute.Robots {
         "/auth", "/auth/*",
         "/looks",
         "/preview-tile",
+        // An unchromed, per-story render target for the share-image
+        // capture worker (Module 4 share/OG rework) — never a page a
+        // reader or a search engine should land on.
+        "/render", "/render/*",
       ],
     },
     sitemap: absoluteUrl("/sitemap.xml"),

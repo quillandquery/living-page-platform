@@ -84,6 +84,9 @@ export default async function SampleReaderPage(
     headline: context.title,
     description: context.summary,
     url: absoluteUrl(`/wander/s/${slug}`),
+    // Same reasoning as the real story route: the co-located
+    // opengraph-image.tsx here always renders one, noindex or not.
+    imageUrl: absoluteUrl(`/wander/s/${slug}/opengraph-image`),
     authorName: story.author.display_name,
     authorUrl: absoluteUrl("/wander"),
     datePublished: story.published_at,

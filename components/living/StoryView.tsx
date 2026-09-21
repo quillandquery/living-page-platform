@@ -87,7 +87,7 @@ export function StoryView({
               here instead, as one more small-caps tag alongside place/date/
               author, so it reads as part of the byline row rather than a
               second title competing with `place`. */}
-          {fragment ? <p className="hero-tag">{fragment.trim()}</p> : null}
+          {fragment ? <h1 className="hero-tag">{fragment.trim()}</h1> : null}
           <p className="stamp">{date}</p>
           {author ? (
             <p className="byline">
