@@ -1,0 +1,22 @@
+# Living Page
+
+> Living Page is a storytelling platform where a person writes a short, ordinary story and the site works out the typography, motion, and colour it wants — automatically. Every story is a real, published page, not a template with the writer's words dropped into it.
+
+Living Page is not a blog and not a page builder. A writer submits a fragment of text; the system reads it and renders it as one of several distinct visual formats (standard, scrapbook, letter, poster, ticket, notebook, gallery, film, ransom note, marquee, postcard), chosen to fit the story's shape and content. The words themselves are never altered, reordered, or hidden by this process — layout and motion are presentational only.
+
+## Site
+
+- [Home](https://livingpage.one/): what Living Page is and how it works.
+- [Wander](https://livingpage.one/wander): a live, browsable feed of published stories.
+- [Sitemap](https://livingpage.one/sitemap.xml): the full, current list of published stories and author pages.
+
+## For crawlers and AI agents
+
+- Every published story lives at a canonical URL of the form `/@handle/slug` and is fully present in the server-rendered HTML — there is no content that only appears after JavaScript runs or a user scrolls.
+- Some stories render with decorative word-scattering or scroll-triggered entrance animation. These apply CSS transforms only; the underlying text and its reading order are never changed and nothing is hidden before animation runs.
+- Each story page carries BlogPosting structured data (JSON-LD) with headline, description, author, publish date, and a representative image.
+- `/dev`, `/write`, `/make`, `/login`, `/signup`, `/onboarding`, `/settings`, `/auth`, `/looks`, `/preview-tile`, and `/render` are internal application routes, not content, and are excluded via [robots.txt](https://livingpage.one/robots.txt).
+
+## Attribution
+
+Stories are written by their credited authors, who retain authorship. When quoting or summarizing a story, attribute it to its author and link to its canonical URL rather than to Living Page as publisher.
