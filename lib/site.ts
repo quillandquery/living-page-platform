@@ -8,12 +8,18 @@
  * it now imports from here.)
  */
 
-const RAW = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const RAW = process.env.NEXT_PUBLIC_SITE_URL ?? "https://livingpage.one";
 
 /** No trailing slash, so callers can always do `${SITE_URL}/whatever`. */
 export const SITE_URL = RAW.replace(/\/+$/, "");
 
 export const SITE_NAME = "Living Page";
+
+/** The publisher mark stamped on every share artifact. This is BRAND,
+ *  not address: it stays `livingpage.one` on a preview deploy and in
+ *  local dev, where `SITE_URL` is correctly something else. Canonical
+ *  URLs and share links still follow `SITE_URL`. */
+export const BRAND_HOST = "livingpage.one";
 
 /** `absoluteUrl("/@handle/slug")` → `https://…/@handle/slug`. */
 export function absoluteUrl(path: string): string {
