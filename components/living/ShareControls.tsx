@@ -46,9 +46,14 @@ export type ShareControlsProps = {
   whatsappMessage: string;
   /** Email subject + body. */
   email: { subject: string; body: string };
-  /** Absolute URLs to the two pre-rendered assets. */
+  /** Absolute URLs to the two pre-rendered still assets. */
   instagramFeedUrl: string;
   instagramStoryUrl: string;
+  /** Pre-generated moving story asset (Supabase Storage), when it exists
+   *  for this story. Instagram Stories accept video, so this is what a
+   *  reader posts; the stills above remain the fallback. */
+  motionMp4?: string | null;
+  motionWebp?: string | null;
 };
 
 type Toast = { message: string; key: number } | null;
@@ -227,6 +232,9 @@ export function ShareControls(props: ShareControlsProps) {
           ) : null}
           <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramFeedUrl, reaction), "living-page-feed.png")}>Save image (feed · 1080×1350)</button>
           <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramStoryUrl, reaction), "living-page-story.png")}>Save image (story · 1080×1920)</button>
+          {props.motionMp4 ? (
+            <button type="button" className="share-item share-item-motion" role="menuitem" onClick={() => saveInstagramAsset(props.motionMp4!, "living-page-story.mp4")}>Save moving version (story · MP4)</button>
+          ) : null}
           <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.instagramCaption, "Caption copied")}>Copy caption</button>
           <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.canonicalUrl, "Link copied")}>Copy link</button>
           <button type="button" className="share-item share-item-back" role="menuitem" onClick={() => setIgOpen(false)}>← Back</button>

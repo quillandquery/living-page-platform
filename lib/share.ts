@@ -35,5 +35,7 @@ export function buildShareProps(story: StoryWithAuthor): ShareControlsProps {
     email: emailBody(input),
     instagramFeedUrl: absoluteUrl(`${path}/instagram-feed.png`),
     instagramStoryUrl: absoluteUrl(`${path}/instagram-story.png`),
+    motionMp4: story.art_direction?.share?.loopMp4 ?? null,
+    motionWebp: story.art_direction?.share?.loopWebp ?? null,
   };
 }

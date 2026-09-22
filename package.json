@@ -10,7 +10,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "check": "node scripts/check-stories.mjs",
-    "seed": "node --env-file=.env.local scripts/seed.mjs"
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "gen:loops": "TSX_TSCONFIG_PATH=scripts/tsconfig.gen.json node --env-file=.env.local --import tsx scripts/gen-share-loops.ts"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.0",
@@ -28,10 +29,13 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/mdx": "^2.0.13",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "satori": "^0.12.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.0"
   }
 }

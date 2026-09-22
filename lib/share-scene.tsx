@@ -24,6 +24,9 @@ export type SceneProps = {
   w: number;
   h: number;
   seed: number;
+  /** loop phase 0..1 — offsets the animated layers (rain, stars) so a
+   *  pre-generated frame sequence reads as motion. Omitted = still. */
+  t?: number;
 };
 
 function mulberry32(seed: number) {
@@ -85,7 +88,8 @@ export function skyGradient(backdrop: Backdrop): string {
   return `linear-gradient(180deg, ${top} 0%, ${mid} 46%, ${low} 76%, ${ground} 100%)`;
 }
 
-export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
+export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
+  const phase = t ?? 0;
   const rnd = mulberry32(seed);
   const dark = backdrop.scheme === "dark";
   const ground = sceneGround(backdrop);
@@ -144,7 +148,9 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
     const n = Math.round(w / 34);
     for (let i = 0; i < n; i++) {
       const x = rnd() * w, y = rnd() * (h * 0.52), r = 1.2 + rnd() * 2;
-      push(<circle cx={x} cy={y} r={r} fill="#FFFFFF" opacity={0.4 + rnd() * 0.5} />);
+      const base = 0.4 + rnd() * 0.5, ph = rnd();
+      const op = Math.max(0.08, base * (0.55 + 0.45 * Math.sin((ph + phase) * Math.PI * 2)));
+      push(<circle cx={x} cy={y} r={r} fill="#FFFFFF" opacity={op} />);
     }
   }
   if (has("raylight")) {
@@ -153,6 +159,16 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
       const x0 = (w / (n + 1)) * (i + 1) + (rnd() - 0.5) * 60;
       push(<polygon points={`${x0 - 30},0 ${x0 + 30},0 ${x0 + 90},${h} ${x0 - 90},${h}`} fill={accent2} opacity={0.06} />);
     }
+  }
+
+  // ── horizon glow — a light source at the horizon so the world reads
+  //    with depth, not one flat wash (concentric faint discs; Satori has
+  //    no radial-gradient). ─────────────────────────────────────────
+  {
+    const gy = horizonY - h * 0.02;
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.62} fill={accent2} opacity={dark ? 0.05 : 0.06} />);
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.40} fill={accent2} opacity={dark ? 0.06 : 0.07} />);
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.22} fill={mix(accent2, "#FFFFFF", dark ? 0.2 : 0.35)} opacity={dark ? 0.07 : 0.08} />);
   }
 
   // ── horizon silhouettes — two-depth bands, not one flat shape ────
@@ -212,15 +228,56 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
       winGrid(x, bw - 5, topY, horizonY + 30, accent2);
     }
   }
+  if (has("rain") && !has("city") && !has("sea") && !has("trees") && !has("ridge")) {
+    // A tall, dense, warmly-lit cityscape receding into the wet dark —
+    // the prototype's rain scene. Two depth rows; warm windows are the
+    // pop that makes a rainy city read as a place, not a band.
+    const warm = "#F0C070";
+    const cityscape = (count: number, minT: number, maxT: number, fill: string, op: number, litP: number, winOp: number) => {
+      const bw = w / count;
+      for (let i = 0; i < count; i++) {
+        const x = i * bw + rnd() * bw * 0.14;
+        const topY = minT + rnd() * (maxT - minT);
+        const ww = bw * (0.7 + rnd() * 0.22);
+        push(<rect x={x} y={topY} width={ww} height={h - topY} fill={fill} opacity={op} />);
+        const cols = Math.min(3, Math.max(1, Math.round(ww / 20)));
+        for (let cx = 0; cx < cols; cx++) {
+          for (let wy = topY + 16; wy < h - 26; wy += 26) {
+            if (rnd() < litP) push(<rect x={x + 7 + cx * (ww / cols)} y={wy} width={6} height={9} fill={warm} opacity={winOp + rnd() * 0.35} />);
+          }
+        }
+      }
+    };
+    // Silhouette colours are keyed to the GROUND (dark in a dark world),
+    // never `ink` — in a dark world ink is the light text colour, which
+    // would wash the buildings out. Front is near-black; back a hazier
+    // dark, tinted toward the world so it recedes.
+    const silFront = dark ? mix(ground, "#000000", 0.45) : mix("#241B12", accent, 0.28);
+    const silBack = dark ? mix(ground, accent, 0.32) : mix("#3A2C20", accent, 0.3);
+    // back row — hazier, shorter (atmospheric depth)
+    cityscape(9, h * 0.60, h * 0.72, silBack, 0.7, 0.16, 0.32);
+    // front row — near-black silhouettes, taller, warm windows popping
+    cityscape(12, h * 0.46, h * 0.66, silFront, 0.98, 0.44, 0.6);
+    // rain haze glow low over the city, and a shallow wet-ground sheen
+    push(<rect x={0} y={h * 0.62} width={w} height={h * 0.22} fill={accent2} opacity={0.05} />);
+    push(<rect x={0} y={h * 0.9} width={w} height={h * 0.1} fill={warm} opacity={0.04} />);
+  }
   if (has("sea")) {
-    push(<path d={`M0,${horizonY} Q${w * 0.5},${horizonY - 14} ${w},${horizonY} L${w},${h} L0,${h} Z`} fill={mix(ground, accent, dark ? 0.42 : 0.3)} opacity={0.9} />);
+    // distant headlands on either side — depth behind the water
+    push(<path d={`M0,${horizonY} L${w * 0.16},${horizonY - h * 0.055} L${w * 0.33},${horizonY - h * 0.02} L${w * 0.33},${horizonY} Z`} fill={mix(ink, accent, dark ? 0.5 : 0.4)} opacity={0.55} />);
+    push(<path d={`M${w * 0.72},${horizonY} L${w * 0.88},${horizonY - h * 0.06} L${w},${horizonY - h * 0.03} L${w},${horizonY} Z`} fill={mix(ink, accent, dark ? 0.5 : 0.4)} opacity={0.55} />);
+    // the water
+    push(<path d={`M0,${horizonY} Q${w * 0.5},${horizonY - 14} ${w},${horizonY} L${w},${h} L0,${h} Z`} fill={mix(ground, accent, dark ? 0.42 : 0.32)} opacity={0.92} />);
     if (has("sun")) {
-      // the sun's own reflection, laid straight down the water
-      push(<rect x={w * 0.68} y={horizonY} width={w * 0.16} height={h - horizonY} fill={accent2} opacity={0.16} />);
+      // the sun's reflection, a warm column down the water
+      push(<rect x={w * 0.6} y={horizonY} width={w * 0.14} height={h - horizonY} fill={accent2} opacity={0.2} />);
+      push(<rect x={w * 0.64} y={horizonY} width={w * 0.06} height={h - horizonY} fill={mix(accent2, "#FFFFFF", 0.4)} opacity={0.18} />);
     }
-    for (let i = 0; i < 3; i++) {
-      const y = horizonY + 20 + i * 28;
-      push(<path d={`M0,${y} Q${w * 0.5},${y - 9} ${w},${y}`} stroke={mix(ground, "#FFFFFF", 0.55)} strokeWidth={1.5} opacity={0.3} fill="none" />);
+    // dense wave lines, brighter and closer-spaced near the foreground
+    for (let i = 0; i < 8; i++) {
+      const y = horizonY + 16 + i * (h - horizonY) / 10;
+      const amp = 6 + i * 2;
+      push(<path d={`M0,${y} Q${w * 0.28},${y - amp} ${w * 0.5},${y} T${w},${y}`} stroke={mix(ground, "#FFFFFF", 0.6)} strokeWidth={1 + i * 0.35} opacity={0.16 + i * 0.03} fill="none" />);
     }
   }
   if (has("field")) {
@@ -244,10 +301,15 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
 
   // ── weather & atmosphere ─────────────────────────────────────────
   if (has("rain")) {
-    const n = Math.round(w / 24);
+    const n = Math.round(w / 13);            // denser, so it reads at poster scale
+    const travel = h + 140;
     for (let i = 0; i < n; i++) {
-      const x = rnd() * w, y = rnd() * h, len = 24 + rnd() * 28;
-      push(<line x1={x} y1={y} x2={x - len * 0.28} y2={y + len} stroke={mix(accent, "#FFFFFF", 0.35)} strokeWidth={1.5} opacity={0.35} strokeLinecap="round" />);
+      const near = rnd();                    // depth: near drops bigger/faster/brighter
+      const x = rnd() * w, y0 = rnd() * travel, len = 30 + rnd() * (36 + near * 64);
+      const y = ((y0 + phase * travel * (0.7 + near * 0.7)) % travel) - 70;
+      push(<line x1={x} y1={y} x2={x - len * 0.26} y2={y + len}
+        stroke={mix(accent, "#FFFFFF", 0.45)} strokeWidth={1 + near * 2.2}
+        opacity={0.22 + near * 0.4} strokeLinecap="round" />);
     }
   }
   if (has("shimmer")) {
@@ -290,8 +352,10 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
 
   // ── vignette — a soft edge darkening so the type reads as the
   //    subject, the world as the frame around it. ────────────────────
-  push(<rect x={0} y={0} width={w} height={h * 0.14} fill={ink} opacity={dark ? 0.16 : 0.05} />);
-  push(<rect x={0} y={h * 0.88} width={w} height={h * 0.12} fill={ink} opacity={dark ? 0.2 : 0.08} />);
+  push(<rect x={0} y={0} width={w} height={h * 0.16} fill={ink} opacity={dark ? 0.22 : 0.06} />);
+  push(<rect x={0} y={h * 0.84} width={w} height={h * 0.16} fill={ink} opacity={dark ? 0.3 : 0.1} />);
+  push(<rect x={0} y={0} width={w * 0.06} height={h} fill={ink} opacity={dark ? 0.16 : 0.04} />);
+  push(<rect x={w * 0.94} y={0} width={w * 0.06} height={h} fill={ink} opacity={dark ? 0.16 : 0.04} />);
 
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", background: skyGradient(backdrop) }}>

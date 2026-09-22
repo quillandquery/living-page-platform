@@ -74,7 +74,7 @@ export function LifeLabel({
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <div style={{ width: 10, height: 10, borderRadius: 999, background: palette.accent, display: "flex" }} />
-      <div style={{ display: "flex", fontSize, letterSpacing: 5, textTransform: "uppercase", color: palette.accent, fontWeight: 700 }}>
+      <div style={{ display: "flex", fontSize, letterSpacing: 4, textTransform: "uppercase", color: palette.ink, fontWeight: 700 }}>
         {label}
       </div>
     </div>

@@ -9,3 +9,7 @@ _to_delete
 .deploy-token
 .vercel
 to_delete_7sept
+
+# pre-generated share loops (generated artifacts)
+.loopframes/
+public/share-loops/
