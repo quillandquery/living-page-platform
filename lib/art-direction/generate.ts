@@ -104,7 +104,7 @@ export function generateArtDirection(
   const atmosphere = buildAtmosphere(mood);
 
   // — art style / look — a Look owns the medium; without one the mood picks it
-  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood);
+  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood, backdrop.energy);
   const artStyleSpec = ART_STYLES[look.artStyle];
   const intensity: VisualIntensity = opts.visualIntensity ?? look.visualIntensity;
 

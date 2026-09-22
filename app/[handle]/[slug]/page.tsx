@@ -8,6 +8,7 @@ import { deriveStoryContext } from "@/lib/story-context";
 import { buildStoryMetadata } from "@/lib/metadata";
 import { articleJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
 import { absoluteUrl } from "@/lib/site";
+import { buildShareProps } from "@/lib/share";
 import { ReaderTracking } from "@/components/analytics/ReaderTracking";
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
@@ -129,9 +130,16 @@ export default async function StoryReaderPage(
       author={{ handle: story.author.handle, display_name: story.author.display_name }}
       seed={story.id}
       artDirection={story.art_direction}
+      share={buildShareProps(story)}
       more={{
-        same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, theme: matchedTheme } : null,
-        surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place } : null,
+        // READ NEXT EXPERIMENT 1 — "this reminded me of…" needs enough of
+        // the destination's own treatment (its fragment and its accent) to
+        // let the destination sit inside the current page as another
+        // little world rather than a card. Surprise stays in the shape so
+        // the experiment can be rolled back to the original three-link
+        // strip without touching this file.
+        same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, theme: matchedTheme, fragment: same.fragment, accent: same.accent, backdrop: same.backdrop } : null,
+        surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place, fragment: surprise.fragment, accent: surprise.accent, backdrop: surprise.backdrop } : null,
       }}
     />
     </>

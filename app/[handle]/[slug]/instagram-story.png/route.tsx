@@ -1,27 +1,23 @@
 import { ImageResponse } from "next/og";
 import { publishedStory } from "@/lib/db";
-import { ShareFrame, FallbackFrame, OG_SIZE } from "@/lib/og-render";
+import { ShareFrame, FallbackFrame, IG_STORY_SIZE } from "@/lib/og-render";
 import { buildComposition, shareHost } from "@/lib/share-render";
 import { loadShareFonts, availableFamilies } from "@/lib/og-fonts";
 
 export const runtime = "nodejs";
-export const alt = "A story on Living Page";
-export const size = OG_SIZE;
-export const contentType = "image/png";
+export const revalidate = 3600;
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
 
-// The OG image is crawled and cached once by each platform — it has no
-// per-viewer reaction to carry, unlike the Instagram assets below, which
-// a reader generates fresh at the moment they choose to share.
-export default async function Image({ params }: { params: Promise<{ handle: string; slug: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ handle: string; slug: string }> }) {
   const { handle, slug } = await params;
   const story = await publishedStory(clean(handle), slug);
   const fonts = await loadShareFonts();
-  if (!story) return new ImageResponse(<FallbackFrame canvas="og" />, { ...size, fonts });
+  if (!story) return new ImageResponse(<FallbackFrame canvas="story" />, { ...IG_STORY_SIZE, fonts });
 
+  const reaction = new URL(req.url).searchParams.get("r");
   const families = availableFamilies(fonts);
-  const { composition, environmentKey, mood } = buildComposition(story);
+  const { composition, environmentKey, mood } = buildComposition(story, reaction);
   return new ImageResponse(
     <ShareFrame
       composition={composition}
@@ -29,12 +25,12 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
       authorHandle={`@${story.author.handle}`}
       mood={mood}
       host={shareHost()}
-      canvas="og"
+      canvas="story"
       hasDisplay={families.has("Instrument Serif")}
       hasBody={families.has("Newsreader")}
       hasHand={families.has("Caveat")}
       hasMono={families.has("Space Mono")}
     />,
-    { ...size, fonts },
+    { ...IG_STORY_SIZE, fonts },
   );
 }

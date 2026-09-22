@@ -4,6 +4,8 @@ import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
 import { Artwork } from "./Artwork";
 import { Signature } from "./Signature";
+import { ShareControls, type ShareControlsProps } from "./ShareControls";
+import { RemindedOf } from "./RemindedOf";
 import { Doodle } from "@/components/doodles/Doodle";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
 import { paletteStyle } from "@/lib/palette-style";
@@ -40,16 +42,19 @@ export type StoryViewData = {
   /** Story Visual System 2.0 — absent or `{}` for a row saved before it
    *  existed; the shell then renders exactly as it always has. */
   artDirection?: Partial<StoryArtDirection> | null;
+  /** share prop bundle from `lib/share.ts`, present only on the public reader
+   *  (Module 4 PARTS 14-33) — the studio preview stays share-less. */
+  share?: ShareControlsProps | null;
   /** the rabbit hole at the end of the piece — omitted in the studio preview */
   more?: {
-    same: { handle: string; slug: string; place: string; theme?: string | null; href?: string } | null;
-    surprise: { handle: string; slug: string; place: string; href?: string } | null;
+    same: { handle: string; slug: string; place: string; theme?: string | null; href?: string; fragment?: string | null; accent?: string | null; backdrop?: string | null } | null;
+    surprise: { handle: string; slug: string; place: string; href?: string; fragment?: string | null; accent?: string | null; backdrop?: string | null } | null;
   };
 };
 
 export function StoryView({
   place, date, fragment, accent, backdrop, veil = true, blocks, author, chrome = true, seed = "preview", more,
-  artDirection, scoped = false,
+  artDirection, scoped = false, share,
 }: StoryViewData) {
   const safeAccent = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : "#2B3ED0";
   const world = getBackdrop(backdrop ?? undefined);
@@ -101,23 +106,12 @@ export function StoryView({
         <StoryRender blocks={blocks} />
       </StoryFrame>
 
-      {chrome && more && (more.same || more.surprise) ? (
-        <section className="keep-going">
-          <p className="keep-going-h">Keep going.</p>
-          <div className="keep-going-links">
-            {more.same ? (
-              <Link href={more.same.href ?? `/@${more.same.handle}/${more.same.slug}`} className="keep-going-link">
-                {more.same.theme ? <>You may also fall into: {more.same.theme}</> : "Same feeling"} → <span className="keep-going-place">{more.same.place}</span>
-              </Link>
-            ) : null}
-            {more.surprise ? (
-              <Link href={more.surprise.href ?? `/@${more.surprise.handle}/${more.surprise.slug}`} className="keep-going-link">
-                Surprise me → <span className="keep-going-place">{more.surprise.place}</span>
-              </Link>
-            ) : null}
-            <Link href="/wander" className="keep-going-link">Back to Wander →</Link>
-          </div>
-        </section>
+      {/* READ NEXT EXPERIMENT 1 — "this reminded me of…"
+         Replaces the three-link "Keep going" strip with a single
+         associative link out. To roll back, restore the original block
+         from git history and drop the RemindedOf import + component. */}
+      {chrome && more ? (
+        <RemindedOf same={more.same ?? null} surprise={more.surprise ?? null} />
       ) : null}
 
       {chrome ? (
@@ -127,6 +121,7 @@ export function StoryView({
             {author ? <> · <Link href={author.href ?? `/@${author.handle}`} className="back">@{author.handle}</Link></> : null}
           </span>
           <span className="colophon-doodle"><Doodle name={ad?.signature.doodle ?? "spiral"} seed={19} size={54} ink="var(--rule)" /></span>
+          {share ? <ShareControls {...share} /> : null}
           <Link href="/" className="back">the rest of them</Link>
         </footer>
       ) : null}
