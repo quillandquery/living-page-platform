@@ -27,7 +27,11 @@ export function PageEdge({
   // out as a wide flat box and then turned a quarter turn.
   const labelWidth = Math.round(height * 0.52);
   return (
-    <>
+    // A plain wrapping div, not a Fragment — Satori's `type` resolution
+    // trips on `Symbol(react.fragment)` ("Cannot convert a Symbol value
+    // to a string") when it appears as a returned/array element rather
+    // than JSX authored inline in the caller.
+    <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex" }}>
       {/* the rule */}
       <div style={{
         position: "absolute", top: 0, left,
@@ -46,7 +50,7 @@ export function PageEdge({
       }}>
         {pageMark}
       </div>
-    </>
+    </div>
   );
 }
 

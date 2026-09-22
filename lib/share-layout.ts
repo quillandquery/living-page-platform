@@ -50,6 +50,8 @@ export type ShareComposition = {
   title: string;
   lifeLabel: string;
   pageMark: string;
+  /** the landing line, set as the handwritten note under the turn */
+  coda: string;
   /** one mark per beat, height by salience — evidence the piece was composed */
   strip: number[];
   /** a reader's one-tap reaction, baked on as a stamp; absent for the
@@ -63,6 +65,7 @@ export function composeShare(input: {
   setup: string;
   turn: string;
   title: string;
+  coda?: string;
   place: string;
   date?: string | null;
   seed: number;
@@ -73,6 +76,7 @@ export function composeShare(input: {
     setup: input.setup.trim(),
     turn: input.turn.trim(),
     title: input.title.trim(),
+    coda: (input.coda ?? "").trim(),
     lifeLabel: lifeLabel(input.place, input.date),
     pageMark: pageMark(input.seed),
     strip: input.strip,

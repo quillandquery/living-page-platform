@@ -76,10 +76,12 @@ function beatsOf(blocks: Block[] | null | undefined): BeatPick[] {
 }
 
 export type SetupTurn = {
-  /** the premise — short, sets the frame */
+  /** the premise — an opening line of prose that sets the frame */
   setup: string;
-  /** the payoff — the line the piece turns on */
+  /** the payoff — the line the piece turns on (the emphasis) */
   turn: string;
+  /** the landing — a short closing line, set as the handwritten note */
+  coda: string;
 };
 
 /**
@@ -95,7 +97,7 @@ export type SetupTurn = {
 export function pickSetupTurn(fragment: string, blocks: Block[] | null | undefined): SetupTurn {
   const beats = beatsOf(blocks);
   const title = fragment.trim();
-  if (!beats.length) return { setup: title, turn: "" };
+  if (!beats.length) return { setup: "", turn: title, coda: "" };
 
   const best = (pool: BeatPick[]) =>
     pool.length
@@ -105,19 +107,22 @@ export function pickSetupTurn(fragment: string, blocks: Block[] | null | undefin
   // The turn lives in the back half, minus the last beat (the landing).
   const from = Math.floor(beats.length * 0.4);
   const backHalf = beats.slice(from, Math.max(from + 1, beats.length - 1));
-  const turn = best(backHalf) ?? best(beats);
+  const turn = (best(backHalf) ?? best(beats))?.text ?? title;
 
-  // The setup is the writer's own title when they gave a real one;
-  // otherwise the strongest beat from the opening stretch.
+  // The setup is the strongest line of the opening stretch — the prose
+  // that sets up the turn — never the title (the masthead already carries
+  // the writer's hook line, so repeating it here would be redundant).
   const opening = beats.slice(0, Math.max(1, from));
-  const setup = title || best(opening)?.text || "";
+  const openPick = best(opening)?.text ?? "";
+  const setup = openPick && openPick !== turn ? openPick : "";
 
-  return {
-    setup,
-    turn: turn && turn.text !== setup ? turn.text : (best(opening)?.text ?? ""),
-  };
+  // The coda is the final beat — the landing — kept only when it is short
+  // enough to read as a handwritten note and does not repeat the turn.
+  const landing = beats[beats.length - 1]?.text ?? "";
+  const coda = landing && landing !== turn && landing.trim().length <= 66 ? landing : "";
+
+  return { setup, turn, coda };
 }
-
 /**
  * THE SCORE — the story's own rhythm, as a strip of marks.
  *

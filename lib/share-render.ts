@@ -54,7 +54,7 @@ export function buildComposition(
 
   const mood = story.art_direction?.atmosphere?.mood ?? null;
   const seed = seedFromId(story.id);
-  const { setup, turn } = pickSetupTurn(story.fragment, story.blocks);
+  const { setup, turn, coda } = pickSetupTurn(story.fragment, story.blocks);
   const strip = scoreStrip(story.blocks, 48);
   const reaction: Reaction | null = isReaction(reactionParam) ? reactionParam : null;
 
@@ -62,6 +62,7 @@ export function buildComposition(
     setup,
     turn: turn || context.title,
     title: context.title,
+    coda,
     place: story.place,
     date: story.date,
     seed,

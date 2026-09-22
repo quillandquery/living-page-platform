@@ -153,22 +153,19 @@ export function ShareFrame({
   return (
     <div style={shell}>
       <ShareScene backdrop={backdrop} w={c.w} h={c.h} seed={composition.pageMark.length + hero.headline.length} />
-      {veil ? <div style={{ position: "absolute", inset: 0, display: "flex", background: veil }} /> : null}
+      {veil ? <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", background: veil }} /> : null}
       <PageEdge height={c.h} pageMark={composition.pageMark} palette={palette} left={s(pad.edge)} fontSize={s(13)} />
 
       <div style={inner}>
         {/* ── MASTHEAD ─────────────────────────────────────────── */}
         <div style={{ display: "flex", flexDirection: "column", flex: "0 0 auto" }}>
           <Rule mb={s(18)} />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <LifeLabel label={composition.lifeLabel} palette={palette} fontSize={s(18)} />
-            <div style={{ display: "flex", fontFamily: mono, fontSize: s(13), letterSpacing: s(2), color: mute, fontWeight: 400 }}>
-              {composition.pageMark.replace("LIVING PAGE / ", "NO. ")}
-            </div>
           </div>
           <div style={{
-            display: "flex", marginTop: s(14), fontFamily: serif, fontSize: s(30), lineHeight: 1.08,
-            letterSpacing: s(1), textTransform: "uppercase", color: ink, fontWeight: 400, maxWidth: c.w - s(pad.x) * 2,
+            display: "flex", marginTop: s(14), fontFamily: mono, fontSize: s(22), lineHeight: 1.2,
+            letterSpacing: s(3), textTransform: "uppercase", color: ink, fontWeight: 700, maxWidth: c.w - s(pad.x) * 2,
           }}>
             {composition.title}
           </div>
@@ -179,9 +176,8 @@ export function ShareFrame({
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", flex: "1 1 0", minHeight: 0, gap: s(14) }}>
           {composition.setup && composition.setup !== composition.title ? (
             <div style={{
-              display: "flex", fontFamily: body, fontSize: s(22), lineHeight: 1.5,
-              letterSpacing: s(3), textTransform: "uppercase", fontWeight: 500,
-              color: soft, maxWidth: c.w - s(pad.x) * 2 - s(40),
+              display: "flex", fontFamily: body, fontSize: s(26), lineHeight: 1.5,
+              fontWeight: 400, color: soft, maxWidth: c.w - s(pad.x) * 2 - s(40),
             }}>
               {composition.setup}
             </div>
@@ -194,21 +190,21 @@ export function ShareFrame({
             letterSpacing: `${style.letterSpacingEm}em`,
             textTransform: style.uppercase ? "uppercase" : "none",
             color: heroColor,
-            transform: style.rotate ? `rotate(${style.rotate}deg)` : undefined,
+            transform: `rotate(${style.rotate || 0}deg)`,
             maxWidth: c.w - s(pad.x) * 2,
           }}>
             {composition.turn}
           </div>
+          {composition.coda ? (
+            <div style={{
+              display: "flex", fontFamily: hand, fontWeight: 700, fontSize: s(38),
+              lineHeight: 1.12, color: mixHex(ink, accent2, 0.7),
+              maxWidth: c.w - s(pad.x) * 2 - s(60),
+            }}>
+              {composition.coda}
+            </div>
+          ) : null}
         </div>
-
-        {/* ── THE SCORE — evidence the piece was composed, not information ── */}
-        {composition.strip.length ? (
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: s(20), marginBottom: s(10), opacity: 0.5 }}>
-            {composition.strip.map((h, i) => (
-              <div key={i} style={{ display: "flex", flex: 1, height: `${Math.round(h * 100)}%`, background: accent, borderRadius: 1, minWidth: 1 }} />
-            ))}
-          </div>
-        ) : null}
 
         {/* ── BYLINE ───────────────────────────────────────────── */}
         <div style={{ display: "flex", alignItems: "center", gap: s(14), flex: "0 0 auto", paddingTop: s(14), borderTop: `1px solid ${rule}` }}>
