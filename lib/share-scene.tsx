@@ -24,6 +24,9 @@ export type SceneProps = {
   w: number;
   h: number;
   seed: number;
+  /** loop phase 0..1 — offsets the animated layers (rain, stars) so a
+   *  pre-generated frame sequence reads as motion. Omitted = still. */
+  t?: number;
 };
 
 function mulberry32(seed: number) {
@@ -85,7 +88,8 @@ export function skyGradient(backdrop: Backdrop): string {
   return `linear-gradient(180deg, ${top} 0%, ${mid} 46%, ${low} 76%, ${ground} 100%)`;
 }
 
-export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
+export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
+  const phase = t ?? 0;
   const rnd = mulberry32(seed);
   const dark = backdrop.scheme === "dark";
   const ground = sceneGround(backdrop);
@@ -144,7 +148,9 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
     const n = Math.round(w / 34);
     for (let i = 0; i < n; i++) {
       const x = rnd() * w, y = rnd() * (h * 0.52), r = 1.2 + rnd() * 2;
-      push(<circle cx={x} cy={y} r={r} fill="#FFFFFF" opacity={0.4 + rnd() * 0.5} />);
+      const base = 0.4 + rnd() * 0.5, ph = rnd();
+      const op = Math.max(0.08, base * (0.55 + 0.45 * Math.sin((ph + phase) * Math.PI * 2)));
+      push(<circle cx={x} cy={y} r={r} fill="#FFFFFF" opacity={op} />);
     }
   }
   if (has("raylight")) {
@@ -245,8 +251,10 @@ export function ShareScene({ backdrop, w, h, seed }: SceneProps) {
   // ── weather & atmosphere ─────────────────────────────────────────
   if (has("rain")) {
     const n = Math.round(w / 24);
+    const travel = h + 80;
     for (let i = 0; i < n; i++) {
-      const x = rnd() * w, y = rnd() * h, len = 24 + rnd() * 28;
+      const x = rnd() * w, y0 = rnd() * travel, len = 24 + rnd() * 28;
+      const y = ((y0 + phase * travel) % travel) - 40; // falls over the loop, wraps seamlessly
       push(<line x1={x} y1={y} x2={x - len * 0.28} y2={y + len} stroke={mix(accent, "#FFFFFF", 0.35)} strokeWidth={1.5} opacity={0.35} strokeLinecap="round" />);
     }
   }

@@ -100,15 +100,31 @@ export type ShareFrameProps = {
   hasBody?: boolean;
   hasHand?: boolean;
   hasMono?: boolean;
+  /** loop phase 0..1 for a pre-generated motion frame; omitted = still. */
+  t?: number;
 };
 
 export function ShareFrame({
   composition, environmentKey, authorHandle, mood, host, canvas,
-  hasDisplay = false, hasBody = false, hasHand = false, hasMono = false,
+  hasDisplay = false, hasBody = false, hasHand = false, hasMono = false, t,
 }: ShareFrameProps) {
   const c = CANVASES[canvas];
   const pad = PAD[canvas];
   const s = (n: number) => Math.round(n * c.scale);
+
+  // ── motion (pre-generated frames): a reveal timeline over the loop.
+  //    `t` undefined → still (everything at rest, opacity 1). ──────────
+  const anim = typeof t === "number";
+  const tt = anim ? (t as number) : 1;
+  const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+  const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
+  const seg = (a: number, b: number) => easeOut(clamp01((tt - a) / (b - a)));
+  const revMast = anim ? seg(0.04, 0.16) : 1;
+  const revSetup = anim ? seg(0.12, 0.30) : 1;
+  const revTurnR = anim ? clamp01((tt - 0.30) / (0.52 - 0.30)) : 1;
+  const revTurn = anim ? easeOut(revTurnR) : 1;
+  const revCoda = anim ? seg(0.56, 0.72) : 1;
+  const turnScale = anim ? 0.965 + 0.035 * revTurn + 0.05 * Math.max(0, Math.sin(clamp01(revTurnR) * Math.PI)) : 1;
 
   const backdrop = getBackdrop(environmentKey) ?? BACKDROPS.dawn;
   const dark = backdrop.scheme === "dark";
@@ -152,13 +168,13 @@ export function ShareFrame({
 
   return (
     <div style={shell}>
-      <ShareScene backdrop={backdrop} w={c.w} h={c.h} seed={composition.pageMark.length + hero.headline.length} />
+      <ShareScene backdrop={backdrop} w={c.w} h={c.h} seed={composition.pageMark.length + hero.headline.length} t={t} />
       {veil ? <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", background: veil }} /> : null}
       <PageEdge height={c.h} pageMark={composition.pageMark} palette={palette} left={s(pad.edge)} fontSize={s(13)} />
 
       <div style={inner}>
         {/* ── MASTHEAD ─────────────────────────────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", flex: "0 0 auto" }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: "0 0 auto", opacity: revMast }}>
           <Rule mb={s(18)} />
           <div style={{ display: "flex", alignItems: "center" }}>
             <LifeLabel label={composition.lifeLabel} palette={palette} fontSize={s(18)} />
@@ -178,6 +194,7 @@ export function ShareFrame({
             <div style={{
               display: "flex", fontFamily: body, fontSize: s(26), lineHeight: 1.5,
               fontWeight: 400, color: soft, maxWidth: c.w - s(pad.x) * 2 - s(40),
+              opacity: revSetup, transform: `translateY(${(1 - revSetup) * s(10)}px)`,
             }}>
               {composition.setup}
             </div>
@@ -190,7 +207,8 @@ export function ShareFrame({
             letterSpacing: `${style.letterSpacingEm}em`,
             textTransform: style.uppercase ? "uppercase" : "none",
             color: heroColor,
-            transform: `rotate(${style.rotate || 0}deg)`,
+            opacity: revTurn,
+            transform: `translateY(${(1 - revTurn) * s(12)}px) scale(${turnScale}) rotate(${style.rotate || 0}deg)`,
             maxWidth: c.w - s(pad.x) * 2,
           }}>
             {composition.turn}
@@ -200,6 +218,7 @@ export function ShareFrame({
               display: "flex", fontFamily: hand, fontWeight: 700, fontSize: s(38),
               lineHeight: 1.12, color: mixHex(ink, accent2, 0.7),
               maxWidth: c.w - s(pad.x) * 2 - s(60),
+              opacity: revCoda, transform: `translateY(${(1 - revCoda) * s(8)}px)`,
             }}>
               {composition.coda}
             </div>
