@@ -161,6 +161,16 @@ export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
     }
   }
 
+  // ── horizon glow — a light source at the horizon so the world reads
+  //    with depth, not one flat wash (concentric faint discs; Satori has
+  //    no radial-gradient). ─────────────────────────────────────────
+  {
+    const gy = horizonY - h * 0.02;
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.62} fill={accent2} opacity={dark ? 0.05 : 0.06} />);
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.40} fill={accent2} opacity={dark ? 0.06 : 0.07} />);
+    push(<circle cx={w * 0.5} cy={gy} r={w * 0.22} fill={mix(accent2, "#FFFFFF", dark ? 0.2 : 0.35)} opacity={dark ? 0.07 : 0.08} />);
+  }
+
   // ── horizon silhouettes — two-depth bands, not one flat shape ────
   if (has("ridge")) {
     band(4, h * 0.22, 0, mix(ground, accent, dark ? 0.32 : 0.16));
@@ -218,6 +228,18 @@ export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
       winGrid(x, bw - 5, topY, horizonY + 30, accent2);
     }
   }
+  if (has("rain") && !has("city") && !has("sea") && !has("trees") && !has("ridge")) {
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const bw = w / n;
+      const bh = h * 0.05 + rnd() * (h * 0.16);
+      const x = i * bw + bw * 0.06;
+      push(<rect x={x} y={horizonY - bh} width={bw * 0.88} height={bh + 40} fill={mix(ground, accent, dark ? 0.34 : 0.2)} opacity={0.55} />);
+      if (rnd() < 0.5) push(<rect x={x + bw * 0.3} y={horizonY - bh + 8 + rnd() * bh * 0.6} width={bw * 0.16} height={5} fill={accent2} opacity={0.55} />);
+    }
+    push(<rect x={0} y={horizonY} width={w} height={h - horizonY} fill={mix(ink, accent, 0.28)} opacity={0.45} />);
+    push(<rect x={0} y={horizonY} width={w} height={(h - horizonY) * 0.5} fill={accent2} opacity={0.06} />);
+  }
   if (has("sea")) {
     push(<path d={`M0,${horizonY} Q${w * 0.5},${horizonY - 14} ${w},${horizonY} L${w},${h} L0,${h} Z`} fill={mix(ground, accent, dark ? 0.42 : 0.3)} opacity={0.9} />);
     if (has("sun")) {
@@ -250,12 +272,15 @@ export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
 
   // ── weather & atmosphere ─────────────────────────────────────────
   if (has("rain")) {
-    const n = Math.round(w / 24);
-    const travel = h + 80;
+    const n = Math.round(w / 13);            // denser, so it reads at poster scale
+    const travel = h + 140;
     for (let i = 0; i < n; i++) {
-      const x = rnd() * w, y0 = rnd() * travel, len = 24 + rnd() * 28;
-      const y = ((y0 + phase * travel) % travel) - 40; // falls over the loop, wraps seamlessly
-      push(<line x1={x} y1={y} x2={x - len * 0.28} y2={y + len} stroke={mix(accent, "#FFFFFF", 0.35)} strokeWidth={1.5} opacity={0.35} strokeLinecap="round" />);
+      const near = rnd();                    // depth: near drops bigger/faster/brighter
+      const x = rnd() * w, y0 = rnd() * travel, len = 30 + rnd() * (36 + near * 64);
+      const y = ((y0 + phase * travel * (0.7 + near * 0.7)) % travel) - 70;
+      push(<line x1={x} y1={y} x2={x - len * 0.26} y2={y + len}
+        stroke={mix(accent, "#FFFFFF", 0.45)} strokeWidth={1 + near * 2.2}
+        opacity={0.22 + near * 0.4} strokeLinecap="round" />);
     }
   }
   if (has("shimmer")) {
@@ -298,8 +323,10 @@ export function ShareScene({ backdrop, w, h, seed, t }: SceneProps) {
 
   // ── vignette — a soft edge darkening so the type reads as the
   //    subject, the world as the frame around it. ────────────────────
-  push(<rect x={0} y={0} width={w} height={h * 0.14} fill={ink} opacity={dark ? 0.16 : 0.05} />);
-  push(<rect x={0} y={h * 0.88} width={w} height={h * 0.12} fill={ink} opacity={dark ? 0.2 : 0.08} />);
+  push(<rect x={0} y={0} width={w} height={h * 0.16} fill={ink} opacity={dark ? 0.22 : 0.06} />);
+  push(<rect x={0} y={h * 0.84} width={w} height={h * 0.16} fill={ink} opacity={dark ? 0.3 : 0.1} />);
+  push(<rect x={0} y={0} width={w * 0.06} height={h} fill={ink} opacity={dark ? 0.16 : 0.04} />);
+  push(<rect x={w * 0.94} y={0} width={w * 0.06} height={h} fill={ink} opacity={dark ? 0.16 : 0.04} />);
 
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", background: skyGradient(backdrop) }}>

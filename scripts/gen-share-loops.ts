@@ -29,7 +29,7 @@ const FIXTURE = {
   date: "JANUARY",
   source: null,
   backdrop: "monsoon",
-  art_direction: { atmosphere: { mood: "raw" } },
+  art_direction: { atmosphere: { mood: "cinematic" } },
   author: { handle: "arjun" },
   blocks: [
     { kind: "beat", text: "I took the 6:40 out for the last time.", voice: "listen" },
