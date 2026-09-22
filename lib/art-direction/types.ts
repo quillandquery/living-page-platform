@@ -116,6 +116,16 @@ export type StoryArtDirection = {
   secondaryAccent?: string;
   /** the seed everything above was derived from, so re-running is a no-op */
   seed: number;
+  /** pre-generated share motion (scripts/gen-share-loops + the publish
+   *  webhook). Absent until the loop for this story has been generated;
+   *  the share sheet falls back to the still image while it is. */
+  share?: {
+    loopMp4?: string;
+    loopWebp?: string;
+    /** the story revision the loop was rendered from, so an edit can
+     *  invalidate a stale loop. */
+    rev?: string;
+  };
 };
 
 /** `stories.art_direction` defaults to `{}` for a row that predates this

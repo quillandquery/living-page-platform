@@ -1,0 +1,47 @@
+name: Share loops
+
+# Pre-generate the moving share asset for every story.
+#  • repository_dispatch (story-published): fired by the publish webhook →
+#    generates that one story instantly.
+#  • schedule: a safety-net sweep that catches any missed event.
+#  • workflow_dispatch: manual backfill (mode: missing | all).
+on:
+  repository_dispatch:
+    types: [story-published]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "missing (only stories without a current loop) | all"
+        default: "missing"
+
+concurrency:
+  group: share-loops
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      TSX_TSCONFIG_PATH: scripts/tsconfig.gen.json
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm ci
+      - name: Generate loops
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            node --import tsx scripts/gen-share-loops.ts --id "${{ github.event.client_payload.id }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            node --import tsx scripts/gen-share-loops.ts --${{ github.event.inputs.mode }}
+          else
+            node --import tsx scripts/gen-share-loops.ts --missing
+          fi
