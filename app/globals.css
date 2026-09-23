@@ -459,9 +459,20 @@ a{ color: inherit; }
      instead of clipping. */
   position: relative;
   display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.5rem;
-  padding: 3.5rem 0 1.25rem;
+  padding: 3.5rem 1.5rem 1.25rem;
+  margin: 0 -1.5rem 5rem;
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 5rem;
+  /* a world's own artwork (Backdrop) is unpredictable per story — the
+     "window" world, for one, draws a full-viewport pane outline whose top
+     edge lands almost exactly where this row sits, so the back button
+     read as welded to someone else's decorative line. A translucent
+     paper backing (not a hard box — bleeds to the frame's own edge, no
+     border of its own) keeps the header legible and visually its own
+     layer against ANY world's art, without hand-tuning per world. */
+  background: color-mix(in oklab, var(--paper) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0 0 20px 20px;
 }
 
 /* ── the story hero (Module 4) — the writer's own hook line (`fragment`),
@@ -532,8 +543,16 @@ a{ color: inherit; }
      needs its own position to paint above .backdrop. */
   position: relative;
   display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem;
-  margin-top: 22vh; padding: 1.5rem 0 6rem;
+  margin: 22vh -1.5rem 0;
+  padding: 1.5rem 1.5rem 6rem;
   border-top: 1px solid var(--rule);
+  /* same reasoning as .frontispiece above — this can land back inside a
+     fixed backdrop's art once scrolled into view (the backdrop doesn't
+     move, so the SAME pane can reappear at the footer). */
+  background: color-mix(in oklab, var(--paper) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px 20px 0 0;
 }
 .colophon-doodle{ color: var(--rule); margin-left: auto; }
 
