@@ -447,7 +447,18 @@ a{ color: inherit; }
 /* ── frontispiece & colophon ───────────────────────────────────────── */
 
 .frontispiece{
-  display: flex; align-items: baseline; gap: 1.5rem;
+  /* `position: relative` is load-bearing, not decorative: Backdrop
+     (.backdrop) is `position: fixed`, and per CSS stacking rules ANY
+     positioned element paints above static in-flow content regardless of
+     DOM order. .beat already dodges this (it's `position: relative` for
+     its own animation transforms), which is why story text was always
+     visible while this header — plain static content — was painting
+     BEHIND the backdrop and disappearing completely against any world
+     with a solid-ish fill (night skies, fog, etc). flex-wrap keeps the
+     place/date/author group from running off-screen on narrow viewports
+     instead of clipping. */
+  position: relative;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.5rem;
   padding: 3.5rem 0 1.25rem;
   border-bottom: 1px solid var(--rule);
   margin-bottom: 5rem;
@@ -484,6 +495,12 @@ a{ color: inherit; }
 .wander-back{
   display: inline-flex; align-items: center; gap: .4rem;
   align-self: center;
+  /* first child of a flex header row (frontispiece/ticket/notebook/
+     postcard) — this is what packed place/date/author flush right
+     against it before (via the old .back rule); carry that over so
+     restyling the link doesn't relayout the whole header row. Inert
+     everywhere .wander-back isn't a flex item (a no-op there). */
+  margin-left: auto;
   font-family: var(--f-mono); font-size: .625rem; letter-spacing: .2em;
   text-transform: uppercase; text-decoration: none; white-space: nowrap;
   padding: .5rem 1.05rem;
@@ -500,8 +517,21 @@ a{ color: inherit; }
 /* scrapbook's header is centred with the back link pinned to its corner
    (see .sb-head below) — keep the chip in that same corner slot. */
 .sb-head .wander-back{ position: absolute; left: 0; top: 0; }
+
+/* narrow viewports: stop trying to keep the whole frontispiece/colophon
+   row on one line (that's what was clipping the date/byline off-screen
+   on phones) and stack it instead — the back button gets its own line,
+   place/hero-tag/date/author follow underneath, each full-width and
+   left-aligned. Simplest thing that can't overflow. */
+@media (max-width: 640px){
+  .frontispiece, .colophon{ flex-direction: column; align-items: flex-start; gap: .9rem; }
+  .wander-back{ margin-left: 0; }
+}
 .colophon{
-  display: flex; align-items: center; gap: 1.5rem;
+  /* same fixed-backdrop stacking issue as .frontispiece above — this
+     needs its own position to paint above .backdrop. */
+  position: relative;
+  display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem;
   margin-top: 22vh; padding: 1.5rem 0 6rem;
   border-top: 1px solid var(--rule);
 }
