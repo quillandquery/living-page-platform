@@ -2291,6 +2291,28 @@ a{ color: inherit; }
   background: linear-gradient(160deg, color-mix(in oklab, var(--accent) 26%, var(--paper)), var(--paper-3));
 }
 .remind-scene .backdrop{ position: absolute !important; inset: 0 !important; width: 100%; height: 100%; z-index: 0; }
+/* bd-scrim is tuned for a full viewport, where "the bottom half" is a
+   much bigger, differently-shaped area than it is in this small card - at
+   this scale it was crushing the illustration into a near-solid block
+   with nothing showing. Re-shaped so it protects just the two text
+   zones (the place/hook up top, the byline/read at the very bottom) and
+   lets the world's own art carry the middle, where nothing is overlaid. */
+.remind-scene .bd-scrim-dark{
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--stock) 42%, transparent) 0%,
+      transparent 26%,
+      transparent 70%,
+      color-mix(in oklab, var(--stock) 58%, transparent) 100%);
+}
+.remind-scene .bd-scrim-light{
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,.14) 0%,
+      rgba(255,255,255,0) 26%,
+      rgba(255,255,255,0) 70%,
+      rgba(255,255,255,.10) 100%);
+}
 
 .remind-pg{
   position: relative; z-index: 2;
