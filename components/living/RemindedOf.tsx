@@ -1,19 +1,29 @@
 import Link from "next/link";
+import { Backdrop } from "./Backdrop";
+import { getBackdrop, worldVars } from "@/lib/backdrops";
 import { paletteStyle } from "@/lib/palette-style";
 
 /**
- * READ NEXT EXPERIMENT 1 — three doors ("Keep going.")
+ * READ NEXT EXPERIMENT 1 — "this reminded me of…"
  *
- * Not a card grid. Three physical objects — a postcard, a torn scrap, a
- * hole in the page — placed asymmetrically. Each destination story picks
- * its own treatment deterministically from its slug; the treatments carry
- * the destination's own accent so they read as objects from other
- * worlds sitting on the tail of this one.
+ * Not a recommendation strip. One associative link out of the story,
+ * rendered as the destination's OWN page in miniature — its real world
+ * (the actual <Backdrop>, scoped to this card via worldVars()/
+ * paletteStyle() rather than invented motifs), its own hook, alive on
+ * hover — reached by a single drawn thread. A quiet secondary line
+ * offers a surprise + Wander below it: always present, never a peer —
+ * "this reminded me of…" is a singular gesture; many equal choices would
+ * turn it back into a feed. See the prototype's director's notes for the
+ * full one-vs-many rationale.
  *
- * The wander door is always the "?" — a small round mouth.
+ * The pick itself is unchanged — `same`/`surprise` still come from the
+ * reader's existing thematic logic in app/[handle]/[slug]/page.tsx
+ * (themesOf() keyword overlap → same-accent fallback → a real surprise).
+ * This component only changes how that pick is presented.
  *
  * Isolated on purpose: nothing else in the reader depends on this.
- * Reverting the JSX block in StoryView.tsx removes it entirely.
+ * Revert the JSX block in StoryView.tsx (and this file + its CSS block
+ * in globals.css, "READ NEXT EXPERIMENT 1") to remove it entirely.
  */
 
 type Pick = {
@@ -32,129 +42,112 @@ type Props = {
   surprise: Pick;
 };
 
-// Deterministic string hash → small integer. Same slug always maps to the
-// same treatment, so the three portals on any given reader page keep the
-// look stable across reloads.
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+const safeAccent = (a?: string | null) => (/^#[0-9a-fA-F]{3,8}$/.test(a ?? "") ? (a as string) : "#2B3ED0");
 
-const TREATMENTS = ["postcard", "torn", "type", "hole", "scene"] as const;
-type Treatment = (typeof TREATMENTS)[number];
-
-function treatmentFor(pick: NonNullable<Pick>): Treatment {
-  return TREATMENTS[hash(pick.slug) % TREATMENTS.length];
-}
-
-// A tiny inline SVG that sits inside the "scene" treatment. Not from the
-// doodle registry — a very small, cheap horizon so this component stays
-// self-contained and easy to delete.
-function TinyHorizon({ seed }: { seed: number }) {
-  const jitter = ((seed % 7) - 3) * 0.6; // -1.8 … +1.8
-  return (
-    <svg className="door-scene-svg" viewBox="0 0 120 60" aria-hidden="true" focusable="false">
-      <circle cx={82 + jitter} cy="22" r="7" fill="none" stroke="currentColor" strokeWidth="0.9" />
-      <path
-        d={`M 4 ${44 + jitter} L 34 30 L 58 42 L 88 26 L 116 40`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <line x1="4" y1="52" x2="116" y2="52" stroke="currentColor" strokeWidth="0.7" opacity="0.55" />
-    </svg>
+/** Words with a stable `--i` index, so the CSS-only reveal can stagger
+ *  them — the same trick Beat.tsx's wordify() uses, kept as plain markup
+ *  here because this reveals on hover/focus, not on scroll arrival. */
+function staggeredWords(s: string) {
+  return s.split(/(\s+)/).map((part, i) =>
+    /^\s*$/.test(part) ? part : (
+      <span className="remind-w" style={{ ["--i" as string]: i } as React.CSSProperties} key={i}>{part}</span>
+    )
   );
 }
 
-function Door({ pick, index }: { pick: NonNullable<Pick>; index: 0 | 1 }) {
+function Door({ pick }: { pick: NonNullable<Pick> }) {
+  const world = getBackdrop(pick.backdrop ?? undefined);
+  const vars = worldVars(world, safeAccent(pick.accent));
   const href = pick.href ?? `/@${pick.handle}/${pick.slug}`;
-  const accent = /^#[0-9a-fA-F]{3,8}$/.test(pick.accent ?? "") ? pick.accent! : null;
   const title = (pick.fragment?.trim() || pick.place).trim();
-  const treatment = treatmentFor(pick);
-  const label = `Read next: ${title} — from ${pick.place}${pick.theme ? ` (${pick.theme})` : ""}`;
+  const cue = pick.theme ? `you both wrote about ${pick.theme}` : null;
+  const label = `Read next: ${title} — from ${pick.place}${pick.theme ? `, because you both wrote about ${pick.theme}` : ""}`;
 
   return (
+    <Link href={href} aria-label={label} className="remind-door" style={paletteStyle(vars)}>
+      <span className="remind-scene" aria-hidden="true">
+        <Backdrop name={pick.backdrop ?? undefined} seed={pick.slug} scheme={world?.scheme} />
+      </span>
+      <span className="remind-pg">
+        <span className="remind-place">{pick.place}</span>
+        <span className="remind-rule" aria-hidden="true" />
+        <span className="remind-hook">{title}</span>
+        {cue ? <span className="remind-why">{staggeredWords(cue)}</span> : null}
+        <span className="remind-foot">
+          <span className="remind-by">from @{pick.handle}</span>
+          <span className="remind-read">read <span className="remind-arw" aria-hidden="true">→</span></span>
+        </span>
+      </span>
+      <span className="remind-stamp" aria-hidden="true">this one.</span>
+    </Link>
+  );
+}
+
+function WanderLink({ solo }: { solo?: boolean }) {
+  return (
     <Link
-      href={href}
-      aria-label={label}
-      className={`door door--${treatment} door--slot-${index}`}
-      style={accent ? paletteStyle(`--accent:${accent}`) : undefined}
+      href="/wander"
+      aria-label="Wander — a story chosen at random"
+      className={solo ? "remind-door remind-door--wander" : "remind-alt remind-alt--wander"}
     >
-      {/* Inner render varies by treatment. The outer <Link> is one tap
-          target either way. */}
-      {treatment === "postcard" && (
-        <>
-          <span className="door-postcard-stamp" aria-hidden="true" />
-          <span className="door-place">{pick.place}</span>
-          <span className="door-title door-title--postcard">{title}</span>
-          <span className="door-rule" aria-hidden="true" />
-        </>
-      )}
-      {treatment === "torn" && (
-        <>
-          <span className="door-place">{pick.place}</span>
-          <span className="door-title door-title--torn">{title}</span>
-        </>
-      )}
-      {treatment === "type" && (
-        <>
-          <span className="door-place">{pick.place}</span>
-          <span className="door-title door-title--type">{title}</span>
-        </>
-      )}
-      {treatment === "hole" && (
-        <>
-          <span className="door-hole-ring" aria-hidden="true" />
-          <span className="door-title door-title--hole">{title}</span>
-          <span className="door-place door-place--hole">{pick.place}</span>
-        </>
-      )}
-      {treatment === "scene" && (
-        <>
-          <TinyHorizon seed={hash(pick.slug)} />
-          <span className="door-title door-title--scene">{title}</span>
-          <span className="door-place">{pick.place}</span>
-        </>
-      )}
+      <span className="remind-wander-ring" aria-hidden="true" />
+      <span className="remind-wander-mark" aria-hidden="true">?</span>
+      <span className="remind-wander-label">wander</span>
     </Link>
   );
 }
 
 export function RemindedOf({ same, surprise }: Props) {
-  const doors: Array<{ node: React.ReactNode; key: string }> = [];
-  if (same) doors.push({ key: "same", node: <Door pick={same} index={0} /> });
-  if (surprise) doors.push({ key: "surprise", node: <Door pick={surprise} index={(doors.length as 0 | 1)} /> });
+  const primary = same ?? surprise;
+  // Only offer the surprise a second time when it's genuinely different
+  // from whatever is already carrying the primary thread.
+  const secondary = same && surprise && surprise.slug !== same.slug ? surprise : null;
 
-  // The wander door is always present — the small "?" mouth. If there
-  // are no story picks at all, it stands alone as the graceful fallback.
-  const wander = (
-    <Link
-      href="/wander"
-      aria-label="Wander — a story chosen at random"
-      className="door door--wander"
-      key="wander"
-    >
-      <span className="door-wander-ring" aria-hidden="true" />
-      <span className="door-wander-mark" aria-hidden="true">?</span>
-      <span className="door-wander-label">wander</span>
-    </Link>
-  );
+  if (!primary) {
+    return (
+      <section className="remind remind--empty" aria-label="Nothing rhymed — wander instead">
+        <span className="remind-cue remind-cue--empty">nothing rhymed with this one, yet —</span>
+        <WanderLink solo />
+      </section>
+    );
+  }
 
   return (
-    <section className="next-doors" aria-label="Keep going — three ways in">
-      <p className="next-doors-h">Keep going.</p>
-      <span className="next-doors-drop" aria-hidden="true" />
+    <section className="remind" aria-label="This reminded me of">
+      <div className="remind-stage">
+        <p className="remind-cue">this reminded me of…</p>
 
-      <div className="next-doors-stage" role="list">
-        {doors.map((d) => (
-          <div className="next-doors-slot" role="listitem" key={d.key}>{d.node}</div>
-        ))}
-        <div className="next-doors-slot next-doors-slot--wander" role="listitem">
-          {wander}
-        </div>
+        <svg className="remind-thread remind-thread--desk" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
+          <path className="remind-thread-base" d="M120 92 C 300 150 250 300 470 300 S 470 258 560 262" />
+          <path className="remind-thread-glow" d="M120 92 C 300 150 250 300 470 300 S 470 258 560 262" />
+          <circle className="remind-thread-node" cx="470" cy="300" r="5.5" />
+          <circle className="remind-thread-ring" cx="470" cy="300" r="5.5" />
+        </svg>
+        <svg className="remind-thread remind-thread--phone" viewBox="0 0 200 96" preserveAspectRatio="none" aria-hidden="true">
+          <path className="remind-thread-base" d="M100 4 C 60 34 140 60 100 92" />
+          <path className="remind-thread-glow" d="M100 4 C 60 34 140 60 100 92" />
+          <circle className="remind-thread-node" cx="118" cy="49" r="4.5" />
+          <circle className="remind-thread-ring" cx="118" cy="49" r="4.5" />
+        </svg>
+
+        <Door pick={primary} />
+      </div>
+
+      <div className="remind-onward">
+        <span className="remind-onward-h">or, somewhere else —</span>
+        <span className="remind-onward-row">
+          {secondary ? (
+            <Link
+              href={secondary.href ?? `/@${secondary.handle}/${secondary.slug}`}
+              className="remind-alt"
+              aria-label={`A surprise: ${(secondary.fragment?.trim() || secondary.place).trim()} — from ${secondary.place}`}
+            >
+              <span className="remind-alt-tag">a surprise · {secondary.place}</span>
+              <span className="remind-alt-title">{(secondary.fragment?.trim() || secondary.place).trim()}</span>
+            </Link>
+          ) : null}
+          <WanderLink />
+        </span>
       </div>
     </section>
   );
