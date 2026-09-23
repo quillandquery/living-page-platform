@@ -85,7 +85,7 @@ export function StoryView({
 
       {chrome ? (
         <header className="frontispiece">
-          <Link href="/wander" className="back">back to wander</Link>
+          <Link href="/wander" className="wander-back">back to wander</Link>
           <p className="place">{place}</p>
           {/* THE STORY HERO (Module 4) — the writer's own hook line. Used
               to open as its own big beat below the frontispiece; folded in

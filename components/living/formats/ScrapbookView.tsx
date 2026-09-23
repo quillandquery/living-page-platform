@@ -66,7 +66,7 @@ export function ScrapbookView({
 
       {chrome ? (
         <header className="sb-head">
-          <Link href="/wander" className="back sb-back">back to wander</Link>
+          <Link href="/wander" className="wander-back">back to wander</Link>
           <p className="sb-title">{place}</p>
           {fragment ? <h1 className="sb-frag">{fragment}</h1> : null}
           <span className="sb-stamp" aria-hidden="true">
