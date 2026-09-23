@@ -537,6 +537,14 @@ a{ color: inherit; }
 @media (max-width: 640px){
   .frontispiece, .colophon{ flex-direction: column; align-items: flex-start; gap: .9rem; }
   .wander-back{ margin-left: 0; }
+  /* .back (colophon's "the rest of them") and .colophon-doodle both carry
+     margin-left:auto for the desktop row, where it clusters them against
+     the right edge. In a column-direction flex container that same
+     margin resolves on the CROSS axis instead, individually shoving each
+     one over to the right on its own line — the doodle and the "the
+     rest of them" link end up staggered away from the stamp/share text
+     above them instead of stacking as one clean left-aligned column. */
+  .colophon .back, .colophon-doodle{ margin-left: 0; }
 }
 .colophon{
   /* same fixed-backdrop stacking issue as .frontispiece above — this

@@ -27,6 +27,8 @@ export function buildShareProps(story: StoryWithAuthor): ShareControlsProps {
   const input = { context, canonicalUrl, authorHandle: story.author.handle };
 
   return {
+    storyId: story.id,
+    authorHandle: story.author.handle,
     canonicalUrl,
     title: context.title,
     shareText: shortShareText({ context }),

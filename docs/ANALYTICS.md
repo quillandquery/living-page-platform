@@ -37,6 +37,16 @@ The three questions this exists to answer, per CLAUDE.md's core loop:
    75/100%) on the real `/@handle/slug` reader route only. `reader_create_
    cta_clicked` is defined for the "have one of your own? → tell it" loop
    (PRD §26, AUDIT.md item 6, not yet built) — wire it up when that ships.
+4. **Sharing** — `share_opened` (the Share affordance was tapped) and
+   `share_completed` (a specific channel actually went through — native
+   share sheet, copy link, WhatsApp, X, email, or one of the Instagram
+   paths), both fired from `components/living/ShareControls.tsx`. Added
+   2026-09-23 for the first-100-users instrumentation pass, answering "do
+   publishers share their stories" — see the instrumentation readiness audit
+   in the project docs. `author_handle` rides both events so "the writer
+   shared their own story" vs. "a reader shared it" can be split downstream
+   by joining on the story's author, without an extra auth lookup in the
+   render path just to compute that flag up front.
 
 The full, typed list lives in **`lib/analytics/events.ts`** — that file,
 not this doc, is the source of truth for exact event names and payload
