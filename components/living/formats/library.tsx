@@ -10,7 +10,7 @@ import type { StoryViewData } from "@/components/living/StoryView";
  * tuned by eye.
  */
 
-const Back = () => <Link href="/" className="back">back</Link>;
+const Back = () => <Link href="/wander" className="back">back to wander</Link>;
 const code = (seed: string, i: number) => `NO ${String(Math.floor(hashAt(`${seed}-${i}`) * 900 + 100))}`;
 
 /** Story → author, in every format the reader might have switched to —

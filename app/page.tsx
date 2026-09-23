@@ -45,11 +45,14 @@ const MODES = [
 ] as const;
 
 /** Three real-feeling glimpses of what a page can look like — restored
- *  alongside the mode grid. All three point at /wander (né /explore). */
+ *  alongside the mode grid. Each one links straight to the real Wander
+ *  seed story it's teasing (lib/wander-samples.ts) instead of the generic
+ *  /wander hub — these used to all point at /wander itself, which read as
+ *  three specific story teasers that led nowhere specific. */
 const EXAMPLES = [
-  { place: "GOKARNA", line: "The night bus, and the ten minutes after I got down.", accent: "var(--electric)" },
-  { place: "A KITCHEN, 2AM", line: "Everyone was asleep. I wasn't.", accent: "var(--tomato)" },
-  { place: "THE 6:40 TRAIN", line: "I didn't expect to miss this place.", accent: "var(--grass)" },
+  { place: "GOKARNA", line: "The night bus, and the ten minutes after I got down.", accent: "var(--electric)", slug: "ask-me-to-stay" },
+  { place: "A KITCHEN, 2AM", line: "Everyone was asleep. I wasn't.", accent: "var(--tomato)", slug: "chargers" },
+  { place: "THE 6:40 TRAIN", line: "I didn't expect to miss this place.", accent: "var(--grass)", slug: "the-best-night" },
 ] as const;
 
 /**
@@ -142,7 +145,7 @@ export default function Home() {
         <h2 className="lp-sec-h">Or just read something.</h2>
         <div className="lp-examples">
           {EXAMPLES.map((e) => (
-            <Link key={e.place} href="/wander" className="lp-example" style={{ ["--a" as string]: e.accent }}>
+            <Link key={e.place} href={`/wander/s/${e.slug}`} className="lp-example" style={{ ["--a" as string]: e.accent }}>
               <span className="ex-place">{e.place}</span>
               <span className="ex-line">{e.line}</span>
             </Link>
