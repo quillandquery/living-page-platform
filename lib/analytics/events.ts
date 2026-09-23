@@ -29,7 +29,23 @@ export type AnalyticsEvent =
   // --- reader engagement ------------------------------------------------
   | { name: "story_viewed"; props: { story_id: string; author_handle: string; slug: string; format: string } }
   | { name: "story_scroll_depth"; props: { story_id: string; percent: 25 | 50 | 75 | 100 } }
-  | { name: "reader_create_cta_clicked"; props: { story_id: string; placement: string } };
+  | { name: "reader_create_cta_clicked"; props: { story_id: string; placement: string } }
+  // --- sharing ----------------------------------------------------------
+  // Whoever is on the reader page when they tap Share (a story's own
+  // writer viewing their published piece, or a reader) — the event carries
+  // author_handle so "did the writer share their own story" vs "did a
+  // reader share it" can be split downstream by joining distinct_id against
+  // the story's author, without adding an extra auth lookup to the render
+  // path just to compute that flag up front.
+  | { name: "share_opened"; props: { story_id: string; author_handle: string } }
+  | {
+      name: "share_completed";
+      props: {
+        story_id: string;
+        author_handle: string;
+        channel: "native" | "copy_link" | "whatsapp" | "x" | "email" | "instagram_native" | "instagram_save_feed" | "instagram_save_story" | "instagram_save_motion" | "instagram_caption_copy";
+      };
+    };
 
 export type AnalyticsEventName = AnalyticsEvent["name"];
 export type PropsFor<N extends AnalyticsEventName> = Extract<AnalyticsEvent, { name: N }>["props"];

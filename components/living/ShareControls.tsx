@@ -27,14 +27,24 @@
  * Design principles honoured:
  *  - "Share" is a single subtle action, not a row of social icons (PART 14).
  *  - Native share is preferred (PART 15). Cancel returns silently (PART 15).
- *  - No Instagram OAuth (PART 31). No share analytics (PART 50).
+ *  - No Instagram OAuth (PART 31).
+ *  - share_opened/share_completed (lib/analytics/events.ts) fire on every
+ *    open + successful channel, added 2026-09-23 to answer "do publishers
+ *    share their stories" for the first-100-users instrumentation pass —
+ *    ids and enum-like channel labels only, same no-story-content contract
+ *    as the rest of lib/analytics (superseding the old PART 50 "no share
+ *    analytics" decision).
  *  - No hashtag spam in captions or X shares (PART 19, PART 27).
  *  - Accessible: semantic button, labels, Escape, focus return (PART 45).
  */
 import { useEffect, useRef, useState } from "react";
 import { REACTIONS, type Reaction } from "@/lib/share-layout";
+import { track } from "@/lib/analytics/client";
 
 export type ShareControlsProps = {
+  /** used only for analytics (share_opened/share_completed) — never rendered */
+  storyId: string;
+  authorHandle: string;
   canonicalUrl: string;
   title: string;
   /** short text used for navigator.share `text` and the WhatsApp/email
@@ -65,6 +75,10 @@ function withReaction(url: string, reaction: Reaction | null): string {
   const sep = url.includes("?") ? "&" : "?";
   return `${url}${sep}r=${encodeURIComponent(reaction)}`;
 }
+
+type ShareChannel =
+  | "native" | "copy_link" | "whatsapp" | "x" | "email"
+  | "instagram_native" | "instagram_save_feed" | "instagram_save_story" | "instagram_save_motion" | "instagram_caption_copy";
 
 export function ShareControls(props: ShareControlsProps) {
   const [open, setOpen] = useState(false);
@@ -108,10 +122,23 @@ export function ShareControls(props: ShareControlsProps) {
 
   function showToast(message: string) { setToast({ message, key: Date.now() }); }
 
+  // share_opened fires once per tap of the Share affordance, whichever path
+  // it takes next (native sheet or popover) — this is "did they even try to
+  // share," independent of whether it completes. share_completed fires only
+  // at an actual success point for a specific channel, never on open alone.
+  function trackOpened() {
+    track("share_opened", { story_id: props.storyId, author_handle: props.authorHandle });
+  }
+  function trackCompleted(channel: ShareChannel) {
+    track("share_completed", { story_id: props.storyId, author_handle: props.authorHandle, channel });
+  }
+
   async function onShare() {
+    trackOpened();
     if (supportsNativeShare) {
       try {
         await navigator.share({ title: props.title, text: props.shareText, url: props.canonicalUrl });
+        trackCompleted("native");
       } catch (err) {
         // AbortError is the user cancelling — return silently (PART 15).
         if ((err as DOMException)?.name === "AbortError") return;
@@ -122,10 +149,11 @@ export function ShareControls(props: ShareControlsProps) {
     setOpen(true);
   }
 
-  async function copyText(text: string, successMessage = "Copied") {
+  async function copyText(text: string, successMessage = "Copied", channel?: ShareChannel) {
     try {
       await navigator.clipboard.writeText(text);
       showToast(successMessage);
+      if (channel) trackCompleted(channel);
     } catch {
       showToast("Copy failed");
     }
@@ -145,6 +173,7 @@ export function ShareControls(props: ShareControlsProps) {
           if ((navigator as Navigator).canShare?.({ files: [file] })) {
             try {
               await (navigator as Navigator).share!({ files: [file], title: props.title, text: props.instagramCaption });
+              trackCompleted("instagram_native");
               return;
             } catch (err) {
               if ((err as DOMException)?.name === "AbortError") return;
@@ -158,7 +187,7 @@ export function ShareControls(props: ShareControlsProps) {
     setIgOpen(true);
   }
 
-  async function saveInstagramAsset(url: string, filename: string) {
+  async function saveInstagramAsset(url: string, filename: string, channel: ShareChannel) {
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("fetch failed");
@@ -172,6 +201,7 @@ export function ShareControls(props: ShareControlsProps) {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
       showToast("Image saved");
+      trackCompleted(channel);
     } catch {
       // Absolute-last fallback: open the image in a new tab so the user
       // can long-press / right-click to save it.
@@ -200,10 +230,10 @@ export function ShareControls(props: ShareControlsProps) {
       {open && !igOpen ? (
         <div className="share-popover" role="menu" aria-label="Share this story">
           <p className="share-popover-h">Share this story</p>
-          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.canonicalUrl, "Link copied")}>Copy link</button>
-          <a className="share-item" href={whatsappHref} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close}>WhatsApp</a>
-          <a className="share-item" href={xHref} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={close}>X</a>
-          <a className="share-item" href={mailHref} role="menuitem" onClick={close}>Email</a>
+          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.canonicalUrl, "Link copied", "copy_link")}>Copy link</button>
+          <a className="share-item" href={whatsappHref} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => { trackCompleted("whatsapp"); close(); }}>WhatsApp</a>
+          <a className="share-item" href={xHref} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => { trackCompleted("x"); close(); }}>X</a>
+          <a className="share-item" href={mailHref} role="menuitem" onClick={() => { trackCompleted("email"); close(); }}>Email</a>
           <button type="button" className="share-item share-item-ig" role="menuitem" onClick={() => { setIgOpen(true); }}>Instagram</button>
         </div>
       ) : null}
@@ -230,13 +260,13 @@ export function ShareControls(props: ShareControlsProps) {
           {supportsFileShare ? (
             <button type="button" className="share-item" role="menuitem" onClick={shareInstagram}>Share image…</button>
           ) : null}
-          <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramFeedUrl, reaction), "living-page-feed.png")}>Save image (feed · 1080×1350)</button>
-          <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramStoryUrl, reaction), "living-page-story.png")}>Save image (story · 1080×1920)</button>
+          <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramFeedUrl, reaction), "living-page-feed.png", "instagram_save_feed")}>Save image (feed · 1080×1350)</button>
+          <button type="button" className="share-item" role="menuitem" onClick={() => saveInstagramAsset(withReaction(props.instagramStoryUrl, reaction), "living-page-story.png", "instagram_save_story")}>Save image (story · 1080×1920)</button>
           {props.motionMp4 ? (
-            <button type="button" className="share-item share-item-motion" role="menuitem" onClick={() => saveInstagramAsset(props.motionMp4!, "living-page-story.mp4")}>Save moving version (story · MP4)</button>
+            <button type="button" className="share-item share-item-motion" role="menuitem" onClick={() => saveInstagramAsset(props.motionMp4!, "living-page-story.mp4", "instagram_save_motion")}>Save moving version (story · MP4)</button>
           ) : null}
-          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.instagramCaption, "Caption copied")}>Copy caption</button>
-          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.canonicalUrl, "Link copied")}>Copy link</button>
+          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.instagramCaption, "Caption copied", "instagram_caption_copy")}>Copy caption</button>
+          <button type="button" className="share-item" role="menuitem" onClick={() => copyText(props.canonicalUrl, "Link copied", "copy_link")}>Copy link</button>
           <button type="button" className="share-item share-item-back" role="menuitem" onClick={() => setIgOpen(false)}>← Back</button>
         </div>
       ) : null}
