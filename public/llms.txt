@@ -6,16 +6,17 @@ Living Page is not a blog and not a page builder. A writer submits a fragment of
 
 ## Site
 
-- [Home](https://livingpage.one/): what Living Page is and how it works.
-- [Wander](https://livingpage.one/wander): a live, browsable feed of published stories.
-- [Sitemap](https://livingpage.one/sitemap.xml): the full, current list of published stories and author pages.
+- [Home](https://www.livingpage.one/): what Living Page is and how it works.
+- [About](https://www.livingpage.one/about): who this is for and how stories are attributed.
+- [Wander](https://www.livingpage.one/wander): a live, browsable feed of published stories.
+- [Sitemap](https://www.livingpage.one/sitemap.xml): the full, current list of published stories and author pages.
 
 ## For crawlers and AI agents
 
 - Every published story lives at a canonical URL of the form `/@handle/slug` and is fully present in the server-rendered HTML — there is no content that only appears after JavaScript runs or a user scrolls.
 - Some stories render with decorative word-scattering or scroll-triggered entrance animation. These apply CSS transforms only; the underlying text and its reading order are never changed and nothing is hidden before animation runs.
-- Each story page carries BlogPosting structured data (JSON-LD) with headline, description, author, publish date, and a representative image.
-- `/dev`, `/write`, `/make`, `/login`, `/signup`, `/onboarding`, `/settings`, `/auth`, `/looks`, `/preview-tile`, and `/render` are internal application routes, not content, and are excluded via [robots.txt](https://livingpage.one/robots.txt).
+- Each story page carries BlogPosting structured data (JSON-LD) with headline, description, author, publish date, and a representative image. The homepage carries WebSite and Organization structured data identifying Living Page itself.
+- `/dev`, `/write`, `/make`, `/login`, `/signup`, `/onboarding`, `/settings`, `/auth`, `/looks`, `/preview-tile`, and `/render` are internal application routes, not content, and are excluded via [robots.txt](https://www.livingpage.one/robots.txt).
 
 ## Attribution
 

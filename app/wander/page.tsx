@@ -15,7 +15,11 @@ import { absoluteUrl, SITE_NAME } from "@/lib/site";
  * The image comes from the co-located opengraph-image.tsx.
  */
 const WANDER_TITLE = "Wander";
-const WANDER_DESCRIPTION = "You don't have to know what you're looking for.";
+// SEO audit, Sept 2026: was 47 characters (well under the ~120-160 target,
+// so Google was very likely discarding it for an auto-generated snippet
+// instead) — same voice, extended to describe what's actually here.
+const WANDER_DESCRIPTION =
+  "You don't have to know what you're looking for. Wander finds you a real story to fall into — sorted by feeling, not category: wonder, grief, a laugh.";
 
 export const metadata: Metadata = {
   title: WANDER_TITLE,

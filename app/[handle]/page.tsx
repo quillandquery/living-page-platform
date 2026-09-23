@@ -24,9 +24,14 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
   const title = name;
   // Doc §12: bio verbatim where present; otherwise a neutral, non-generic
   // fallback — never a story count (that's UI chrome, not identity).
+  // SEO audit, Sept 2026: the old fallback was one fixed string, byte-
+  // identical across every bio-less author — a template-string pattern
+  // that gets worse as the platform grows. This still names no count and
+  // invents nothing; it only personalizes the same neutral sentence with
+  // the one real per-page fact every author page already has: who it is.
   const description = author.bio?.trim()
     ? author.bio.trim()
-    : "A Living Page author profile.";
+    : `Stories by ${name} on Living Page.`;
   const url = absoluteUrl(`/@${author.handle}`);
 
   return {

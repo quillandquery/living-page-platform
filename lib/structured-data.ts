@@ -38,6 +38,28 @@ export function articleJsonLd(input: ArticleJsonLdInput) {
   };
 }
 
+/**
+ * HOME / SITE-LEVEL ENTITY (SEO audit, Sept 2026, GEO finding: no
+ * standalone Organization/WebSite entity existed anywhere — Organization
+ * only ever appeared nested inside a story's `publisher` field, which
+ * entity-extraction generally can't see. This matters more than it would on
+ * a more uniquely-named site: "Living Page" collides with an unrelated book,
+ * an unrelated blog, and a same-named competing app, so a disambiguating
+ * entity graph is worth having. Minimal on purpose — name + url only, same
+ * discipline as the rest of this file: no invented `logo`, no invented
+ * `sameAs` links. Rendered once, on the homepage only. */
+export function homeJsonLd() {
+  const org = { "@type": "Organization" as const, "@id": `${SITE_URL}/#organization`, name: SITE_NAME, url: SITE_URL };
+  const site = {
+    "@type": "WebSite" as const,
+    "@id": `${SITE_URL}/#website`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  };
+  return { "@context": "https://schema.org", "@graph": [org, site] };
+}
+
 export type PersonJsonLdInput = {
   name: string;
   url: string;

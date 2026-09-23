@@ -154,7 +154,13 @@ function deriveSummary(bodyText: string, fragment: string): string {
   // build a short run starting at the best sentence, in ORIGINAL order,
   // so the summary reads as a real excerpt rather than a shuffled clause.
   const chosen: typeof scored = [best];
-  const CHAR_BUDGET = 170;
+  // SEO audit, Sept 2026: this budget (was 170, plus a 220-char hard cap
+  // below) let live descriptions run anywhere from ~50 to 211+ characters
+  // — the long end truncates mid-clause in a search snippet. 140 leaves
+  // room for the one-neighbour-sentence extension below to land inside
+  // the ~155-160 char range search engines actually display, without
+  // changing the "extract, never invent" logic itself.
+  const CHAR_BUDGET = 140;
   let len = best.text.length;
   for (const s of scored) {
     if (s === best) continue;
@@ -168,8 +174,8 @@ function deriveSummary(bodyText: string, fragment: string): string {
   chosen.sort((a, b) => a.i - b.i);
 
   let out = chosen.map((c) => c.text).join(" ").trim();
-  if (out.length > 220) {
-    out = out.slice(0, 217).replace(/\s+\S*$/, "") + "…";
+  if (out.length > 160) {
+    out = out.slice(0, 157).replace(/\s+\S*$/, "") + "…";
   }
   return out || fragment.trim();
 }

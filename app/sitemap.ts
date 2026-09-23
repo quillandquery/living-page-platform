@@ -28,6 +28,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const hubs: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), changeFrequency: "weekly", priority: 1 },
     { url: absoluteUrl("/wander"), changeFrequency: "daily", priority: 0.9 },
+    // Added alongside /about (SEO/GEO/AEO audit, Sept 2026) — static,
+    // rarely-changing, low-priority relative to the two real hubs above.
+    { url: absoluteUrl("/about"), changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const authorPages: MetadataRoute.Sitemap = Array.from(authors.entries()).map(([handle, lastModified]) => ({

@@ -3,8 +3,22 @@ import Script from "next/script";
 import { Newsreader, Instrument_Serif, Caveat, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { metadataBaseUrl, SITE_NAME } from "@/lib/site";
-import { GA_MEASUREMENT_ID } from "@/lib/analytics/ga";
 import { Providers } from "./providers";
+
+/**
+ * GA fix (SEO audit, Sept 2026): this used to `import { GA_MEASUREMENT_ID }
+ * from "@/lib/analytics/ga"` — but that module is `"use client"`, and Next
+ * serializes a value imported from a client module into a Server
+ * Component's JSX as an error-throwing client-reference stub instead of the
+ * real string, which broke GA in production on every single page load. A
+ * plain `process.env` read here has no such boundary — `NEXT_PUBLIC_*` vars
+ * are inlined at build time regardless of which side reads them, so this is
+ * the correct way for a Server Component to get the id. `lib/analytics/ga.ts`
+ * still exports its own copy for client components (`app/providers.tsx`'s
+ * `GaPageview`), which is a normal client-to-client import and was never
+ * the problem.
+ */
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const body = Newsreader({ subsets: ["latin"], weight: ["200", "300", "400", "500"], style: ["normal", "italic"], variable: "--font-body", display: "swap" });
 const disp = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-disp", display: "swap" });
