@@ -529,23 +529,6 @@ a{ color: inherit; }
    (see .sb-head below) — keep the chip in that same corner slot. */
 .sb-head .wander-back{ position: absolute; left: 0; top: 0; }
 
-/* narrow viewports: stop trying to keep the whole frontispiece/colophon
-   row on one line (that's what was clipping the date/byline off-screen
-   on phones) and stack it instead — the back button gets its own line,
-   place/hero-tag/date/author follow underneath, each full-width and
-   left-aligned. Simplest thing that can't overflow. */
-@media (max-width: 640px){
-  .frontispiece, .colophon{ flex-direction: column; align-items: flex-start; gap: .9rem; }
-  .wander-back{ margin-left: 0; }
-  /* .back (colophon's "the rest of them") and .colophon-doodle both carry
-     margin-left:auto for the desktop row, where it clusters them against
-     the right edge. In a column-direction flex container that same
-     margin resolves on the CROSS axis instead, individually shoving each
-     one over to the right on its own line — the doodle and the "the
-     rest of them" link end up staggered away from the stamp/share text
-     above them instead of stacking as one clean left-aligned column. */
-  .colophon .back, .colophon-doodle{ margin-left: 0; }
-}
 .colophon{
   /* same fixed-backdrop stacking issue as .frontispiece above — this
      needs its own position to paint above .backdrop. */
@@ -563,6 +546,35 @@ a{ color: inherit; }
   border-radius: 20px 20px 0 0;
 }
 .colophon-doodle{ color: var(--rule); margin-left: auto; }
+
+/* narrow viewports: stop trying to keep the whole frontispiece/colophon
+   row on one line (that's what was clipping the date/byline off-screen
+   on phones) and stack it instead — the back button gets its own line,
+   place/hero-tag/date/author follow underneath, each full-width and
+   left-aligned. Simplest thing that can't overflow.
+   Placement matters here: this has to come AFTER .colophon and
+   .colophon-doodle above (not just after .wander-back higher up the
+   file). Media queries don't add specificity, so at equal specificity
+   the LATER rule in source order wins regardless of which one matches
+   a narrower condition — .colophon's own unconditional
+   align-items:center and .colophon-doodle's unconditional
+   margin-left:auto were silently beating this block on mobile when it
+   sat above them, which is what was scattering the footer (Share and
+   "the rest of them" centered instead of stacked left, the doodle
+   still pinned to the right edge) even after the rules below looked
+   right in isolation. */
+@media (max-width: 640px){
+  .frontispiece, .colophon{ flex-direction: column; align-items: flex-start; gap: .9rem; }
+  .wander-back{ margin-left: 0; }
+  /* .back (colophon's "the rest of them") and .colophon-doodle both carry
+     margin-left:auto for the desktop row, where it clusters them against
+     the right edge. In a column-direction flex container that same
+     margin resolves on the CROSS axis instead, individually shoving each
+     one over to the right on its own line — the doodle and the "the
+     rest of them" link end up staggered away from the stamp/share text
+     above them instead of stacking as one clean left-aligned column. */
+  .colophon .back, .colophon-doodle{ margin-left: 0; }
+}
 
 /* ── the archive ───────────────────────────────────────────────────── */
 
