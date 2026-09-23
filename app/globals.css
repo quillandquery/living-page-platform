@@ -2229,12 +2229,13 @@ a{ color: inherit; }
 }
 .remind-thread-glow{
   fill: none;
-  stroke: var(--accent);
-  stroke-width: 2.1;
+  stroke: color-mix(in oklab, var(--accent) 70%, var(--ink) 30%);
+  stroke-width: 2.4;
   stroke-linecap: round;
   opacity: 0;
   stroke-dasharray: 34 460;
   stroke-dashoffset: 494;
+  transition: filter .4s ease;
 }
 .remind-thread-node{ fill: var(--accent); opacity: .65; transition: opacity .3s ease; }
 .remind-thread-ring{
@@ -2244,6 +2245,9 @@ a{ color: inherit; }
 .remind-stage:has(.remind-door:hover) .remind-thread-glow,
 .remind-stage:has(.remind-door:focus-visible) .remind-thread-glow{
   opacity: .95;
+  filter:
+    drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 80%, transparent))
+    drop-shadow(0 0 9px color-mix(in oklab, var(--accent) 55%, transparent));
   animation: remind-travel 1.5s cubic-bezier(.4,0,.2,1) infinite;
 }
 .remind-stage:has(.remind-door:hover) .remind-thread-node,

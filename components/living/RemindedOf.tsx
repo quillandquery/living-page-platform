@@ -56,7 +56,7 @@ function staggeredWords(s: string) {
 }
 
 function Door({ pick }: { pick: NonNullable<Pick> }) {
-  const world = getBackdrop(pick.backdrop ?? undefined);
+  const world = getBackdrop(pick.backdrop ?? "dawn");
   const vars = worldVars(world, safeAccent(pick.accent));
   const href = pick.href ?? `/@${pick.handle}/${pick.slug}`;
   const title = (pick.fragment?.trim() || pick.place).trim();
@@ -66,7 +66,7 @@ function Door({ pick }: { pick: NonNullable<Pick> }) {
   return (
     <Link href={href} aria-label={label} className="remind-door" style={paletteStyle(vars)}>
       <span className="remind-scene" aria-hidden="true">
-        <Backdrop name={pick.backdrop ?? undefined} seed={pick.slug} scheme={world?.scheme} />
+        <Backdrop name={pick.backdrop ?? "dawn"} seed={pick.slug} scheme={world?.scheme} />
       </span>
       <span className="remind-pg">
         <span className="remind-place">{pick.place}</span>
