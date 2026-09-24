@@ -72,6 +72,10 @@ export const LOOK_KEYS = Object.keys(LOOKS) as LookKey[];
  *  the page. A Look is picked by moving along it, never by a dice roll. */
 const LADDER: LookKey[] = ["minimal", "postcard", "eighties", "maximal"];
 
+/** the same ladder with the one dark Look removed — for content that must
+ *  read bright/warm (reflective essays, credos) no matter how loud it gets. */
+const LIGHT_LADDER: LookKey[] = ["minimal", "postcard", "maximal"];
+
 /** Where a mood starts on the ladder. */
 const MOOD_BASE: Record<MoodKey, number> = {
   quiet: 0,
@@ -117,8 +121,13 @@ const ENERGY_SHIFT: Record<Energy, number> = {
  * Fully deterministic, no seed involved: the same story always resolves
  * to the same Look.
  */
-export function autoLook(mood: MoodKey, energy: Energy = "warm"): Look {
+export function autoLook(mood: MoodKey, energy: Energy = "warm", opts: { lightOnly?: boolean } = {}): Look {
   const base = MOOD_BASE[mood] ?? 1;
+  if (opts.lightOnly) {
+    // placeless/reflective: no "place energy" to push it, and never dark.
+    const i = Math.min(LIGHT_LADDER.length - 1, Math.max(0, base));
+    return LOOKS[LIGHT_LADDER[i]];
+  }
   const i = Math.min(LADDER.length - 1, Math.max(0, base + (ENERGY_SHIFT[energy] ?? 1)));
   return LOOKS[LADDER[i]];
 }

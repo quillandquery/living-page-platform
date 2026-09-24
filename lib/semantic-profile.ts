@@ -124,10 +124,11 @@ export const EMOTION_CUES: [string, RegExp][] = [
   ["anxious", /\b(anxious|nervous|panic|racing thoughts|couldn't breathe)\b/i],
   ["peaceful", /\b(peaceful|calm|quiet|serene|stillness)\b/i],
   ["absurd", /\b(absurd|ridiculous|bizarre|strange thing happened|accidentally)\b/i],
-  ["romantic", /\b(love|loved|kiss|tender|heart|falling for)\b/i],
+  ["romantic", /\b(kiss|kissed|tender|in love|fell in love|fall in love|falling for|lover|romance|holding hands)\b/i],
   ["melancholic", /\b(sad|melanchol|hollow|ache|heartache|hated it|disappointed|disappointing)\b/i],
   ["chaotic", /\b(chaos|frantic|everywhere|too much|spinning|noise)\b/i],
   ["hopeful", /\b(hope|hopeful|maybe this time|looking forward)\b/i],
+  ["generous", /\b(connect|connector|introduc\w*|kindness|\bkind\b|generos\w*|mentor\w*|advice|encourag\w*|vulnerab\w*|smile|smiled|give\b|giving|spread\w*|help(?:ed|ing)? (?:each other|others|people)|for everyone|change(?:s|d)? someone)\b/i],
   ["regretful", /\b(regret|wish I had|shouldn't have|if only)\b/i],
   ["funny", /\b(laugh|funny|hilarious|joke|ridiculous)\b/i],
 ];

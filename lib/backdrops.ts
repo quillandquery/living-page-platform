@@ -107,6 +107,18 @@ export const BACKDROPS: Record<string, Backdrop> = {
     layers: ["sky", "stars", "moon"], viewpoint: "open_sky",
     cues: ["sky", "stars", "constellation", "quiet night", "rooftop at night"] },
 
+  // — placeless / reflective —
+  // A credo, an essay, a letter to no one in particular has no place — and
+  // forcing it into "city" or "night road" is exactly why such pieces used
+  // to render wrong. `reverie` is a bright, warm, abstract light: soft rays
+  // over a glow, no literal scenery. Built from existing layers, so it needs
+  // no new render code. It carries no cues — the engine reaches it through
+  // the reflective fallback in art-direction/generate.ts, never by keyword,
+  // so it can never steal a story that is actually set somewhere.
+  reverie:   { label: "open light", scheme: "light", energy: "warm", accent: "#E0A24A", secondaryAccent: "#5FA98C", paperTint: "#F8F0DE",
+    layers: ["glow", "raylight"], viewpoint: "open_horizon",
+    cues: [] },
+
   // — surreal —
   dreamscape:{ label: "dreamscape", scheme: "dark", energy: "vivid", accent: "#7A6CE0", secondaryAccent: "#E86FA0",
     layers: ["glow", "stars", "field"], viewpoint: "floating",

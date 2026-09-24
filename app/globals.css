@@ -1764,13 +1764,14 @@ a{ color: inherit; }
 .fmt-flat .words{ max-width: none; }
 /* full-bleed grounds for every format main */
 .fmt-letter, .fmt-poster, .fmt-ticket, .fmt-notebook, .fmt-gallery,
-.fmt-film, .fmt-ransom, .fmt-marquee, .fmt-postcard-card{
+.fmt-film, .fmt-ransom, .fmt-marquee, .fmt-postcard-card, .fmt-listicle{
   max-width: none; width: 100%; padding-inline: clamp(1rem, 4vw, 3rem); padding-bottom: 8rem;
 }
 /* card-wrapped formats veil the whole card as its beat arrives */
-.flow.veiled .tk-stub, .flow.veiled .nb-entry, .flow.veiled .gl-plate{ transition: opacity .5s ease; }
+.flow.veiled .tk-stub, .flow.veiled .nb-entry, .flow.veiled .gl-plate, .flow.veiled .lk-item{ transition: opacity .5s ease; }
 .flow.veiled .tk-stub:not(:has(.beat.arrived)),
 .flow.veiled .nb-entry:not(:has(.beat.arrived)),
+.flow.veiled .lk-item:not(:has(.beat.arrived)),
 .flow.veiled .gl-plate:not(:has(.beat.arrived)){ opacity: .12; }
 /* the switch can hold many options */
 .fmt-switch{ max-width: calc(100vw - 1.5rem); overflow-x: auto; }
@@ -2583,4 +2584,46 @@ a{ color: inherit; }
   .remind-door:hover, .remind-door:focus-visible{ transform: none; }
   .remind-stage:has(.remind-door:hover) .remind-thread-glow,
   .remind-stage:has(.remind-door:focus-visible) .remind-thread-glow{ opacity: .7; stroke-dashoffset: 0; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE LIST — a bright countdown of small things. The one format that knows
+   it is a list: big playful numerals, the headline pulled large, a spark in
+   the margin, a mantra as a stamp at the end. Palette-driven, so it stays a
+   Living Page and not a Buzzfeed post.
+   ══════════════════════════════════════════════════════════════════════ */
+.lk-head{ max-width: 44rem; margin: 0 auto 2.6rem; padding-top: 2.4rem; }
+.lk-kicker{ font-family: var(--f-mono); letter-spacing: .26em; text-transform: uppercase; font-size: .7rem; color: var(--accent); }
+.lk-frag{ font-family: var(--f-disp); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.02; margin: .5rem 0 0; color: var(--ink); text-wrap: balance; }
+.lk-head .byline{ margin-top: 1rem; font-family: var(--f-mono); font-size: .72rem; color: var(--mute); }
+
+.fmt-listicle .flow{ max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(2.2rem, 7vh, 4.4rem); }
+
+.lk-lede{ font-family: var(--f-disp); font-size: clamp(1.2rem, 2.6vw, 1.55rem); line-height: 1.5; color: var(--ink-soft); font-style: italic; max-width: 38rem; }
+.lk-lede .words{ font-family: inherit; font-size: inherit; }
+
+.lk-item{ display: grid; grid-template-columns: auto 1fr auto; column-gap: clamp(.9rem, 3vw, 2rem); align-items: start; }
+.lk-num{ font-family: var(--f-disp); font-weight: 800; font-size: clamp(2.8rem, 9vw, 5rem); line-height: .8; color: var(--accent);
+  -webkit-text-stroke: 0; letter-spacing: -.02em; transform-origin: center; transition: transform .3s cubic-bezier(.2,.8,.3,1); }
+.lk-item:nth-child(odd)  .lk-num{ transform: rotate(-4deg); }
+.lk-item:nth-child(even) .lk-num{ transform: rotate(3deg); }
+.lk-item:hover .lk-num{ transform: scale(1.08) rotate(0deg); }
+.lk-body{ min-width: 0; padding-top: .2rem; }
+.lk-headline .words{ font-family: var(--f-disp); font-weight: 650; font-size: clamp(1.35rem, 3.6vw, 2rem); line-height: 1.14; color: var(--ink); text-wrap: balance; }
+.lk-rest{ margin-top: .55rem; }
+.lk-rest .words{ font-family: var(--f-body); font-size: 1.02rem; line-height: 1.62; color: var(--ink-soft); }
+.lk-mark{ align-self: start; padding-top: .5rem; opacity: .8; transition: transform .5s ease; }
+.lk-item:hover .lk-mark{ transform: rotate(90deg) scale(1.12); }
+
+/* the closing mantra — not item N+1, a stamp */
+.lk-coda{ margin: clamp(2rem, 6vh, 3.5rem) auto 0; display: flex; flex-direction: column; align-items: center; gap: .6rem; text-align: center; }
+.lk-coda-star{ animation: lk-twinkle 3.2s ease-in-out infinite; }
+.lk-coda-line .words{ font-family: var(--f-hand); font-size: clamp(1.6rem, 5vw, 2.6rem); line-height: 1.2; color: var(--accent); }
+@keyframes lk-twinkle{ 0%,100%{ transform: scale(1) rotate(0); opacity: .85; } 50%{ transform: scale(1.18) rotate(12deg); opacity: 1; } }
+
+@media (max-width: 560px){
+  .lk-item{ grid-template-columns: auto 1fr; }
+  .lk-mark{ display: none; }
+  .lk-num{ font-size: clamp(2.2rem, 12vw, 3.2rem); }
 }

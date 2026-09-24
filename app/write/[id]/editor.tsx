@@ -13,7 +13,7 @@ import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
-import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
+import { generateArtDirection, describeArtDirection, detectRegister } from "@/lib/art-direction/generate";
 import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, curatedFormats, type FormatKey } from "@/lib/formats";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
@@ -153,8 +153,14 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       environmentOverride: worldSel === "auto" ? undefined : worldSel,
       moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
       visualIntensity: visSel === "auto" ? undefined : visSel,
+      mode: story.type,
     });
-  }, [raw, worldSel, moodSel, visSel]);
+  }, [raw, worldSel, moodSel, visSel, story.type]);
+
+  // the register (narrative vs reflective) the words are in — the mode picks
+  // it when decisive, the writing decides otherwise. Feeds the voice pass so
+  // an essay/credo isn't read like a travel diary.
+  const register = useMemo(() => detectRegister(raw, extractStoryProfile(raw), story.type), [raw, story.type]);
 
   const mood = artDirection.atmosphere.mood as Mood;
   const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];
@@ -165,8 +171,8 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const dark = getBackdrop(world)?.scheme === "dark";
 
   const blocks = useMemo(
-    () => dramatize(toBlocks(annotate(raw, { doodleDensity: density, voiceBudget: budget / 100 }))),
-    [raw, density, budget],
+    () => dramatize(toBlocks(annotate(raw, { doodleDensity: density, voiceBudget: budget / 100, register }))),
+    [raw, density, budget, register],
   );
 
   // Format is the one explicit choice now (palette/style follow automatically).
