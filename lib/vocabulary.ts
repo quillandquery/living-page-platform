@@ -125,6 +125,9 @@ export type BeatSpec = {
   side?: "left" | "right";
   /** true when this beat is a deliberate silence rather than words */
   hold?: boolean;
+  /** true when this beat is the first sentence of a source line — the item
+   *  boundary a list-piece groups on (the list format reads this) */
+  lineStart?: boolean;
   /** how long that silence runs. 1 is a breath, 4 is a held pause. */
   beats?: number;
 };

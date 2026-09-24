@@ -16,6 +16,7 @@
  */
 import { BACKDROPS, getBackdrop } from "../backdrops";
 import type { SemanticStoryProfile } from "../semantic-profile";
+import type { StoryType } from "../types";
 import { ART_STYLES } from "./art-styles";
 import { PALETTES, paletteVars } from "./palettes";
 import { LOOKS, autoLook, type LookKey } from "./looks";
@@ -80,6 +81,43 @@ const INTENSITY_TREATMENT: Partial<Record<VisualIntensity, import("@/components/
   minimal: "line", collage: "filled", maximal: "filled",
 };
 
+export type Register = "narrative" | "reflective";
+
+/**
+ * NARRATIVE vs REFLECTIVE — which register the piece is written in.
+ *
+ * The whole engine was tuned for first-person travel narrative. A credo, an
+ * essay, a list of advice ("small sparks") is a different animal: placeless,
+ * second-person, imperative, aphoristic — and it fell through every
+ * travel-shaped net onto wrong defaults (a "city" it isn't set in, a
+ * "romantic" mood from the word "love", a dark neon look).
+ *
+ * The writer's chosen mode is authoritative where it is decisive: `thought`
+ * is the reflective on-ramp, `story`/`moment` are narrative. `freeform`
+ * ("just start") and an unset mode fall through to a structural read — a
+ * placeless piece thick with "you/your" and imperatives is reflective.
+ * Deterministic, no LLM (D1).
+ */
+export function detectRegister(
+  raw: string,
+  profile: SemanticStoryProfile,
+  mode?: StoryType,
+): Register {
+  if (mode === "thought") return "reflective";
+  if (mode === "story" || mode === "moment") return "narrative";
+  const text = (raw || "").toLowerCase();
+  const words = profile.wordCount || 1;
+  const placeScore = profile.place[0]?.score ?? 0;
+  const objects = profile.objects.length;
+  const you = (text.match(/\b(you|your|yourself|yourselves)\b/g) ?? []).length;
+  const imperatives = (raw.match(
+    /(^|\n)\s*(become|spread|mention|spend|find|create|try|always|never|give|share|connect|make|do|say|smile|remember|start|notice|keep|choose|be)\b/gi,
+  ) ?? []).length;
+  const placeless = placeScore < 3 && objects <= 1;
+  const advisory = you / words > 0.02 || imperatives >= 2;
+  return placeless && advisory ? "reflective" : "narrative";
+}
+
 export function generateArtDirection(
   raw: string,
   profile: SemanticStoryProfile,
@@ -89,14 +127,25 @@ export function generateArtDirection(
     moodOverride?: import("./atmosphere").MoodKey;
     visualIntensity?: VisualIntensity;
     lookOverride?: LookKey;
+    /** the writer's entry mode — steers register (D3 mode, now non-cosmetic) */
+    mode?: StoryType;
   } = {},
 ): StoryArtDirection {
   const seed = (opts.seed ?? seedHash(raw)) >>> 0;
+  const register = detectRegister(raw, profile, opts.mode);
+  const reflective = register === "reflective";
 
   // — environment —
   const envScored = scoreEnvironments(raw, profile);
+  // A reflective piece names places only in passing ("go back to Oxford",
+  // "walk down the street"); without a dominant, repeated setting it belongs
+  // in the placeless `reverie`, not whatever travel world one stray word hit.
+  const topPlace = envScored[0]?.score ?? 0;
+  const reflectivePlaceless = reflective && topPlace < 3;
   const envKey = opts.environmentOverride
-    ?? seededPick(envScored.map((e) => ({ item: e.key, score: e.score || 0.01 })), seed, 0.92);
+    ?? (reflectivePlaceless
+      ? "reverie"
+      : seededPick(envScored.map((e) => ({ item: e.key, score: e.score || 0.01 })), seed, 0.92));
   const backdrop = getBackdrop(envKey) ?? BACKDROPS.dawn;
 
   // — atmosphere —
@@ -104,7 +153,7 @@ export function generateArtDirection(
   const atmosphere = buildAtmosphere(mood);
 
   // — art style / look — a Look owns the medium; without one the mood picks it
-  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood, backdrop.energy);
+  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood, backdrop.energy, { lightOnly: reflective });
   const artStyleSpec = ART_STYLES[look.artStyle];
   const intensity: VisualIntensity = opts.visualIntensity ?? look.visualIntensity;
 
@@ -132,7 +181,9 @@ export function generateArtDirection(
   const material = MATERIALS[look.material] ?? MATERIALS[artStyleSpec.materialDefault];
 
   // — signature —
-  const signature = pickSignature(artwork, profile.narrative, ENVIRONMENT_FALLBACK_ARTWORK[envKey] ?? "spiral");
+  const sparkRefrain = /✨|\bspark(?:s|le|les|led|ing)?\b/i.test(raw);
+  const signatureFallback = sparkRefrain ? "star" : (ENVIRONMENT_FALLBACK_ARTWORK[envKey] ?? "spiral");
+  const signature = pickSignature(artwork, profile.narrative, signatureFallback);
 
   // colour comes from the palette now, not the world — that is the whole fix
   const accent = paletteSpec.baseAccent;

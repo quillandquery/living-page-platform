@@ -51,6 +51,7 @@ const EMOTION_TO_MOOD: Record<string, MoodKey> = {
   regretful: "raw",
   chaotic: "chaotic",
   hopeful: "warm",
+  generous: "warm",
 };
 
 export function inferMood(emotion: Signal<string>[], environmentDark: boolean): MoodKey {

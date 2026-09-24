@@ -10,7 +10,7 @@ import type { Block } from "@/lib/story-blocks.mjs";
 
 export type FormatKey =
   | "standard" | "scrapbook" | "letter" | "poster" | "ticket"
-  | "notebook" | "gallery" | "film" | "ransom" | "marquee" | "postcard";
+  | "notebook" | "gallery" | "film" | "ransom" | "marquee" | "postcard" | "listicle";
 
 export type FormatDef = { key: FormatKey; label: string; verb: string; blurb: string; min: number };
 
@@ -26,6 +26,7 @@ export const FORMATS: Record<FormatKey, FormatDef> = {
   ransom:    { key: "ransom",    label: "Cut-up",        verb: "Cut-up",     blurb: "ransom-note, off the grid",           min: 2 },
   marquee:   { key: "marquee",   label: "Marquee",       verb: "Marquee",    blurb: "a lit sign at night",                 min: 2 },
   postcard:  { key: "postcard",  label: "Postcard",      verb: "Postcard",   blurb: "a stamped card, written across",      min: 2 },
+  listicle:  { key: "listicle",  label: "The List",      verb: "As a list",  blurb: "a bright countdown of small things",  min: 4 },
 };
 
 export const FORMAT_KEYS = Object.keys(FORMATS) as FormatKey[];
@@ -74,10 +75,11 @@ const AFFINITY: Record<FormatKey, string[]> = {
   ransom: ["chaotic", "playful", "restless"],
   marquee: ["restless", "chaotic", "cinematic"],
   postcard: ["warm", "romantic", "dreamy"],
+  listicle: ["playful", "warm", "hopeful", "chaotic"],
 };
 const BASE: Partial<Record<FormatKey, number>> = {
   scrapbook: 1.0, letter: 0.9, poster: 0.8, postcard: 0.8, film: 0.7,
-  ticket: 0.7, gallery: 0.6, notebook: 0.5, marquee: 0.5, ransom: 0.4,
+  ticket: 0.7, gallery: 0.6, notebook: 0.5, marquee: 0.5, ransom: 0.4, listicle: 0.85,
 };
 
 /** the story's best ~n formats (standard always first), ranked by how well

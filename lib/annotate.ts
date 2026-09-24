@@ -64,7 +64,7 @@ export const DOODLE_HINTS: [RegExp, string, Gesture][] = [
   [/\b(wire|pole|electric|telephone|signal)\b/i, "wire", "reveal"],
 ];
 
-export type Segment = { text: string } | { pause: true };
+export type Segment = { text: string; lineStart?: boolean } | { pause: true };
 
 export function segment(raw: string, splitSentences = true): Segment[] {
   const out: Segment[] = [];
@@ -83,13 +83,13 @@ export function segment(raw: string, splitSentences = true): Segment[] {
       });
       parts = merged;
     }
-    parts.forEach((text) => out.push({ text }));
+    parts.forEach((text, pi) => out.push(pi === 0 ? { text, lineStart: true } : { text }));
   });
   while (out.length && "pause" in out[out.length - 1]) out.pop();
   return out;
 }
 
-type Ctx = { recent: Voice[]; opensScene: boolean; isLast: boolean; prevText: string };
+type Ctx = { recent: Voice[]; opensScene: boolean; isLast: boolean; prevText: string; reflective: boolean };
 
 function readVoice(text: string, ctx: Ctx): { voice: Voice; margin: number } {
   const t = text.trim();
@@ -98,7 +98,7 @@ function readVoice(text: string, ctx: Ctx): { voice: Voice; margin: number } {
 
   const s: Record<Voice, number> = {
     speak: 2.4,
-    shout: hits(LEX.loud, t) * 2.6 + (/!\s*$/.test(t) ? 3.6 : 0) + (caps ? 6 : 0) + (n <= 8 ? 0.6 : -1.4),
+    shout: hits(LEX.loud, t) * 2.6 + (/!\s*$/.test(t) ? 3.6 : 0) + (caps ? 6 : 0) + (ctx.reflective ? -0.9 : (n <= 8 ? 0.6 : -1.4)),
     thought: hits(LEX.doubt, t) * 2.2 + (/\?\s*$/.test(t) ? 3.4 : 0) + (/^[a-z]/.test(t) ? 0.8 : 0) + (n <= 14 ? 0.5 : -1),
     whisper: hits(LEX.quiet, t) * 1.9 + hits(LEX.small, t) * 1.1 + (n <= 12 ? 1.0 : -1.6),
     drift: hits(LEX.water, t) * 1.5 + hits(LEX.dream, t) * 1.5 + (t.split(".").length > 3 ? 1.4 : 0) - (n < 6 ? 1.2 : 0),
@@ -107,13 +107,36 @@ function readVoice(text: string, ctx: Ctx): { voice: Voice; margin: number } {
     // gated behind actual evidence. In the prototype this voice fired on
     // any short line and turned lyric into telemetry; a record needs
     // something on it to record.
-    ledger: hits(LEX.clock, t) || hits(LEX.count, t)
-      ? hits(LEX.clock, t) * 2.6 + hits(LEX.count, t) * 1.8 + (n <= 8 ? 1.6 : -1.8)
+    // a record needs something on it to record. In reflective register a bare
+    // count ("30 minutes of your month") is advice, not a fare, so only a real
+    // clock/time keeps the ledger alive there.
+    ledger: (ctx.reflective ? hits(LEX.clock, t) : (hits(LEX.clock, t) || hits(LEX.count, t)))
+      ? hits(LEX.clock, t) * 2.6 + (ctx.reflective ? 0 : hits(LEX.count, t) * 1.8) + (n <= 8 ? 1.6 : -1.8)
       : -5,
   };
 
-  // rhythm: a voice fades from the ear slowly, and costly voices need room
+  // REFLECTIVE READS — a credo's emphasis doesn't live in travel nouns; it
+  // lives in the shape of the sentences. The item headline (an imperative
+  // opener), the aphorism that closes a point (a short declarative truth),
+  // and the moment of vulnerability are where such a piece wants to land.
+  // The travel lexicon is blind to all three, which is why an essay used to
+  // render as one long flat column. These give it its cadence; the costly-
+  // voice spacing below then thins them so it reads as punctuation, not noise.
+  if (ctx.reflective) {
+    const opener = /^(become|spread|mention|spend|find|create|try|always|never|give|share|connect|make|smile|remember|start|notice|keep|choose|introduce|default)\b/i.test(t);
+    const shortTruth = n <= 8 && /[.]$/.test(t) && !/\?$/.test(t);
+    const vuln = /\b(rough time|vulnerab\w*|not perfect|isn't perfect|isn't either|afraid|struggl\w*|show your life)\b/i.test(t);
+    if (opener) s.listen += 1.9;
+    if (shortTruth) s.listen += 1.3;
+    if (vuln) { s.whisper += 2.2; s.listen -= 0.6; }
+  }
+
+  // rhythm: a voice fades from the ear slowly, and costly voices need room.
+  // `speak` is exempt — it is the resting state, not a voice that tires; a
+  // long run of plain lines (a list, an argument, an aphorism) must not
+  // starve speak below the loud voices' floor and push narration into shout.
   ctx.recent.forEach((v, d) => {
+    if (v === "speak") return;
     const dist = d + 1;
     s[v] -= (COSTLY_VOICES.includes(v) ? 3.2 : 2.0) / dist;
     if (COSTLY_VOICES.includes(v) && dist <= 2) COSTLY_VOICES.forEach((k) => { s[k] -= 2.2 / dist; });
@@ -141,6 +164,13 @@ export type AnnotateOptions = {
   voiceBudget?: number;
   /** varies motion so two similar drafts don't render identically */
   seed?: number;
+  /**
+   * The register the piece is written in. "narrative" is the travel-diary
+   * default. "reflective" covers essays, credos and list-pieces — second
+   * person, imperative, aphoristic, placeless — where the travel-tuned reads
+   * (bare-number ledgers, a shout on every short line) actively mislead.
+   */
+  register?: "narrative" | "reflective";
 };
 
 function seedHash(str: string): number {
@@ -159,8 +189,39 @@ function readMove(voice: Voice, text: string, seed: number): Move {
   return pickMoveFrom(MOVE_CANDIDATES[voice] ?? ["enter"], seed);
 }
 
+/* ── the refrain ──────────────────────────────────────────────────────
+   A credo or a list-piece often turns on a repeated phrase — a mantra the
+   writer says to themselves ("small spark"), a line that comes back. The
+   travel engine had no notion of it: the refrain rendered as flat speak and
+   its final, quiet statement got no weight. This finds the phrase that
+   recurs and lifts its calmest occurrence to `listen`, so the page lands on
+   it the way the writing does. Deterministic, no LLM. Also surfaced to the
+   art-direction generator (via `refrainOf`) so it can become the signature. */
+const REFRAIN_STOP = new Set(
+  ("the a an and or but of to in on at for with is are was be it its you your i "
+  + "we they he she them his her my me so as if then than that this these those "
+  + "not no do does did can will just even more most about into out up down each "
+  + "one two some any all your youre theyll").split(/\s+/),
+);
+const normRefrain = (t: string) =>
+  t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+/** the phrase (2–3 content words) that recurs across the draft, or "" */
+export function refrainOf(raw: string): string {
+  const lines = normRefrain(raw).split("\n").map((l) => l.trim()).filter(Boolean);
+  const grams = new Map<string, number>();
+  for (const raw2 of normRefrain(raw).split(/[.!?\n]+/)) {
+    const w = raw2.split(/\s+/).filter((x) => x && !REFRAIN_STOP.has(x));
+    for (let i = 0; i < w.length - 1; i++) grams.set(`${w[i]} ${w[i + 1]}`, (grams.get(`${w[i]} ${w[i + 1]}`) ?? 0) + 1);
+  }
+  let best = "", bestN = 1;
+  for (const [g, n] of grams) if (n > bestN) { best = g; bestN = n; }
+  return bestN >= 2 ? best : "";
+}
+
 export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
-  const { splitSentences = true, doodleDensity = 5, voiceBudget = 0.3 } = opts;
+  const { splitSentences = true, doodleDensity = 5, voiceBudget = 0.3, register = "narrative" } = opts;
+  const reflective = register === "reflective";
   const base = (opts.seed ?? seedHash(raw)) >>> 0;
   const segs = segment(raw, splitSentences);
   const textCount = segs.filter((s) => !("pause" in s)).length;
@@ -177,7 +238,7 @@ export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
   segs.forEach((seg, idx) => {
     if ("pause" in seg) { beats.push({ text: "", voice: "speak", hold: true, beats: 2 }); opensScene = true; return; }
     const isLast = idx === segs.length - 1;
-    const { voice, margin } = readVoice(seg.text, { recent, opensScene, isLast, prevText });
+    const { voice, margin } = readVoice(seg.text, { recent, opensScene, isLast, prevText, reflective });
     const body = readBody(voice, seg.text, recent);
 
     let doodle: string | undefined;
@@ -194,7 +255,7 @@ export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
     else sinceDoodle++;
 
     const move = readMove(voice, seg.text, base + i * 2654435761);
-    beats.push({ text: seg.text, voice, body, gesture, doodle, side, move });
+    beats.push({ text: seg.text, voice, body, gesture, doodle, side, move, lineStart: seg.lineStart });
     margins.push(voice === "speak" ? Infinity : margin);
     recent.unshift(voice);
     if (recent.length > 5) recent.pop();
@@ -202,6 +263,23 @@ export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
     opensScene = false;
     i++;
   });
+
+  // lift the recurring refrain (and any "say to yourself …" mantra) so the
+  // page lands on it. Only the calmest occurrence, so it stays punctuation.
+  const refrain = refrainOf(raw);
+  const isMantra = (t: string) => /\bsay to yourself\b/i.test(t);
+  const carriesRefrain = (t: string) =>
+    (!!refrain && normRefrain(t).includes(refrain)) || isMantra(t);
+  const cands = beats
+    .map((b, i) => ({ b, i }))
+    .filter(({ b }) => !b.hold && b.voice === "speak" && carriesRefrain(b.text));
+  if (cands.length) {
+    cands.sort((a, c) => a.b.text.split(/\s+/).length - c.b.text.split(/\s+/).length);
+    const pick = cands[0].b;
+    pick.voice = "listen";
+    pick.body = DEFAULT_BODY.listen;
+    pick.move = pick.move ?? "rise";
+  }
 
   return enforceRatio(beats, textCount, voiceBudget);
 }
@@ -258,6 +336,7 @@ export function toBlocks(beats: BeatSpec[]): Block[] {
       side: b.doodle ? b.side : undefined,
       gesture: b.doodle ? b.gesture : undefined,
       move: b.move && b.move !== DEFAULT_MOVE[b.voice] ? b.move : undefined,
+      lineStart: b.lineStart || undefined,
     };
   });
 }

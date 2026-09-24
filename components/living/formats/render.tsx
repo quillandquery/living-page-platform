@@ -5,12 +5,13 @@ import {
   LetterView, PosterView, TicketView, NotebookView, GalleryView,
   FilmView, RansomView, MarqueeView, PostcardView,
 } from "./library";
+import { ListicleView } from "./ListicleView";
 import type { FormatKey } from "@/lib/formats";
 
 const RENDERERS: Partial<Record<FormatKey, (p: StoryViewData) => ReactNode>> = {
   scrapbook: ScrapbookView, letter: LetterView, poster: PosterView, ticket: TicketView,
   notebook: NotebookView, gallery: GalleryView, film: FilmView, ransom: RansomView,
-  marquee: MarqueeView, postcard: PostcardView,
+  marquee: MarqueeView, postcard: PostcardView, listicle: ListicleView,
 };
 
 /** Render a story in a given format (standard is the fallback). */

@@ -13,11 +13,12 @@ import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
-import { generateArtDirection, describeArtDirection } from "@/lib/art-direction/generate";
+import { generateArtDirection, describeArtDirection, detectRegister } from "@/lib/art-direction/generate";
 import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, curatedFormats, type FormatKey } from "@/lib/formats";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
+  createClaimLinkAction, revokeClaimLinkAction,
   type SaveInput,
 } from "../actions";
 import { track } from "@/lib/analytics/client";
@@ -109,6 +110,40 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [pending, start] = useTransition();
   const [reveal, setReveal] = useState(false);
 
+  // — claim link (hand this piece to whoever actually wrote it) —
+  const [claimToken, setClaimToken] = useState<string | null>(
+    story.claim_status === "pending" ? story.claim_token : null,
+  );
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [claimMsg, setClaimMsg] = useState<string | null>(null);
+  const claimedBy = story.claim_status === "claimed"; // this row already changed hands once
+
+  async function getClaimLink() {
+    setClaimBusy(true);
+    setClaimMsg(null);
+    const res = await createClaimLinkAction(story.id);
+    setClaimBusy(false);
+    if (res.ok) setClaimToken(res.token);
+    else setClaimMsg(res.message);
+  }
+  async function copyClaimLink() {
+    if (!claimToken) return;
+    const url = `${window.location.origin}/claim/${claimToken}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setClaimMsg("Copied.");
+    } catch {
+      setClaimMsg(url); // clipboard blocked — at least show it to copy by hand
+    }
+  }
+  async function revokeClaim() {
+    setClaimBusy(true);
+    const res = await revokeClaimLinkAction(story.id);
+    setClaimBusy(false);
+    if (res.ok) { setClaimToken(null); setClaimMsg("Link revoked — it no longer opens."); }
+    else setClaimMsg(res.message);
+  }
+
   // The one engine, Auto or nudged: a manual World/Mood pick overrides just
   // that axis and still lets everything downstream (art style, artwork,
   // ambient motion, material, composition, signature) follow from it.
@@ -118,8 +153,14 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       environmentOverride: worldSel === "auto" ? undefined : worldSel,
       moodOverride: moodSel === "auto" ? undefined : (moodSel as MoodKey),
       visualIntensity: visSel === "auto" ? undefined : visSel,
+      mode: story.type,
     });
-  }, [raw, worldSel, moodSel, visSel]);
+  }, [raw, worldSel, moodSel, visSel, story.type]);
+
+  // the register (narrative vs reflective) the words are in — the mode picks
+  // it when decisive, the writing decides otherwise. Feeds the voice pass so
+  // an essay/credo isn't read like a travel diary.
+  const register = useMemo(() => detectRegister(raw, extractStoryProfile(raw), story.type), [raw, story.type]);
 
   const mood = artDirection.atmosphere.mood as Mood;
   const spec = MOOD_SPEC[mood as Exclude<Mood, "auto">];
@@ -130,8 +171,8 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const dark = getBackdrop(world)?.scheme === "dark";
 
   const blocks = useMemo(
-    () => dramatize(toBlocks(annotate(raw, { doodleDensity: density, voiceBudget: budget / 100 }))),
-    [raw, density, budget],
+    () => dramatize(toBlocks(annotate(raw, { doodleDensity: density, voiceBudget: budget / 100, register }))),
+    [raw, density, budget, register],
   );
 
   // Format is the one explicit choice now (palette/style follow automatically).
@@ -212,6 +253,31 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
               <input className="ed-field" value={fragment} onChange={(e) => setFragment(e.target.value)} placeholder="One line to draw people in" />
               <input className="ed-field" value={date} onChange={(e) => setDate(e.target.value)} placeholder="Date (optional)" />
               <label className="ed-check"><input type="checkbox" checked={veil} onChange={(e) => setVeil(e.target.checked)} /> lines arrive as you scroll</label>
+
+              {!published ? (
+                <div className="ed-claim">
+                  {claimedBy ? (
+                    <p className="ed-claim-msg">This piece has already been claimed — it belongs to whoever claimed it now.</p>
+                  ) : (
+                    <>
+                      <p className="ed-claim-label">not your words? hand this piece to whoever wrote them</p>
+                      {claimToken ? (
+                        <div className="ed-claim-row">
+                          <code className="ed-claim-link">/claim/{claimToken}</code>
+                          <button type="button" className="ed-mini" disabled={claimBusy} onClick={copyClaimLink}>copy link</button>
+                          <button type="button" className="ed-mini" disabled={claimBusy} onClick={revokeClaim}>revoke</button>
+                        </div>
+                      ) : (
+                        <button type="button" className="ed-mini" disabled={claimBusy} onClick={getClaimLink}>
+                          {claimBusy ? "…" : "get a claim link"}
+                        </button>
+                      )}
+                      {claimMsg ? <p className="ed-claim-msg">{claimMsg}</p> : null}
+                    </>
+                  )}
+                </div>
+              ) : null}
+
               {published ? <button className="ed-mini" disabled={pending} onClick={() => run(unpublishAction, "unpublish", false)}>unpublish</button> : null}
               <form action={deleteStoryAction.bind(null, story.id)}>
                 <button className="ed-del" onClick={(e) => { if (!confirm("Delete this piece for good?")) e.preventDefault(); }}>delete this piece</button>
@@ -296,6 +362,11 @@ const CSS = `
 .ed-del{ background:none; border:0; color:var(--mute); font-family:var(--f-mono); font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; padding:0; text-align:left; }
 .ed-del:hover{ color:#C0392B; }
 .ed-artdir{ font-family:var(--f-mono); font-size:.66rem; line-height:1.6; color:var(--ink-soft); white-space:pre-wrap; margin:.6rem 0 0; }
+.ed-claim{ display:flex; flex-direction:column; gap:.5rem; padding:.9rem; border:1px dashed var(--line); border-radius:10px; background:var(--paper-2); }
+.ed-claim-label{ font-family:var(--f-mono); font-size:.66rem; letter-spacing:.04em; color:var(--mute); margin:0; }
+.ed-claim-row{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.ed-claim-link{ font-family:var(--f-mono); font-size:.78rem; color:var(--ink); background:var(--paper); border:1px solid var(--line); border-radius:6px; padding:.3rem .55rem; word-break:break-all; }
+.ed-claim-msg{ font-family:var(--f-mono); font-size:.66rem; color:var(--electric); margin:0; }
 
 .ed-preview-col{ display:flex; flex-direction:column; }
 .ed-seg{ display:flex; gap:.2rem; padding:.8rem max(1rem,2vw); border-bottom:1px solid var(--line); background:var(--paper); }

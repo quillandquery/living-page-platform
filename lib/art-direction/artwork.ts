@@ -20,7 +20,7 @@ export const ENVIRONMENT_FALLBACK_ARTWORK: Record<string, string> = {
   meadow: "flower", heat: "sun", desertroad: "car", dawn: "sun",
   city: "person", window: "window", cafe: "cup", palace: "chandelier",
   monsoon: "umbrella", nightcity: "eye", nightroad: "moon", nightsky: "moon",
-  dreamscape: "spiral",
+  dreamscape: "spiral", reverie: "star",
 };
 
 function pick<T>(arr: T[], seed: number, i: number): T {
