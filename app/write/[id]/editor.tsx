@@ -11,7 +11,7 @@ import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection, detectRegister } from "@/lib/art-direction/generate";
-import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, curatedFormats, type FormatKey } from "@/lib/formats";
+import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, inferFormat, curatedFormats, type FormatKey } from "@/lib/formats";
 import { MOODS as ART_MOODS, MOOD_ATMOSPHERE, type MoodKey } from "@/lib/art-direction/atmosphere";
 import {
   saveDraftAction, publishAction, unpublishAction, deleteStoryAction,
@@ -155,10 +155,25 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
 
   // Format is the one explicit choice now (palette/style follow automatically).
   const fitting = useMemo(() => fittingFormats(blocks), [blocks]);
-  const curated = useMemo(() => curatedFormats(blocks, artDirection.atmosphere?.mood), [blocks, artDirection]);
   const format = resolveFormat(fmtSel === "auto" ? undefined : fmtSel, blocks, { look: artDirection.look });
-  const selValue = curated.includes(format) ? format : curated[0];
-  const autoKey = curated[1] ?? curated[0];
+  // The engine's own auto pick (world-driven, via inferFormat) is a
+  // different heuristic from curatedFormats' mood-affinity ranking below —
+  // "or let us decide" in the format-select modal has to reset to THIS,
+  // not to whatever ranks #2 by mood, or "auto" would mean two different
+  // things in two different places.
+  const autoKey = inferFormat(blocks, artDirection.look);
+  // The mood-curated rail is a taste-driven top few, not every format that
+  // fits — so a story's real auto pick, or whatever the writer explicitly
+  // chose in the Format control, can fall outside it. Guarantee both are
+  // always present, so the modal never shows a tile other than `format` as
+  // selected (which used to happen silently, with Publish still saving the
+  // real `format` underneath the mismatch).
+  const curated = useMemo(() => {
+    const base = curatedFormats(blocks, artDirection.atmosphere?.mood);
+    const extra = Array.from(new Set([format, autoKey])).filter((k) => !base.includes(k));
+    return extra.length ? [...base, ...extra] : base;
+  }, [blocks, artDirection, format, autoKey]);
+  const selValue = format;
 
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
