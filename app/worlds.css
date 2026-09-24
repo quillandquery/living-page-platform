@@ -34,6 +34,32 @@
 .subject-layer .doodle path{ vector-effect: non-scaling-stroke; }
 .subject-layer .doodle-filled path{ opacity: .9; }
 
+/* THE PHOTOGRAPHIC HERO — a curated, hand-picked cutout (background removed
+   once, checked in) instead of the line doodle. Real photography reads much
+   heavier per % opacity than a thin SVG stroke, so it runs a tighter width
+   and leans on a soft blur + colour wash to sit behind the words rather than
+   in front of them; --subj-op is set higher for these in subject.ts to
+   compensate for the blur eating perceived strength. */
+.subject-photo .subject-art{
+  width: min(58vmin, 480px);
+  filter: blur(.4px) saturate(1.05);
+}
+.subject-photo img{
+  display: block; width: 100%; height: auto;
+  -webkit-mask-image: radial-gradient(ellipse 78% 82% at 50% 50%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 78% 82% at 50% 50%, #000 62%, transparent 100%);
+}
+/* the ground shows through the cutout rather than the photo's own tone
+   fighting the world's palette — a soft colour wash keyed to the accent */
+.subject-photo .subject-art::after{
+  content: ""; position: absolute; inset: 0;
+  background: var(--accent2, var(--accent));
+  mix-blend-mode: color;
+  opacity: .35;
+  -webkit-mask-image: inherit; mask-image: inherit;
+}
+.subject-photo .subject-art{ position: relative; }
+
 /* drift — a creature swims slowly across the page and bobs (one combined
    transform so it never fights the parallax on the parent). */
 .subject-drift .subject-art{ animation: subj-swim 48s ease-in-out infinite alternate; }
@@ -50,21 +76,39 @@
   to  { transform: translateY(-3vh) scale(var(--subj-scale, 1)); }
 }
 
-/* draw — a landmark sketches itself in as the reader scrolls, stroke by
-   stroke, bound to --depth. The whole point of the "Eiffel Tower building up
-   as the story progresses" behaviour. */
+/* draw — a landmark sketches itself in as the reader scrolls. The whole
+   point of the "Eiffel Tower building up as the story progresses"
+   behaviour. An SVG doodle draws stroke by stroke; a photographic cutout
+   can't stroke-draw, so it builds bottom-to-top instead — the tower rises
+   out of the ground as the reader descends the page. Both bound to --depth. */
 .subject-draw .subject-art{ transform: scale(var(--subj-scale, 1)); }
 .subject-draw .doodle .stk{
   stroke-dasharray: var(--len);
   stroke-dashoffset: calc(var(--len) * (1 - var(--depth, 0)));
   transition: stroke-dashoffset .18s linear;
 }
+.subject-draw.subject-photo .subject-art{
+  --reveal: calc(8% + var(--depth, 0) * 92%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 10%));
+  mask-image: linear-gradient(to top, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 10%));
+  transition: -webkit-mask-image .18s linear, mask-image .18s linear;
+}
 
 @media (prefers-reduced-motion: reduce){
   .subject-drift .subject-art, .subject-rise .subject-art{ animation: none !important; }
   .subject-draw .doodle .stk{ stroke-dashoffset: 0; }
+  .subject-draw.subject-photo .subject-art{ -webkit-mask-image: none; mask-image: none; }
   .subject-layer{ transform: none; }
 }
+
+/* the hero cutout's attribution — small, unobtrusive, same family as the
+   other stamped labels (.stamp/.byline), sitting in the colophon. */
+.subject-credit-link{
+  font-family: var(--f-mono); font-size: .625rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--mute); text-decoration: none;
+  opacity: .8;
+}
+.subject-credit-link:hover{ opacity: 1; text-decoration: underline; }
 
 /* new looks don't get the old per-look backdrop dimming — give the dark
    worlds a full, alive scene and the light ones a soft one. */

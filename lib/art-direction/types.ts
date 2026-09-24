@@ -110,6 +110,14 @@ export type SubjectDirection = {
   /** relative scale, ~1 ≈ 62vmin */
   scale: number;
   reason: string;
+  /** Story Visual System 3.1 — a curated, hand-picked transparent PNG cutout
+   *  (the real photographic subject, background removed) for this doodle
+   *  key, when one exists. Takes over rendering from the SVG line doodle;
+   *  absent falls back to it, so the hero grows without new code paths
+   *  (D6) as more cutouts are added. Never an AI image, never a random
+   *  fetch (D1/D2) — sourced from the same curated library as the inline
+   *  photography (lib/media-library.ts), processed once, checked in. */
+  image?: { src: string; credit: string; creditUrl: string };
 };
 
 export type StoryArtDirection = {

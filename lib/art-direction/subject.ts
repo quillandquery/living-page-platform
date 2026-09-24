@@ -58,6 +58,23 @@ function modeFor(doodle: string, bias: SubjectMode): SubjectMode {
 
 const safe = (name: string) => (DOODLES[name] ? name : null);
 
+/** curated, hand-picked transparent cutouts — real photography, background
+ *  removed once and checked into public/subjects/, not fetched or generated
+ *  at render time. Add an entry here as the cutout library grows; any
+ *  doodle key without one keeps rendering as the SVG line doodle. */
+const SUBJECT_IMAGES: Partial<Record<string, { src: string; credit: string; creditUrl: string }>> = {
+  whaleshark: {
+    src: "/subjects/whaleshark.png",
+    credit: "Photo \u00b7 @seefromthesky / Unsplash",
+    creditUrl: "https://unsplash.com/@seefromthesky?utm_source=living_page&utm_medium=referral",
+  },
+  eiffel: {
+    src: "/subjects/eiffel.png",
+    credit: "Photo \u00b7 @diofagundes / Unsplash",
+    creditUrl: "https://unsplash.com/@diofagundes?utm_source=living_page&utm_medium=referral",
+  },
+};
+
 /**
  * Pick the hero. First a strong hero-word, else the story's strongest named
  * object, else the environment's fallback — so a page nearly always has a
@@ -92,11 +109,12 @@ export function pickSubject(
   const mode = modeFor(doodle, bias);
   // dark worlds carry a brighter translucent hero than light ones
   const dark = scheme === "dark";
-  const baseOpacity: Record<SubjectMode, number> = {
-    drift: dark ? 0.20 : 0.12,
-    draw: dark ? 0.30 : 0.20,
-    rise: dark ? 0.16 : 0.10,
-  };
+  // a real photographic cutout reads at full strength at a lower opacity
+  // than a thin SVG line does — it carries much more visual weight per %.
+  const image = SUBJECT_IMAGES[doodle];
+  const baseOpacity: Record<SubjectMode, number> = image
+    ? { drift: dark ? 0.34 : 0.22, draw: dark ? 0.42 : 0.30, rise: dark ? 0.26 : 0.18 }
+    : { drift: dark ? 0.20 : 0.12, draw: dark ? 0.30 : 0.20, rise: dark ? 0.16 : 0.10 };
   const baseScale: Record<SubjectMode, number> = { drift: 1.15, draw: 1.0, rise: 0.9 };
-  return { doodle, mode, opacity: baseOpacity[mode], scale: baseScale[mode], reason };
+  return { doodle, mode, opacity: baseOpacity[mode], scale: baseScale[mode], reason, image };
 }

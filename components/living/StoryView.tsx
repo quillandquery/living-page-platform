@@ -123,6 +123,11 @@ export function StoryView({
             {author ? <> · <Link href={author.href ?? `/@${author.handle}`} className="back">@{author.handle}</Link></> : null}
           </span>
           <span className="colophon-doodle"><Doodle name={ad?.signature.doodle ?? "spiral"} seed={19} size={54} ink="var(--rule)" /></span>
+          {ad?.subject?.image ? (
+            <a href={ad.subject.image.creditUrl} target="_blank" rel="noreferrer noopener" className="subject-credit-link">
+              {ad.subject.image.credit}
+            </a>
+          ) : null}
           {share ? <ShareControls {...share} /> : null}
           <Link href="/" className="back">the rest of them</Link>
         </footer>
