@@ -19,7 +19,8 @@ import type { SemanticStoryProfile } from "../semantic-profile";
 import type { StoryType } from "../types";
 import { ART_STYLES } from "./art-styles";
 import { PALETTES, paletteVars } from "./palettes";
-import { LOOKS, autoLook, type LookKey } from "./looks";
+import { autoLook, getLook, type LookKey } from "./looks";
+import { pickSubject } from "./subject";
 import { MATERIALS } from "./materials";
 import { COMPOSITIONS } from "./compositions";
 import { buildAtmosphere, inferMood } from "./atmosphere";
@@ -152,8 +153,12 @@ export function generateArtDirection(
   const mood = opts.moodOverride ?? inferMood(profile.emotion, backdrop.scheme === "dark");
   const atmosphere = buildAtmosphere(mood);
 
-  // — art style / look — a Look owns the medium; without one the mood picks it
-  const look = opts.lookOverride ? LOOKS[opts.lookOverride] : autoLook(mood, backdrop.energy, { lightOnly: reflective });
+  // — art style / look / WORLD — a Look owns the medium, palette, type and
+  //   format. Without a writer override the engine scores every world against
+  //   the story (mood, place, entry mode, the actual words) and picks — no
+  //   longer collapsing nine moods onto four fixed pages.
+  const look = getLook(opts.lookOverride)
+    ?? autoLook({ mood, energy: backdrop.energy, environment: envKey, type: opts.mode, raw, seed, lightOnly: reflective });
   const artStyleSpec = ART_STYLES[look.artStyle];
   const intensity: VisualIntensity = opts.visualIntensity ?? look.visualIntensity;
 
@@ -185,6 +190,10 @@ export function generateArtDirection(
   const signatureFallback = sparkRefrain ? "star" : (ENVIRONMENT_FALLBACK_ARTWORK[envKey] ?? "spiral");
   const signature = pickSignature(artwork, profile.narrative, signatureFallback);
 
+  // — hero subject — the one big illustration that carries the story behind
+  //   the words: a creature drifts, a landmark draws itself in on scroll.
+  const subject = pickSubject(raw, profile, look.subjectBias ?? "rise", seed >>> 5, paletteSpec.scheme, signatureFallback);
+
   // colour comes from the palette now, not the world — that is the whole fix
   const accent = paletteSpec.baseAccent;
   const secondaryAccent = paletteSpec.baseAccent2;
@@ -199,8 +208,11 @@ export function generateArtDirection(
     composition: { key: composition.key, label: composition.label },
     typography: look.typography ?? artStyleSpec.typography,
     signature,
+    subject,
+    visualIntensity: intensity,
     palette,
     look: look.key,
+    format: look.format,
     accent,
     secondaryAccent,
     seed,
@@ -220,6 +232,8 @@ export function describeArtDirection(d: StoryArtDirection): string {
     `MATERIAL      ${d.material.label}`,
     `COMPOSITION   ${d.composition.label}`,
     `SIGNATURE     ${d.signature.doodle} (${d.signature.arc}) — ${d.signature.reason}`,
+    `SUBJECT       ${d.subject ? `${d.subject.doodle} (${d.subject.mode})` : "(none)"}`,
+    `FORMAT        ${d.format ?? "standard"}`,
     `ACCENT        ${d.accent}${d.secondaryAccent ? ` / ${d.secondaryAccent}` : ""}`,
   ].join("\n");
 }

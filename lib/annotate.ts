@@ -220,7 +220,7 @@ export function refrainOf(raw: string): string {
 }
 
 export function annotate(raw: string, opts: AnnotateOptions = {}): BeatSpec[] {
-  const { splitSentences = true, doodleDensity = 5, voiceBudget = 0.3, register = "narrative" } = opts;
+  const { splitSentences = true, doodleDensity = 5, voiceBudget = 0.34, register = "narrative" } = opts;
   const reflective = register === "reflective";
   const base = (opts.seed ?? seedHash(raw)) >>> 0;
   const segs = segment(raw, splitSentences);

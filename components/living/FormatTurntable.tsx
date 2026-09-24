@@ -20,6 +20,7 @@ const META: Record<FormatKey, { accent: string; feels: string; cls: string }> = 
   marquee:   { accent: "#31C8D8", feels: "Electric",   cls: "The Marquee" },
   postcard:  { accent: "#A66A3B", feels: "Sunlit",      cls: "The Traveller" },
   listicle:  { accent: "#E4A020", feels: "Playful",     cls: "The Countdown" },
+  crawl:     { accent: "#FFE81F", feels: "Cinematic",  cls: "The Crawl" },
 };
 
 /**

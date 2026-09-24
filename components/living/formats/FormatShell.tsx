@@ -1,6 +1,8 @@
 import React, { Fragment } from "react";
 import { Beat } from "@/components/living/Beat";
 import { StoryFrame } from "@/components/living/StoryFrame";
+import { Backdrop } from "@/components/living/Backdrop";
+import { SubjectLayer } from "@/components/living/SubjectLayer";
 import { worldVars } from "@/lib/backdrops";
 import { paletteStyle } from "@/lib/palette-style";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
@@ -111,11 +113,16 @@ export function FormatShell({
   const ad = isCompleteArtDirection(artDirection) ? artDirection : null;
   const vars = ad?.palette?.vars ?? worldVars(null, safeAccent);
   const scheme = ad?.palette?.scheme ?? "light";
+  const materialVars = ad ? `--material-grain:${ad.material.grain};--material-contrast:${ad.material.contrast};--art-rotate:${ad.typography.rotateBias}deg;` : "";
+  const worldClass = ad ? `material-${ad.material.key} look-${ad.look} palette-${ad.palette.key}` : "";
   const beats = beatsFrom(blocks);
 
   return (
-    <main className={`frame story-reading fmt-${variant} ${flat ? "fmt-flat" : ""} scheme-${scheme}`} style={scoped ? paletteStyle(vars) : undefined}>
-      {scoped ? null : <style>{`:root{${vars}}`}</style>}
+    <main className={`frame story-reading fmt-${variant} ${flat ? "fmt-flat" : ""} scheme-${scheme} ${worldClass}`} style={scoped ? paletteStyle(`${vars};${materialVars}`) : undefined}>
+      {scoped ? null : <style>{`:root{${vars};${materialVars}}`}</style>}
+      {ad ? <Backdrop name={ad.environment.key} seed={seed} ambient={ad.ambientMotion} scheme={ad.palette?.scheme} /> : null}
+      {ad ? <SubjectLayer subject={ad.subject} seed={seed} /> : null}
+      {ad ? <div className="material-layer" /> : null}
       {header}
       <StoryFrame veil={veil} accent={safeAccent}>
         {renderGroup

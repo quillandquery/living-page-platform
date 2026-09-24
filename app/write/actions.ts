@@ -124,7 +124,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   // missing key or a provider hiccup never blocks a save.
   let blocks = input.blocks;
   if (input.imagery) {
-    try { blocks = await resolveImagery(input.place, input.source, input.blocks); } catch { blocks = input.blocks; }
+    try { blocks = await resolveImagery(input.place, input.source, input.blocks, input.art_direction?.environment?.key ?? input.backdrop ?? undefined); } catch { blocks = input.blocks; }
   }
 
   const patch: Record<string, unknown> = {

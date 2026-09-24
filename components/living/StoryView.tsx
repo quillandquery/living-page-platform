@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StoryFrame } from "./StoryFrame";
 import { StoryRender } from "./StoryRender";
 import { Backdrop } from "./Backdrop";
+import { SubjectLayer } from "./SubjectLayer";
 import { Artwork } from "./Artwork";
 import { Signature } from "./Signature";
 import { ShareControls, type ShareControlsProps } from "./ShareControls";
@@ -79,6 +80,7 @@ export function StoryView({
     <main className={shellClass} style={scoped ? paletteStyle(`${vars};${materialVars}`) : undefined}>
       {scoped ? null : <style>{`:root{${vars};${materialVars}}`}</style>}
       <Backdrop name={ad?.environment.key ?? (backdrop ?? undefined)} seed={seed} ambient={ad?.ambientMotion} scheme={ad?.palette?.scheme} />
+      {ad ? <SubjectLayer subject={ad.subject} seed={seed} /> : null}
       {ad ? <div className="material-layer" /> : null}
       {ad ? <Artwork pieces={ad.artwork} seed={seed} /> : null}
       {ad ? <Signature signature={ad.signature} seed={world?.scheme === "dark" ? 11 : 5} treatment={ad.artStyle.artworkTreatment} side={ad.composition.key === "postcard" ? "left" : "right"} /> : null}

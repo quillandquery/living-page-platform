@@ -1,0 +1,134 @@
+/* ============================================================================
+   STORY VISUAL SYSTEM 3.0 — worlds, hero subjects, new formats.
+   Hand-written, no framework (D7). Loaded AFTER globals.css so it can layer on
+   top. New palettes/looks reuse the existing .material-*/.comp-* machinery and
+   supply their own colour + type via the injected palette vars — this file is
+   only what those can't express in variables alone: the hero-subject layer,
+   the crawl stage, and a few per-world flourishes.
+   ========================================================================== */
+
+/* Keep the reading content above the world layers (backdrop + hero subject,
+   both z-index:0), while the grain material stays over everything (z-index:2),
+   exactly as before. Mirrors the pattern .look-eighties already used. */
+.story-reading > .frontispiece,
+.story-reading > .flow,
+.story-reading > .colophon,
+.story-reading > .cr-head,
+.story-reading > .lk-head,
+.story-reading > .fmt-head { position: relative; z-index: 1; }
+
+/* ── THE HERO SUBJECT ──────────────────────────────────────────────────────
+   The one big illustration that carries the story, behind the words. */
+.subject-layer{
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  display: grid; place-items: center;
+  color: var(--accent2, var(--counter, var(--accent)));
+  opacity: var(--subj-op, .14);
+  /* gentle scroll parallax on the whole layer */
+  transform: translateY(calc((var(--depth, 0) - 0.5) * -6vh));
+  transition: opacity .6s ease;
+}
+.subject-art{ width: min(94vmin, 800px); display: block; will-change: transform; }
+.subject-layer .doodle{ width: 100% !important; }
+.subject-layer .doodle svg{ overflow: visible; }
+.subject-layer .doodle path{ vector-effect: non-scaling-stroke; }
+.subject-layer .doodle-filled path{ opacity: .9; }
+
+/* drift — a creature swims slowly across the page and bobs (one combined
+   transform so it never fights the parallax on the parent). */
+.subject-drift .subject-art{ animation: subj-swim 48s ease-in-out infinite alternate; }
+@keyframes subj-swim{
+  0%   { transform: translate(-9vw, -1.6vh) scale(var(--subj-scale, 1)) rotate(-1.5deg); }
+  50%  { transform: translate(0, 1.6vh) scale(var(--subj-scale, 1)) rotate(1deg); }
+  100% { transform: translate(9vw, -1.2vh) scale(var(--subj-scale, 1)) rotate(-1deg); }
+}
+
+/* rise — a quiet subject floats gently up and down */
+.subject-rise .subject-art{ animation: subj-rise 34s ease-in-out infinite alternate; }
+@keyframes subj-rise{
+  from{ transform: translateY(3vh) scale(var(--subj-scale, 1)); }
+  to  { transform: translateY(-3vh) scale(var(--subj-scale, 1)); }
+}
+
+/* draw — a landmark sketches itself in as the reader scrolls, stroke by
+   stroke, bound to --depth. The whole point of the "Eiffel Tower building up
+   as the story progresses" behaviour. */
+.subject-draw .subject-art{ transform: scale(var(--subj-scale, 1)); }
+.subject-draw .doodle .stk{
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: calc(var(--len) * (1 - var(--depth, 0)));
+  transition: stroke-dashoffset .18s linear;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .subject-drift .subject-art, .subject-rise .subject-art{ animation: none !important; }
+  .subject-draw .doodle .stk{ stroke-dashoffset: 0; }
+  .subject-layer{ transform: none; }
+}
+
+/* new looks don't get the old per-look backdrop dimming — give the dark
+   worlds a full, alive scene and the light ones a soft one. */
+.look-diving .backdrop{ opacity: .85; }
+.look-neon   .backdrop{ opacity: .8; }
+.look-space  .backdrop{ opacity: .9; }
+.look-noir   .backdrop{ opacity: .5; filter: grayscale(.65) contrast(1.1); }
+.look-ember  .backdrop{ opacity: .7; }
+.look-paris  .backdrop{ opacity: .5; }
+.look-wanted .backdrop{ opacity: .4; }
+.look-fieldnotes .backdrop{ opacity: .32; }
+.look-essay  .backdrop{ opacity: .3; }
+
+/* ── PER-WORLD FLOURISHES (only what vars can't say) ───────────────────────*/
+
+/* the deep — bioluminescent emphasis, a coral shout */
+.palette-diving .v-shout{ color: var(--pop); text-shadow: 0 0 22px color-mix(in oklab, var(--pop) 60%, transparent); }
+.palette-diving .frontispiece .place{ color: var(--accent); letter-spacing: .14em; text-transform: uppercase; }
+.palette-diving .frontispiece .place,
+.look-diving .cr-title{ text-shadow: 0 0 26px color-mix(in oklab, var(--accent) 45%, transparent); }
+
+/* neon night — tube glow on the loud type */
+.palette-neon .v-shout,
+.palette-neon .frontispiece .place{ text-shadow: 0 0 10px var(--accent), 0 0 26px color-mix(in oklab, var(--accent) 70%, transparent); }
+.palette-neon .frontispiece .place{ color: var(--accent); text-transform: uppercase; letter-spacing: .12em; }
+
+/* black & white — the one red lands hard */
+.palette-noir .v-shout{ color: var(--accent); }
+.palette-noir .frontispiece .place{ letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
+
+/* far away — the star's yellow, a faint bloom */
+.palette-space .frontispiece .place,
+.palette-space .cr-title{ color: var(--accent); text-shadow: 0 0 30px color-mix(in oklab, var(--accent) 40%, transparent); }
+
+/* broadside — a stamped, ruled poster */
+.look-wanted .frontispiece{ border: 3px double var(--ink); padding: 1.1rem 1.4rem; }
+.palette-sepia .frontispiece .place{ letter-spacing: .04em; text-transform: uppercase; }
+
+/* ── THE CRAWL (star-wars opening) ─────────────────────────────────────────
+   The story recedes into the starfield in perspective; scroll drives the
+   recession, so it never fights the veil. */
+.fmt-crawl .flow{
+  perspective: 520px;
+  padding-top: 10vh;
+}
+.fmt-crawl .flow{
+  transform: rotateX(24deg);
+  transform-origin: 50% 0%;
+  text-align: center;
+  color: var(--accent);
+  --crawl-mask: linear-gradient(to top, #000 52%, color-mix(in oklab, #000 40%, transparent) 82%, transparent 100%);
+  -webkit-mask-image: var(--crawl-mask); mask-image: var(--crawl-mask);
+}
+.fmt-crawl .cr-line{ max-width: 42ch; margin: 0 auto 1.5rem; }
+.fmt-crawl .cr-line .beat{ grid-template-columns: 1fr; justify-items: center; padding-block: .2rem; }
+.fmt-crawl .cr-line .words{ font-size: clamp(1.15rem, 3.2vw, 2rem); line-height: 1.5; font-weight: 700; letter-spacing: .01em; }
+.fmt-crawl .cr-head{ text-align: center; padding-top: 6vh; }
+.fmt-crawl .cr-open{ font-family: var(--f-body); color: var(--accent2); font-size: 1.1rem; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 .8rem; }
+.fmt-crawl .cr-title{
+  font-family: var(--f-disp); font-weight: 400;
+  font-size: clamp(2.4rem, 9vw, 5.5rem); line-height: .95; letter-spacing: .04em;
+  text-transform: uppercase; margin: 0; color: var(--accent);
+}
+.fmt-crawl .wander-back{ display: inline-block; margin-bottom: 1.4rem; }
+@media (prefers-reduced-motion: reduce){
+  .fmt-crawl .flow{ transform: none; -webkit-mask-image: none; mask-image: none; }
+}
