@@ -24,6 +24,11 @@ export type Profile = {
 
 export type StoryStatus = "draft" | "published";
 
+/** A link generated so someone who didn't write this row can claim it —
+ *  see docs/CLAIMING.md and lib/claim.ts. `none` covers every ordinary
+ *  story that was never handed off. */
+export type ClaimStatus = "none" | "pending" | "claimed";
+
 /** A story row as it lives in Postgres. */
 export type StoryRow = {
   id: string;
@@ -45,6 +50,15 @@ export type StoryRow = {
    *  `isCompleteArtDirection` in `lib/art-direction/types.ts`. */
   art_direction: Partial<StoryArtDirection>;
   type: StoryType;
+  /** The live claim token for `/claim/<token>`, or null once claimed,
+   *  revoked, or never generated. Never shown to a reader — only ever
+   *  read server-side via the service-role client (lib/claim.ts). */
+  claim_token: string | null;
+  claim_status: ClaimStatus;
+  claimed_at: string | null;
+  /** Who generated the claim link — durable, unlike `author_id`, which
+   *  moves to the claimant the moment it's claimed. */
+  seeded_by: string | null;
 };
 
 /** A story joined with the writer who wrote it — what the feed and reader need. */

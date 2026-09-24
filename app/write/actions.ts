@@ -9,6 +9,7 @@ import { resolveImagery } from "@/lib/media";
 import { deriveSlugBase } from "@/lib/slug";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
 import { captureServer } from "@/lib/analytics/server";
+import { createClaimLink, revokeClaimLink, type CreateClaimResult } from "@/lib/claim";
 
 /**
  * THE STUDIO'S HANDS, on a platform.
@@ -179,4 +180,22 @@ export async function deleteStoryAction(id: string) {
   await supabase.from("stories").delete().eq("id", id).eq("author_id", profile.id);
   revalidatePath(`/@${profile.handle}`);
   redirect(`/@${profile.handle}`);
+}
+
+/**
+ * CLAIM LINKS — thin wrappers so the editor talks to lib/claim.ts the same
+ * way it talks to everything else here: a plain async action it can call
+ * from a transition and get a result back, no redirect, no page reload.
+ */
+
+export async function createClaimLinkAction(storyId: string): Promise<CreateClaimResult> {
+  const res = await createClaimLink(storyId);
+  if (res.ok) revalidatePath(`/write/${storyId}`);
+  return res;
+}
+
+export async function revokeClaimLinkAction(storyId: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  const res = await revokeClaimLink(storyId);
+  if (res.ok) revalidatePath(`/write/${storyId}`);
+  return res;
 }

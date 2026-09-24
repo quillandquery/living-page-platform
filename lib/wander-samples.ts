@@ -216,6 +216,10 @@ function build(input: SampleInput): StoryWithAuthor {
     published_at: "2026-01-01T00:00:00Z",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
+    claim_token: null,
+    claim_status: "none",
+    claimed_at: null,
+    seeded_by: null,
     author: AUTHOR,
   };
 }

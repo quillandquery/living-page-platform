@@ -19,6 +19,13 @@ export type AuthState = { error?: string; notice?: string };
 
 const HANDLE_RE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/;
 
+/** Only ever a same-site path(+query) — never let a redirect target
+ *  wander off this domain. Used by both sign-in and sign-up. */
+function safeNext(raw: FormDataEntryValue | null): string {
+  const s = String(raw ?? "");
+  return s.startsWith("/") && !s.startsWith("//") ? s : "";
+}
+
 export async function signInAction(_prev: AuthState, form: FormData): Promise<AuthState> {
   const email = String(form.get("email") ?? "").trim();
   const password = String(form.get("password") ?? "");
@@ -29,8 +36,8 @@ export async function signInAction(_prev: AuthState, form: FormData): Promise<Au
   if (error) return { error: error.message };
 
   // where they were headed before the wall
-  const rawNext = String(form.get("next") ?? "");
-  if (rawNext.startsWith("/")) redirect(rawNext);
+  const next = safeNext(form.get("next"));
+  if (next) redirect(next);
 
   // no specific destination — their own page if they have one, or finish
   // setting one up if they don't
@@ -43,19 +50,28 @@ export async function signUpAction(_prev: AuthState, form: FormData): Promise<Au
   const password = String(form.get("password") ?? "");
   if (!email || password.length < 8) return { error: "Use a password of at least 8 characters." };
 
+  // Wherever they were headed (e.g. a claim link's /claim/<token>/finish)
+  // rides along inside `next=/onboarding?next=<dest>` — the same nesting
+  // createStoryAction already uses to get a signed-out writer back to the
+  // piece they were starting. Onboarding forwards its own `next` verbatim
+  // once a handle is chosen, so this survives both the "confirm your
+  // email" detour and the ordinary no-confirmation-needed path below.
+  const dest = safeNext(form.get("next"));
+  const onboardingNext = `/onboarding${dest ? `?next=${encodeURIComponent(dest)}` : ""}`;
+
   const supabase = await supabaseServer();
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${site}/auth/callback?next=/onboarding` },
+    options: { emailRedirectTo: `${site}/auth/callback?next=${encodeURIComponent(onboardingNext)}` },
   });
   if (error) return { error: error.message };
 
   // If the project has email confirmation off, a session already exists and
   // we can go straight to picking a handle. If it's on, there is no session
   // yet — tell them to confirm.
-  if (data.session) redirect("/onboarding");
+  if (data.session) redirect(onboardingNext);
   return { notice: "Check your email to confirm your account, then come back and sign in." };
 }
 
