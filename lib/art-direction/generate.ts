@@ -150,7 +150,7 @@ export function generateArtDirection(
   const backdrop = getBackdrop(envKey) ?? BACKDROPS.dawn;
 
   // — atmosphere —
-  const mood = opts.moodOverride ?? inferMood(profile.emotion, backdrop.scheme === "dark");
+  const mood = opts.moodOverride ?? inferMood(profile.emotion, backdrop.scheme === "dark", profile.narrative);
   const atmosphere = buildAtmosphere(mood);
 
   // — art style / look / WORLD — a Look owns the medium, palette, type and

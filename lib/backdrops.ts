@@ -85,7 +85,13 @@ export const BACKDROPS: Record<string, Backdrop> = {
     cues: ["window", "café", "cafe", "coffee", "train window", "indoors", "inside", "glass", "watching"] },
   cafe:      { label: "warm interior", scheme: "light", energy: "warm", accent: "#C77D3A", secondaryAccent: "#B98A55", paperTint: "#F3E9D6",
     layers: ["window", "glow"], viewpoint: "interior",
-    cues: ["kitchen", "bedroom", "home", "lamp", "warm", "bed", "tea", "apartment", "sofa", "room", "office", "desk"] },
+    // "home"/"kitchen"/"bedroom"/"room"/"office"/"desk"/"bed" were dropped —
+    // audit (claude/world-differentiation-audit-2026-09-24.md) found these
+    // generic domestic nouns firing on almost any personal narrative that
+    // mentions being indoors at all, regardless of whether the scene reads
+    // as a cozy "warm interior" specifically. Kept only the more distinctive
+    // coziness words.
+    cues: ["lamp", "tea", "apartment", "sofa"] },
   palace:    { label: "palace interior", scheme: "light", energy: "vivid", accent: "#C9A227", secondaryAccent: "#7A2E3A", paperTint: "#F6EFD8",
     layers: ["window", "drape", "glow"], viewpoint: "grand_hall",
     cues: ["palace", "chandelier", "ballroom", "royal", "overdressed", "grand hall", "throne"] },

@@ -54,12 +54,47 @@ const EMOTION_TO_MOOD: Record<string, MoodKey> = {
   generous: "warm",
 };
 
-export function inferMood(emotion: Signal<string>[], environmentDark: boolean): MoodKey {
+/** the semantic NARRATIVE axis (`lib/semantic-profile.ts`) reads the shape
+ *  of the story — a life transition, a discovery, a reunion, a plain
+ *  uneventful day — rather than a named feeling. It's a broader, second
+ *  tier: less exact than an emotion word, but still something the story
+ *  actually said, not a guess. Used only when no emotion cue fired (audit:
+ *  `claude/world-differentiation-audit-2026-09-24.md` — without this,
+ *  ordinary writing that names no emotion collapsed to a hard-coded
+ *  warm/cinematic binary regardless of content). */
+const NARRATIVE_TO_MOOD: Record<string, MoodKey> = {
+  transition: "restless",
+  departure: "raw",
+  arrival: "cinematic",
+  breakup: "raw",
+  transformation: "dreamy",
+  failure: "raw",
+  discovery: "cinematic",
+  escape: "restless",
+  reunion: "romantic",
+  boredom: "quiet",
+  absurdity: "playful",
+  grief: "raw",
+  celebration: "playful",
+};
+
+export function inferMood(
+  emotion: Signal<string>[],
+  environmentDark: boolean,
+  narrative: Signal<string>[] = [],
+): MoodKey {
   for (const e of emotion) {
     const m = EMOTION_TO_MOOD[e.key];
     if (m) return m;
   }
-  return environmentDark ? "cinematic" : "warm";
+  for (const n of narrative) {
+    const m = NARRATIVE_TO_MOOD[n.key];
+    if (m) return m;
+  }
+  // Nothing named at all: a plain, undramatic piece — "quiet" (minimal's
+  // own reason for existing), not a coin flip between "warm" and
+  // "cinematic" decided purely by whether the backdrop is dark.
+  return environmentDark ? "cinematic" : "quiet";
 }
 
 export function buildAtmosphere(mood: MoodKey): AtmosphereDirection {

@@ -205,7 +205,7 @@ export const LOOKS: Record<LookKey, Look> = {
     affinity: {
       moods: ["warm", "romantic", "dreamy"],
       environments: ["cafe", "nightroad", "nightsky"],
-      cues: [/\b(fire|campfire|firelight|embers?|candle|lantern|home|kitchen|blanket|midnight talk)\b/i],
+      cues: [/\b(fire|campfire|firelight|embers?|candle|lantern|blanket|midnight talk)\b/i],
       base: 0.25,
     },
   },
