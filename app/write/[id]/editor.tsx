@@ -3,12 +3,9 @@
 import Link from "next/link";
 import React, { useMemo, useState, useTransition } from "react";
 import { annotate, toBlocks } from "@/lib/annotate";
-import { Beat } from "@/components/living/Beat";
-import { Hold } from "@/components/living/Scene";
-import { Backdrop } from "@/components/living/Backdrop";
 import { FormatSelect } from "@/components/living/FormatSelect";
+import { FormatRender } from "@/components/living/formats/render";
 import { getBackdrop } from "@/lib/backdrops";
-import { type Body, type Gesture, type Move, type Voice } from "@/lib/vocabulary";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
@@ -67,25 +64,6 @@ function dramatize(blocks: Block[]): Block[] {
     if (punch) { punch.voice = "shout"; punch.ink = "accent2"; }
   }
   return out;
-}
-
-function LivePreview({ blocks }: { blocks: Block[] }) {
-  return (
-    <>
-      {blocks.map((b, i) => {
-        if (b.kind === "hold") return <Hold key={i} beats={Math.min(b.beats, 2)} />;
-        if (b.kind === "raw") return <p key={i} className="blk-kept-line">{b.text}</p>;
-        if (b.kind === "media") return null;
-        return (
-          <Beat key={i} voice={b.voice as Voice} body={b.body as Body | undefined}
-                gesture={b.gesture as Gesture | undefined} move={b.move as Move | undefined} doodle={b.doodle}
-                ink={b.ink} side={b.side === "left" ? "left" : "right"} seed={i * 7 + 3}>
-            {b.text}
-          </Beat>
-        );
-      })}
-    </>
-  );
 }
 
 type Msg = { tone: "ok" | "bad"; text: string } | null;
@@ -304,11 +282,34 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <button onClick={() => setTab("words")} aria-selected={tab === "words"}>your words</button>
           </div>
           {tab === "page" ? (
-            <div className={`ed-live${dark ? " dark" : ""}`} style={{ ["--accent" as string]: accent }} key={world}>
-              <Backdrop name={world} seed={story.id} ambient={artDirection.ambientMotion} />
-              <div className="ed-flow">
-                {raw.trim() ? <LivePreview blocks={blocks} /> : <p className="ed-blank">Your living page appears here as you write.</p>}
-              </div>
+            <div className={`ed-live${dark ? " dark" : ""}`} style={{ ["--accent" as string]: accent }} key={`${world}-${format}`}>
+              {raw.trim() ? (
+                // The live "coming alive" preview goes through the SAME
+                // format renderer the reader page does (FormatRender), so
+                // the "Format" control actually changes this stage instead
+                // of a generic flow that never varied with it. `scoped`
+                // keeps the world's palette local to this box rather than
+                // painting :root, and `contain: paint` below (CSS) is what
+                // keeps the format's fixed-position layers (backdrop, hero
+                // subject, letterbox bars, …) inside this pane instead of
+                // covering the whole editor.
+                <FormatRender
+                  format={format}
+                  scoped
+                  chrome={false}
+                  veil={veil}
+                  place={place}
+                  date={date}
+                  fragment={fragment}
+                  accent={accent}
+                  backdrop={world}
+                  blocks={blocks}
+                  artDirection={artDirection}
+                  seed={story.id}
+                />
+              ) : (
+                <p className="ed-blank">Your living page appears here as you write.</p>
+              )}
             </div>
           ) : (
             <pre className="ed-words">{raw || "(nothing written yet)"}</pre>
@@ -380,11 +381,20 @@ const CSS = `
 
 /* the living page preview — a real world behind real voices */
 .ed-live{ position:relative; flex:1; overflow-y:scroll; overflow-x:hidden; scrollbar-gutter:stable; padding:6vh 2vw;
-  background: color-mix(in oklab, var(--accent) 7%, #FBF6EC); }
+  background: color-mix(in oklab, var(--accent) 7%, #FBF6EC);
+  /* This box now renders a real format (FormatRender), and every format's
+     world layers (backdrop, hero subject, material grain, a format's own
+     full-bleed chrome like film's letterbox bars) are position:fixed,
+     meant to fill whatever they're staged in. contain:paint makes THIS
+     element that stage: it becomes the containing block for every fixed
+     descendant and clips paint to its own box, so nothing escapes into the
+     rest of the editor -- no per-layer override list to maintain as formats
+     are added. */
+  contain: paint; }
 .ed-live.dark{ background:#14161B; color:#ECE8DF; }
-.ed-live .backdrop{ position:absolute !important; }
-.ed-flow{ position:relative; z-index:1; max-width:34rem; margin:0 auto; display:flex; flex-direction:column; gap:.2rem; }
-.ed-blank{ font-family:var(--f-mono); font-size:.8rem; color:var(--mute); text-align:center; }
+.ed-live .frame{ max-width:34rem; }
+.ed-live .flow{ gap:.2rem; }
+.ed-blank{ font-family:var(--f-mono); font-size:.8rem; color:var(--mute); text-align:center; padding-top:8vh; }
 /* single-column beats so voice sizes carry the transformation in a half-width panel */
 .ed-live .beat{ display:block !important; padding-block:.5rem; animation:ed-rise .55s cubic-bezier(.2,.8,.3,1) both; }
 .ed-live .words{ max-width:none !important; margin:0 auto; }
