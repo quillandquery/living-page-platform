@@ -1,7 +1,7 @@
 /* ============================================================================
    STORY VISUAL SYSTEM 3.0 — worlds, hero subjects, new formats.
    Hand-written, no framework (D7). Loaded AFTER globals.css so it can layer on
-   top. New palettes/looks reuse the existing .material-*/.comp-* machinery and
+   top. New palettes/looks reuse the existing .material-* and .comp-* machinery and
    supply their own colour + type via the injected palette vars — this file is
    only what those can't express in variables alone: the hero-subject layer,
    the crawl stage, and a few per-world flourishes.
