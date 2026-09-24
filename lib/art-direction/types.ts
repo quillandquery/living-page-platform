@@ -95,6 +95,23 @@ export type PaletteDirection = {
   vars: string;
 };
 
+export type SubjectMode = "drift" | "draw" | "rise";
+
+/** THE HERO ILLUSTRATION — the one big drawing that carries the story behind
+ *  the words (§9/§10 taken further). A creature `drift`s across the page; a
+ *  landmark `draw`s itself in as the reader scrolls (bound to --depth); a
+ *  quiet subject `rise`s. Tied to what the story is actually about. */
+export type SubjectDirection = {
+  /** a key into components/doodles/registry.ts DOODLES */
+  doodle: string;
+  mode: SubjectMode;
+  /** hero opacity 0..1 (the story stays the thing being read) */
+  opacity: number;
+  /** relative scale, ~1 ≈ 62vmin */
+  scale: number;
+  reason: string;
+};
+
 export type StoryArtDirection = {
   environment: EnvironmentDirection;
   atmosphere: AtmosphereDirection;
@@ -105,6 +122,13 @@ export type StoryArtDirection = {
   composition: CompositionDirection;
   typography: TypographyDirection;
   signature: SignatureDirection;
+  /** the hero illustration that carries the story behind the words */
+  subject?: SubjectDirection | null;
+  /** the writer's Visuals dial, resolved (auto or explicit) — how much of
+   *  the page artwork/photography is allowed to occupy. Exposed so callers
+   *  (the editor, the save action, the preview) can gate curated photography
+   *  on the same signal that already governs doodle density (§14). */
+  visualIntensity?: "minimal" | "illustrated" | "collage" | "maximal";
   /** the story's colour identity — owns the ground, not just the accent */
   palette: PaletteDirection;
   /** which named Look produced this, if any (minimal/maximal/postcard/eighties) */

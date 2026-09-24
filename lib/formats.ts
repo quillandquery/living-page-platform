@@ -7,10 +7,11 @@
  * Precedence: reader's ?as= → author default → engine-inferred → "standard".
  */
 import type { Block } from "@/lib/story-blocks.mjs";
+import { getLook } from "@/lib/art-direction/looks";
 
 export type FormatKey =
   | "standard" | "scrapbook" | "letter" | "poster" | "ticket"
-  | "notebook" | "gallery" | "film" | "ransom" | "marquee" | "postcard" | "listicle";
+  | "notebook" | "gallery" | "film" | "ransom" | "marquee" | "postcard" | "listicle" | "crawl";
 
 export type FormatDef = { key: FormatKey; label: string; verb: string; blurb: string; min: number };
 
@@ -27,6 +28,7 @@ export const FORMATS: Record<FormatKey, FormatDef> = {
   marquee:   { key: "marquee",   label: "Marquee",       verb: "Marquee",    blurb: "a lit sign at night",                 min: 2 },
   postcard:  { key: "postcard",  label: "Postcard",      verb: "Postcard",   blurb: "a stamped card, written across",      min: 2 },
   listicle:  { key: "listicle",  label: "The List",      verb: "As a list",  blurb: "a bright countdown of small things",  min: 4 },
+  crawl:     { key: "crawl",     label: "Opening crawl", verb: "Crawl",      blurb: "a long time ago, receding into stars",min: 2 },
 };
 
 export const FORMAT_KEYS = Object.keys(FORMATS) as FormatKey[];
@@ -47,7 +49,13 @@ export function fittingFormats(blocks: Block[]): FormatKey[] {
 
 /** the engine's default pick. Kept calm on purpose: the standard reader is
  *  the default a reader lands on; the switcher (or the writer) chooses more. */
-export function inferFormat(_blocks: Block[], _look?: string): FormatKey {
+export function inferFormat(blocks: Block[], look?: string): FormatKey {
+  // the world (Look) knows the stage it reads best in — a dive log stays the
+  // quiet reader, a galaxy piece crawls, a wanted world is a poster. Only ever
+  // a format the story is long enough to fill; otherwise the calm standard.
+  const fit = new Set(fittingFormats(blocks));
+  const hint = getLook(look)?.format;
+  if (isFormatKey(hint) && fit.has(hint)) return hint;
   return "standard";
 }
 
@@ -76,10 +84,11 @@ const AFFINITY: Record<FormatKey, string[]> = {
   marquee: ["restless", "chaotic", "cinematic"],
   postcard: ["warm", "romantic", "dreamy"],
   listicle: ["playful", "warm", "hopeful", "chaotic"],
+  crawl: ["cinematic", "dreamy"],
 };
 const BASE: Partial<Record<FormatKey, number>> = {
   scrapbook: 1.0, letter: 0.9, poster: 0.8, postcard: 0.8, film: 0.7,
-  ticket: 0.7, gallery: 0.6, notebook: 0.5, marquee: 0.5, ransom: 0.4, listicle: 0.85,
+  ticket: 0.7, gallery: 0.6, notebook: 0.5, marquee: 0.5, ransom: 0.4, listicle: 0.85, crawl: 0.6,
 };
 
 /** the story's best ~n formats (standard always first), ranked by how well

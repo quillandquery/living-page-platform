@@ -185,7 +185,12 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
 
-  const imagery = false; // AI imagery paused — see media strategy
+  // Curated photography (lib/media-library.ts) is auto-on by default —
+  // it follows the same Visuals dial as artwork density (§14): a piece
+  // dialled (or auto-inferred) to "minimal" stays text-and-doodle only,
+  // everything else earns a photo or two from the story's world. No AI
+  // call, no per-story cost (D1/D2) — this is a static, tagged library.
+  const imagery = artDirection.visualIntensity !== "minimal";
   const input = (): SaveInput => ({
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,

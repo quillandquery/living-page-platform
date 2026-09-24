@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Newsreader, Instrument_Serif, Caveat, Space_Mono } from "next/font/google";
+import {
+  Newsreader, Instrument_Serif, Caveat, Space_Mono,
+  Archivo, Fraunces, IBM_Plex_Mono, Bebas_Neue, Anton, Special_Elite, Playfair_Display, Monoton,
+} from "next/font/google";
 import "./globals.css";
+import "./worlds.css";
 import { metadataBaseUrl, SITE_NAME } from "@/lib/site";
 import { Providers } from "./providers";
 
@@ -23,10 +27,30 @@ import { Providers } from "./providers";
  */
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
+// The original site hand — the default typographic voice.
 const body = Newsreader({ subsets: ["latin"], weight: ["200", "300", "400", "500"], style: ["normal", "italic"], variable: "--font-body", display: "swap" });
 const disp = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-disp", display: "swap" });
 const hand = Caveat({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-hand", display: "swap" });
 const mono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-mono", display: "swap" });
+
+// Story Visual System 3.0 — per-world type. Each world swaps --f-body/-disp/
+// -hand/-mono to one of these families (see lib/art-direction/typography.ts).
+// All loaded once here, display:swap, so a world can adopt any of them
+// without a per-story font request. Adding a world never adds a font import.
+const archivo  = Archivo({ subsets: ["latin"], weight: ["400", "600", "800", "900"], variable: "--font-archivo", display: "swap" });
+const fraunces = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600", "900"], style: ["normal", "italic"], variable: "--font-fraunces", display: "swap" });
+const plex     = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-plex", display: "swap" });
+const bebas    = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-bebas", display: "swap" });
+const anton    = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", display: "swap" });
+const elite    = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-elite", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "700", "900"], style: ["normal", "italic"], variable: "--font-playfair", display: "swap" });
+const monoton  = Monoton({ subsets: ["latin"], weight: "400", variable: "--font-monoton", display: "swap" });
+
+const FONT_VARS = [
+  body.variable, disp.variable, hand.variable, mono.variable,
+  archivo.variable, fraunces.variable, plex.variable, bebas.variable,
+  anton.variable, elite.variable, playfair.variable, monoton.variable,
+].join(" ");
 
 /**
  * ROOT METADATA — the repositioned copy (Decision D3: Living Page is a
@@ -62,7 +86,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${body.variable} ${disp.variable} ${hand.variable} ${mono.variable}`}>
+    <html lang="en" className={FONT_VARS}>
       <body>
         {/* Google Analytics — a silent no-op when NEXT_PUBLIC_GA_MEASUREMENT_ID
             isn't set, same "optional, unset in local dev/CI" pattern as the

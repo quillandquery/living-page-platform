@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { FORMATS, type FormatKey } from "@/lib/formats";
-import { FormatWheel } from "@/components/living/FormatWheel";
+import { FormatTurntable } from "@/components/living/FormatTurntable";
 import type { StoryViewData } from "@/components/living/StoryView";
 
 /**
@@ -51,7 +51,7 @@ export function FormatSelect({
       </div>
       <div className="fs-body">
         <div className="fs-wheelpane">
-          <FormatWheel formats={formats} value={value} autoKey={autoKey} onSelect={onSelect} />
+          <FormatTurntable formats={formats} value={value} autoKey={autoKey} onSelect={onSelect} />
         </div>
         <div className="fs-stage">
           <div className="fs-screen" key={value}>

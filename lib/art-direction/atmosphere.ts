@@ -24,15 +24,15 @@ export type MoodSpec = {
 } & Omit<AtmosphereDirection, "mood">;
 
 export const MOOD_ATMOSPHERE: Record<MoodKey, MoodSpec> = {
-  quiet:     { accent: "#4C6A8A", density: 3, budget: 30, energy: "quiet",    spatialOpenness: "sparse",   motionIntensity: "still" },
-  dreamy:    { accent: "#7A6CE0", secondaryAccent: "#E86FA0", density: 6, budget: 46, energy: "vivid",    spatialOpenness: "balanced", motionIntensity: "slow" },
-  raw:       { accent: "#D23B2E", density: 5, budget: 46, energy: "electric", spatialOpenness: "dense",    motionIntensity: "urgent" },
-  playful:   { accent: "#E68A2E", secondaryAccent: "#3FA05C", density: 8, budget: 48, energy: "vivid",    spatialOpenness: "dense",    motionIntensity: "active" },
-  cinematic: { accent: "#2E6E8E", density: 6, budget: 40, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
-  warm:      { accent: "#C77D3A", density: 6, budget: 42, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
-  romantic:  { accent: "#D0567F", density: 5, budget: 42, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
-  restless:  { accent: "#2B5BD0", density: 7, budget: 48, energy: "vivid",    spatialOpenness: "dense",    motionIntensity: "urgent" },
-  chaotic:   { accent: "#E24A3B", density: 9, budget: 56, energy: "electric", spatialOpenness: "dense",    motionIntensity: "urgent" },
+  quiet:     { accent: "#4C6A8A", density: 4, budget: 35, energy: "quiet",    spatialOpenness: "sparse",   motionIntensity: "still" },
+  dreamy:    { accent: "#7A6CE0", secondaryAccent: "#E86FA0", density: 7, budget: 51, energy: "vivid",    spatialOpenness: "balanced", motionIntensity: "slow" },
+  raw:       { accent: "#D23B2E", density: 6, budget: 51, energy: "electric", spatialOpenness: "dense",    motionIntensity: "urgent" },
+  playful:   { accent: "#E68A2E", secondaryAccent: "#3FA05C", density: 9, budget: 53, energy: "vivid",    spatialOpenness: "dense",    motionIntensity: "active" },
+  cinematic: { accent: "#2E6E8E", density: 7, budget: 45, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
+  warm:      { accent: "#C77D3A", density: 7, budget: 47, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
+  romantic:  { accent: "#D0567F", density: 6, budget: 47, energy: "warm",     spatialOpenness: "balanced", motionIntensity: "slow" },
+  restless:  { accent: "#2B5BD0", density: 8, budget: 53, energy: "vivid",    spatialOpenness: "dense",    motionIntensity: "urgent" },
+  chaotic:   { accent: "#E24A3B", density: 10, budget: 60, energy: "electric", spatialOpenness: "dense",    motionIntensity: "urgent" },
 };
 
 /** the semantic EMOTION axis (`lib/semantic-profile.ts`) speaks a richer,
