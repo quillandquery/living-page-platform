@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Doodle } from "@/components/doodles/Doodle";
 import { TryIt } from "@/components/home/TryIt";
 import { absoluteUrl, SITE_NAME } from "@/lib/site";
+import { homeJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
 
 /**
  * HOMEPAGE METADATA (SEO audit, Sept 2026). The homepage previously set no
@@ -85,6 +86,11 @@ const EXAMPLES = [
 export default function Home() {
   return (
     <main className="lp">
+      {/* Site-level entity structured data (SEO/GEO audit, Sept 2026) --
+          the only place Organization/WebSite JSON-LD is rendered; every
+          other page's structured data is about a story or an author, not
+          about Living Page itself. See lib/structured-data.ts's homeJsonLd(). */}
+      <script type="application/ld+json" {...jsonLdScriptProps(homeJsonLd())} />
       <style>{CSS}</style>
 
       <nav className="lp-nav">
@@ -165,7 +171,9 @@ export default function Home() {
         </Link>
       </section>
 
-      <footer className="lp-foot">Living Page</footer>
+      <footer className="lp-foot">
+        Living Page <Link href="/about" className="lp-foot-about">About</Link>
+      </footer>
     </main>
   );
 }
@@ -324,6 +332,8 @@ const CSS = `
 .lp-close-alt{ display:block; margin-top:1.2rem; font-family:var(--f-mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--mute); }
 .lp-close-alt:hover{ color:var(--electric); }
 .lp-foot{ text-align:center; padding:3rem; font-family:var(--f-hand); font-size:1.2rem; color:var(--mute); border-top:1px solid var(--line); }
+.lp-foot-about{ font-family:var(--f-mono); font-size:.65rem; letter-spacing:.08em; text-transform:uppercase; vertical-align:middle; margin-left:.6rem; }
+.lp-foot-about:hover{ color:var(--electric); }
 
 @media (max-width:820px){
   .lp-hero{ grid-template-columns:1fr; gap:2rem; }
