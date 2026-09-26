@@ -34,7 +34,14 @@ function PostHogPageview() {
 
   useEffect(() => {
     if (!pathname) return;
-    const url = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+    const path = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+    // $current_url must be an absolute URL (PostHog's own convention —
+    // it's what autocapture would normally send from window.location.href,
+    // and what channel-type/referrer classification and the Web Analytics
+    // dashboard key off). This used to send just the relative path, which
+    // meant UTM-tagged traffic couldn't be reliably split from direct
+    // traffic (growth rethink, Sept 2026).
+    const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
     // posthog-js's own $pageview, not a custom AnalyticsEvent — this is
     // infrastructure (which URL), not one of the curated activity events.
     posthog.capture("$pageview", { $current_url: url });
