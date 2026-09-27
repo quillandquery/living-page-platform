@@ -41,7 +41,7 @@ export function FormatPicker({
   }, []);
   if (formats.length < 2) return null;
   const sep = basePath.includes("?") ? "&" : "?";
-  const href = (k: FormatKey) => (k === "standard" ? basePath : `${basePath}${sep}as=${k}`);
+  const href = (k: FormatKey) => `${basePath}${sep}as=${k}`;
 
   return (
     <>
