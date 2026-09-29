@@ -16,13 +16,24 @@ import { absoluteUrl, SITE_NAME } from "@/lib/site";
  *    is or how authorship/attribution works. Deliberately plain prose, not
  *    homepage-style copy: the locked hero (docs/COPY.md) is untouched here.
  *
- * What this page does NOT add: a founder name, a company entity, or a
- * contact address — none of those exist as real information to add here,
- * and lib/structured-data.ts's own rule is to never invent a fact.
+ * Updated 2026-09-29 (E-E-A-T competitive gap analysis, see the project's
+ * `claude/eeat-competitive-gap-analysis-2026-09-29.md`): the founder note
+ * below was left out originally because no real information existed to add
+ * without inventing it (lib/structured-data.ts's rule: never invent a
+ * fact). The founder gave the real name and origin story directly, so this
+ * now states them plainly — still nothing fabricated, still no invented
+ * `sameAs`/social links. Also added one explicit sentence on how literal
+ * the stories are, since nothing anywhere previously said so and it's a
+ * real trust question specific to this product's premise.
  */
 const ABOUT_TITLE = "About";
 const ABOUT_DESCRIPTION =
   "Living Page is a storytelling platform where a person writes a short, ordinary story and the site works out the typography, motion, and colour it wants — automatically.";
+
+// The founder's country count at the time of writing this page. Not derived
+// from any data source — it's a fact about her life, not the product — so
+// it's a constant to bump by hand as it goes up, not a live counter.
+const COUNTRIES_VISITED = 13;
 
 export const metadata: Metadata = {
   title: ABOUT_TITLE,
@@ -41,6 +52,20 @@ export const metadata: Metadata = {
     description: ABOUT_DESCRIPTION,
   },
 };
+
+function CountryCounter({ count }: { count: number }) {
+  const digits = String(count).padStart(2, "0").split("");
+  return (
+    <span className="founder-counter" aria-label={`${count} countries in`}>
+      <span className="counter-digits" aria-hidden="true">
+        {digits.map((d, i) => (
+          <span className="counter-digit" key={i}>{d}</span>
+        ))}
+      </span>
+      <span className="counter-caption">countries in</span>
+    </span>
+  );
+}
 
 export default function AboutPage() {
   return (
@@ -67,7 +92,22 @@ export default function AboutPage() {
           reads it and renders it as one of several distinct visual formats,
           chosen to fit that story&rsquo;s own shape and content. The words
           themselves are never altered, reordered, or hidden by this process
-          — layout and motion are presentational only.
+          — layout and motion are presentational only. These are true
+          stories, not fiction: nothing here is invented for effect.
+        </p>
+
+        <h2>Founder</h2>
+        <p>
+          Hi — I&rsquo;m Reshikaa Srivastav.
+        </p>
+        <p className="founder-counter-line">
+          <CountryCounter count={COUNTRIES_VISITED} />
+        </p>
+        <p>
+          I had a pile of stories that didn&rsquo;t have anywhere to go —
+          too specific for a blog post, too much for a caption, not really
+          photos. So I built somewhere they could actually live. Living Page
+          is that place.
         </p>
 
         <h2>Attribution</h2>
@@ -103,4 +143,18 @@ const CSS = `
   font-size:1.3rem; margin:2.2rem 0 .8rem; }
 .about-body p{ font-size:1.05rem; line-height:1.65; color:var(--ink-soft); margin:0 0 1.2rem; }
 .about-body a{ color:var(--electric,#2D6BF0); }
+.founder-counter-line{ margin:1rem 0; }
+.founder-counter{ display:inline-flex; align-items:center; gap:.65rem; }
+.counter-digits{ display:inline-flex; gap:.2rem; }
+.counter-digit{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:1.7rem; height:2.2rem; background:var(--paper-2);
+  border:1px solid var(--rule); border-radius:2px;
+  font-family:var(--f-mono); font-size:1.25rem; font-weight:500;
+  color:var(--ink);
+}
+.counter-caption{
+  font-family:var(--f-mono); font-size:.72rem; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--mute);
+}
 `;
