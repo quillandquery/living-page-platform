@@ -13,9 +13,16 @@ import { absoluteUrl, SITE_NAME } from "@/lib/site";
  * title template instead of using it. It also had no canonical URL and no
  * openGraph/twitter fields, so a shared Wander link had no preview card.
  * The image comes from the co-located opengraph-image.tsx.
+ *
+ * Re-audited Sept 22 2026 (action-plan item 7): the description itself was
+ * only 47 characters — well under Google's ~120–160 char target, so it
+ * gets discarded for an auto-generated snippet instead. Extended in the
+ * same voice (the original line kept verbatim as the opening clause, not
+ * replaced) rather than rewritten into generic SEO language.
  */
 const WANDER_TITLE = "Wander";
-const WANDER_DESCRIPTION = "You don't have to know what you're looking for.";
+const WANDER_DESCRIPTION =
+  "You don't have to know what you're looking for. Wander is a live, changing field of real, first-person stories — drift until one catches you.";
 
 export const metadata: Metadata = {
   title: WANDER_TITLE,

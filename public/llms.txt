@@ -10,6 +10,11 @@ Living Page is not a blog and not a page builder. A writer submits a fragment of
 - [About](https://livingpage.one/about): who this is for and how stories are attributed.
 - [Wander](https://livingpage.one/wander): a live, browsable feed of published stories.
 - [Sitemap](https://livingpage.one/sitemap.xml): the full, current list of published stories and author pages.
+- [Full story index](https://livingpage.one/llms-full.txt): every currently published story, generated fresh on each request — title, author, canonical URL and a one-line summary for each, so an agent never has to crawl the whole site to know what exists.
+
+## Start here
+
+Living Page is a multi-writer platform; any `/@handle` below is one writer's own page, not a special case. As a concrete starting point, [@reshikaa30](https://livingpage.one/@reshikaa30) is the founder's own author page — a real, ordinary account on the same platform every other writer uses, useful as a worked example of what one writer's canonical page and stories look like. See [the full story index](https://livingpage.one/llms-full.txt) for every writer's published work, not just this one.
 
 ## For crawlers and AI agents
 

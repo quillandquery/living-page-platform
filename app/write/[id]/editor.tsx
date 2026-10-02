@@ -18,7 +18,12 @@ import {
   createClaimLinkAction, revokeClaimLinkAction,
   type SaveInput,
 } from "../actions";
+import { suggestNudgeLineAction } from "../ai-nudges-actions";
 import { track } from "@/lib/analytics/client";
+import { useWritingOpportunities, NudgeCard, FallbackOfferCard } from "@/components/living/Nudge";
+import { TightenPass } from "@/components/living/TightenPass";
+import { FindStoryPass } from "@/components/living/FindStoryPass";
+import { removeSentenceFromText } from "@/lib/writing-opportunities";
 
 /**
  * THE STUDIO — write-first (PRD v2 §10, §13, §14).
@@ -29,6 +34,13 @@ import { track } from "@/lib/analytics/client";
  */
 
 const PROMPT = "start anywhere — a smell, something someone said, the worst part, the thing you keep replaying.\n\ni thought i wanted to leave.\nturns out i just wanted someone to ask me to stay.";
+
+// THE BRAIN DUMP (writing-intelligence P0, item 1). Shown only while the
+// draft is empty, and gone the moment the writer types a single character —
+// no title/mood/world/visuals ever asked before a word is written.
+const BRAINDUMP_HEAD = "Don't write it well.";
+const BRAINDUMP_HEAD2 = "Just get it out.";
+const BRAINDUMP_SUB = "Tell me what happened, what you remember, what you felt. We'll help you find the story later.";
 
 // The Mood/World/Visuals dropdowns are the writer-facing surface (PRD §14);
 // underneath, `lib/art-direction/generate.ts` is now the one engine that
@@ -80,6 +92,13 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [date, setDate] = useState(story.date);
   const [fragment, setFragment] = useState(story.fragment);
 
+  // — SEO overrides (optional, migration 0004): blank means "keep using
+  // the auto-derived title/description" (lib/story-context.ts via
+  // lib/story-seo.ts) — nothing here is ever required to save or publish. —
+  const [seoTitle, setSeoTitle] = useState(story.seo_title ?? "");
+  const [seoDescription, setSeoDescription] = useState(story.seo_description ?? "");
+  const [tagsText, setTagsText] = useState((story.tags ?? []).join(", "));
+
   const [status, setStatus] = useState<Msg>(
     story.status === "published" ? { tone: "ok", text: "Published — live on your page." } : null,
   );
@@ -87,6 +106,14 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [tab, setTab] = useState<"page" | "words">("page");
   const [pending, start] = useTransition();
   const [reveal, setReveal] = useState(false);
+
+  // — writing intelligence: the quiet editor beside the writer, never a
+  // ghostwriter (see lib/writing-opportunities.ts + docs pasted brief) —
+  const nudges = useWritingOpportunities(raw, story.id);
+  const [showTighten, setShowTighten] = useState(false);
+  const [showFindStory, setShowFindStory] = useState(false);
+  const [storyContextDebug, setStoryContextDebug] = useState<string | null>(null);
+  const wordCount = raw.trim() ? raw.trim().split(/\s+/).filter(Boolean).length : 0;
 
   // — claim link (hand this piece to whoever actually wrote it) —
   const [claimToken, setClaimToken] = useState<string | null>(
@@ -188,6 +215,9 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,
     art_direction: { ...artDirection, format: fmtSel === "auto" ? undefined : fmtSel },
+    seo_title: seoTitle.trim() || null,
+    seo_description: seoDescription.trim() || null,
+    tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
   });
 
   const run = (fn: (i: SaveInput) => Promise<{ ok: boolean; message?: string }>, verb: string, live?: boolean) =>
@@ -217,11 +247,54 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       <div className="ed-grid">
         {/* — write — */}
         <section className="ed-write">
+          {!raw.trim() ? (
+            <div className="ed-braindump">
+              <p className="ed-bd-h">{BRAINDUMP_HEAD}<br />{BRAINDUMP_HEAD2}</p>
+              <p className="ed-bd-sub">{BRAINDUMP_SUB}</p>
+            </div>
+          ) : null}
           <textarea className="ed-text" value={raw} placeholder={PROMPT} spellCheck
                     onChange={(e) => setRaw(e.target.value)} autoFocus />
           {hint ? <p className="ed-hint">{hint}</p> : null}
 
-          <details className="ed-details" open>
+          {nudges.active ? (
+            <NudgeCard
+              opportunity={nudges.active}
+              onRespond={(text) => {
+                const opp = nudges.active!;
+                nudges.respond(opp, text);
+                setRaw((r) => (r.trim() ? r.replace(/\s*$/, "") + "\n\n" + text : text));
+              }}
+              onSkip={() => nudges.skip(nudges.active!.id)}
+              onKeep={() => nudges.keep(nudges.active!.id, nudges.active!.quote)}
+              onCut={(quote) => {
+                const opp = nudges.active!;
+                setRaw((r) => removeSentenceFromText(r, quote));
+                nudges.skip(opp.id);
+              }}
+              onSuggest={(opportunity) => suggestNudgeLineAction({
+                type: opportunity.type,
+                quote: opportunity.quote,
+                secondQuote: opportunity.secondQuote,
+                question: opportunity.question,
+              })}
+            />
+          ) : nudges.showFallbackOffer ? (
+            <FallbackOfferCard
+              pending={nudges.fallbackPending}
+              onAsk={() => nudges.requestFallback()}
+              onDecline={() => nudges.declineFallback()}
+            />
+          ) : null}
+
+          {wordCount >= 60 ? (
+            <div className="ed-passes">
+              <button type="button" className="ed-mini" onClick={() => setShowTighten(true)}>tighten it up</button>
+              <button type="button" className="ed-mini" onClick={() => setShowFindStory(true)}>find the story</button>
+            </div>
+          ) : null}
+
+          <details className="ed-details">
             <summary>Details &amp; shaping</summary>
             <div className="ed-details-body">
               <div className="ed-row">
@@ -251,6 +324,36 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
               <input className="ed-field" value={fragment} onChange={(e) => setFragment(e.target.value)} placeholder="One line to draw people in" />
               <input className="ed-field" value={date} onChange={(e) => setDate(e.target.value)} placeholder="Date (optional)" />
               <label className="ed-check"><input type="checkbox" checked={veil} onChange={(e) => setVeil(e.target.checked)} /> lines arrive as you scroll</label>
+
+              {/* SEO overrides (optional, migration 0004) — nested, closed
+                  by default, like "Art direction (debug)" below: this is a
+                  correction surface, not a step. Every story already gets a
+                  real title/description/canonical/structured-data for free
+                  (lib/story-context.ts) the moment it's published; these
+                  three fields only let a writer override that when they
+                  want different words, never require them to supply any. */}
+              <details className="ed-details">
+                <summary>SEO (optional)</summary>
+                <div className="ed-details-body">
+                  <p className="ed-claim-label">leave these blank and we&rsquo;ll keep writing your title and summary from the story itself</p>
+                  <input className="ed-field" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)}
+                         placeholder={`Search title (auto: "${fragment || "—"}")`} />
+                  <textarea className="ed-field" rows={2} value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)}
+                            placeholder="Search description (auto-written from your own words if left blank)" />
+                  <input className="ed-field" value={tagsText} onChange={(e) => setTagsText(e.target.value)}
+                         placeholder="Topic words, comma separated (optional)" />
+                </div>
+              </details>
+
+              {/* nudges you've already skipped/answered stay dismissed on
+                  this draft on purpose (so a re-read of your own story
+                  doesn't nag) — this is the escape hatch for testing the
+                  same piece more than once and wanting to see them all
+                  again. */}
+              <div className="ed-claim">
+                <p className="ed-claim-label">already dismissed some nudges on this draft and want to see them again?</p>
+                <button type="button" className="ed-mini" onClick={() => nudges.resetNudges()}>reset nudges</button>
+              </div>
 
               {!published ? (
                 <div className="ed-claim">
@@ -288,6 +391,18 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <summary>Art direction (debug)</summary>
             <pre className="ed-artdir">{describeArtDirection(artDirection)}</pre>
           </details>
+
+          {/* the writing-intelligence pass's own output — the raw material
+              handed to the Living Page world (see lib/writing-opportunities
+              .ts's WritingSignals). Debug-only in P0: nothing yet consumes
+              it downstream (see report), but it is here, real, and derived
+              only from the writer's own words. */}
+          {storyContextDebug ? (
+            <details className="ed-details">
+              <summary>Story context (debug)</summary>
+              <pre className="ed-artdir">{storyContextDebug}</pre>
+            </details>
+          ) : null}
         </section>
 
         {/* — the living page — */}
@@ -346,6 +461,34 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
           />
         </div>
       ) : null}
+      {showTighten ? (
+        <TightenPass raw={raw} onApply={(next) => setRaw(next)} onClose={() => setShowTighten(false)} />
+      ) : null}
+      {showFindStory ? (
+        <FindStoryPass
+          raw={raw}
+          kept={nudges.keptLines}
+          sensoryAnswers={nudges.sensoryAnswers}
+          momentAnswers={nudges.momentAnswers}
+          onClose={() => setShowFindStory(false)}
+          onContinue={({ chosen, about, signals }) => {
+            setShowFindStory(false);
+            setStoryContextDebug(JSON.stringify(signals, null, 2));
+            const core = (chosen || about).trim();
+            if (core && !fragment.trim()) setFragment(core.slice(0, 140));
+            // the transition into the EXISTING Living Page renderer (§11) —
+            // identical to "See it come alive →", nothing new built here.
+            run(saveDraftAction, "save");
+            try {
+              sessionStorage.setItem("lp-preview", JSON.stringify({
+                place, date, fragment: core && !fragment.trim() ? core.slice(0, 140) : fragment,
+                accent, backdrop: world, veil, blocks, seed: story.id, artDirection,
+              }));
+            } catch { /* preview cache is best-effort */ }
+            setReveal(true);
+          }}
+        />
+      ) : null}
     </main>
   );
 }
@@ -371,6 +514,10 @@ const CSS = `
   font-family:var(--f-disp); font-size:1.5rem; line-height:1.6; }
 .ed-text::placeholder{ color:var(--mute); font-family:var(--f-body); font-size:1.2rem; }
 .ed-hint{ font-family:var(--f-mono); font-size:.7rem; letter-spacing:.04em; color:var(--mute); margin:0; }
+.ed-braindump{ margin-bottom:.4rem; }
+.ed-bd-h{ font-family:var(--f-disp); font-weight:400; font-size:clamp(1.6rem,3.4vw,2.1rem); line-height:1.2; margin:0 0 .6rem; color:var(--ink); }
+.ed-bd-sub{ font-size:.98rem; color:var(--ink-soft); line-height:1.5; margin:0 0 1.2rem; max-width:32rem; }
+.ed-passes{ display:flex; gap:.6rem; flex-wrap:wrap; }
 .ed-details{ margin-top:1.4rem; border-top:1px solid var(--line); padding-top:1rem; }
 .ed-details summary{ font-family:var(--f-mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); cursor:pointer; }
 .ed-details-body{ display:flex; flex-direction:column; gap:.8rem; padding-top:1.1rem; }

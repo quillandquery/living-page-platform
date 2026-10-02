@@ -23,6 +23,10 @@ export type StoryMetadataInput = {
   /** samples and other non-authored content (Part 12 / SEO doc: seed
    *  stories must never compete with real writers' work in search) */
   noindex?: boolean;
+  /** Author-set tags only (migration 0004) — becomes the `keywords` meta
+   *  tag when present. Omitted (not an empty tag) when the writer set
+   *  none; see `lib/story-seo.ts`. */
+  keywords?: string[];
 };
 
 export function buildStoryMetadata(input: StoryMetadataInput): Metadata {
@@ -33,6 +37,7 @@ export function buildStoryMetadata(input: StoryMetadataInput): Metadata {
     title: input.title,
     description: input.description,
     alternates: { canonical: url },
+    ...(input.keywords?.length ? { keywords: input.keywords } : {}),
     ...(input.noindex ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "article",

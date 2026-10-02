@@ -59,6 +59,16 @@ export type StoryRow = {
   /** Who generated the claim link — durable, unlike `author_id`, which
    *  moves to the claimant the moment it's claimed. */
   seeded_by: string | null;
+  /** Optional author override for the derived title (migration 0004) —
+   *  null means "use `deriveStoryContext().title`". Never required to
+   *  publish; see docs/DISCOVERABILITY.md. */
+  seo_title: string | null;
+  /** Optional author override for the derived description (migration
+   *  0004) — null means "use `deriveStoryContext().summary`". */
+  seo_description: string | null;
+  /** Optional, author-supplied topic words. `[]` means none were set —
+   *  nothing today infers or requires these. */
+  tags: string[];
 };
 
 /** A story joined with the writer who wrote it — what the feed and reader need. */
@@ -78,4 +88,8 @@ export type StoryDraftInput = {
   blocks: Block[];
   art_direction?: Partial<StoryArtDirection>;
   type?: StoryType;
+  /** Optional SEO overrides (migration 0004) — see `StoryRow`. */
+  seo_title?: string | null;
+  seo_description?: string | null;
+  tags?: string[];
 };

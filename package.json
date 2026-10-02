@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "check": "node scripts/check-stories.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "gen:loops": "TSX_TSCONFIG_PATH=scripts/tsconfig.gen.json node --env-file=.env.local --import tsx scripts/gen-share-loops.ts"
+    "gen:loops": "TSX_TSCONFIG_PATH=scripts/tsconfig.gen.json node --env-file=.env.local --import tsx scripts/gen-share-loops.ts",
+    "seo:audit": "node --env-file=.env.local --import tsx scripts/seo-audit.ts"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.0",
@@ -19,19 +20,24 @@
     "@next/mdx": "^15.5.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.115.0",
+    "@types/write-good": "^1.0.3",
+    "dictionary-en": "^4.0.0",
     "gray-matter": "^4.0.3",
     "next": "^15.5.0",
+    "nspell": "^2.1.5",
     "posthog-js": "^1.434.2",
     "posthog-node": "^5.52.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remark-frontmatter": "^5.0.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "write-good": "^1.0.8"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/mdx": "^2.0.13",
     "@types/node": "^22.0.0",
+    "@types/nspell": "^2.1.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "satori": "^0.12.1",

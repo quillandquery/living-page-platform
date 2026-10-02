@@ -72,6 +72,13 @@ export type SaveInput = {
    *  the editor (lib/art-direction/generate.ts) so it round-trips exactly
    *  as previewed. Optional only for callers that predate this. */
   art_direction?: StoryArtDirection;
+  /** Optional SEO overrides (migration 0004) — null/`[]` means "keep
+   *  deriving from the story's own words"; see lib/story-seo.ts. Optional
+   *  on the type only for callers that predate this (e.g. gen-share-loops'
+   *  fixture row), never a reason to skip saving them when present. */
+  seo_title?: string | null;
+  seo_description?: string | null;
+  tags?: string[];
 };
 
 export type SaveResult =
@@ -139,6 +146,9 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     blocks,
   };
   if (input.art_direction) patch.art_direction = input.art_direction;
+  if (input.seo_title !== undefined) patch.seo_title = input.seo_title;
+  if (input.seo_description !== undefined) patch.seo_description = input.seo_description;
+  if (input.tags !== undefined) patch.tags = input.tags;
   if (publish === true) { patch.status = "published"; patch.published_at = new Date().toISOString(); }
   if (publish === false) { patch.status = "draft"; }
 

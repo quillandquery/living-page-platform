@@ -20,6 +20,11 @@ export type ArticleJsonLdInput = {
   authorUrl: string;
   datePublished?: string | null;
   dateModified?: string | null;
+  /** Author-supplied tags only (migration 0004, `stories.tags`) — omitted
+   *  entirely when the writer set none, never backfilled from the derived
+   *  Story Context (that context's `semanticPhrases` are explicitly
+   *  internal-only; see `lib/story-context.ts`). */
+  keywords?: string[];
 };
 
 export function articleJsonLd(input: ArticleJsonLdInput) {
@@ -34,7 +39,26 @@ export function articleJsonLd(input: ArticleJsonLdInput) {
     author: { "@type": "Person", name: input.authorName, url: input.authorUrl },
     ...(input.datePublished ? { datePublished: input.datePublished } : {}),
     ...(input.dateModified ? { dateModified: input.dateModified } : {}),
+    ...(input.keywords?.length ? { keywords: input.keywords.join(", ") } : {}),
     publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+  };
+}
+
+/** BreadcrumbList for a story page (Module 4, discoverability layer 2026-10)
+ *  — Home → the author's page → the story. Every `url` must already be a
+ *  real, resolving canonical; this builder doesn't fabricate one. */
+export type BreadcrumbItem = { name: string; url: string };
+
+export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 
@@ -76,6 +100,31 @@ export function personJsonLd(input: PersonJsonLdInput) {
     ...(input.image ? { image: input.image } : {}),
     ...(input.description ? { description: input.description } : {}),
   };
+}
+
+/** `/@handle` as a page about a Person, not just the Person itself
+ *  (discoverability layer, 2026-10 — task: "ProfilePage/CollectionPage as
+ *  fits"). `@id`-linked `@graph`, same shape as `homeJsonLd()`, so an
+ *  extractor sees one Person entity with a page that's *about* them,
+ *  instead of two disconnected guesses. Replaces a bare `personJsonLd()`
+ *  call on the author page; `personJsonLd()` itself is unchanged and still
+ *  exported for any caller that only wants the bare Person. */
+export function profilePageJsonLd(input: PersonJsonLdInput & { url: string }) {
+  const person = {
+    "@type": "Person" as const,
+    "@id": `${input.url}#person`,
+    name: input.name,
+    url: input.url,
+    ...(input.image ? { image: input.image } : {}),
+    ...(input.description ? { description: input.description } : {}),
+  };
+  const page = {
+    "@type": "ProfilePage" as const,
+    "@id": `${input.url}#profilepage`,
+    url: input.url,
+    mainEntity: { "@id": `${input.url}#person` },
+  };
+  return { "@context": "https://schema.org", "@graph": [person, page] };
 }
 
 /** The exact `<script>` props for a JSON-LD block, escaping `<` the same

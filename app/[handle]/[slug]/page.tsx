@@ -5,8 +5,9 @@ import { resolveFormat, fittingFormats, curatedFormats } from "@/lib/formats";
 import { publishedStory, otherPublishedStories } from "@/lib/db";
 import { themesOf } from "@/lib/discover";
 import { deriveStoryContext } from "@/lib/story-context";
+import { resolveStorySeo } from "@/lib/story-seo";
 import { buildStoryMetadata } from "@/lib/metadata";
-import { articleJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
+import { articleJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
 import { absoluteUrl } from "@/lib/site";
 import { buildShareProps } from "@/lib/share";
 import { ReaderTracking } from "@/components/analytics/ReaderTracking";
@@ -39,14 +40,19 @@ export async function generateMetadata(
     backdrop: story.backdrop,
     artDirection: story.art_direction,
   });
+  // An author's own correction (migration 0004) wins over the derived
+  // title/description; most stories have none and use `context` as-is —
+  // see lib/story-seo.ts.
+  const seo = resolveStorySeo(story, context);
 
   return buildStoryMetadata({
-    title: context.title,
-    description: context.summary,
+    title: seo.title,
+    description: seo.description,
     path: `/@${story.author.handle}/${slug}`,
     authorHandle: story.author.handle,
     publishedTime: story.published_at,
     modifiedTime: story.updated_at,
+    keywords: seo.tags,
   });
 }
 
@@ -96,10 +102,11 @@ export default async function StoryReaderPage(
     backdrop: story.backdrop,
     artDirection: story.art_direction,
   });
+  const seo = resolveStorySeo(story, context);
   const articleUrl = absoluteUrl(basePath);
   const articleLd = articleJsonLd({
-    headline: context.title,
-    description: context.summary,
+    headline: seo.title,
+    description: seo.description,
     url: articleUrl,
     // The co-located opengraph-image.tsx route always serves a real image
     // for this exact path (confirmed in the Twitter Card fix) — Article/
@@ -110,11 +117,21 @@ export default async function StoryReaderPage(
     authorUrl: absoluteUrl(`/@${story.author.handle}`),
     datePublished: story.published_at,
     dateModified: story.updated_at,
+    keywords: seo.tags,
   });
+  // BreadcrumbList (discoverability layer, 2026-10): Home → the writer's
+  // page → this story — the same three-step path a reader actually
+  // clicked through, nothing invented.
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: "Living Page", url: absoluteUrl("/") },
+    { name: story.author.display_name || `@${story.author.handle}`, url: absoluteUrl(`/@${story.author.handle}`) },
+    { name: seo.title, url: articleUrl },
+  ]);
 
   return (
     <>
     <script type="application/ld+json" {...jsonLdScriptProps(articleLd)} />
+    <script type="application/ld+json" {...jsonLdScriptProps(breadcrumbLd)} />
     <ReaderTracking storyId={story.id} authorHandle={story.author.handle} slug={slug} format={format} />
     <StoryStage
       format={format}

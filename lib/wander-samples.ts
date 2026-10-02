@@ -220,6 +220,9 @@ function build(input: SampleInput): StoryWithAuthor {
     claim_status: "none",
     claimed_at: null,
     seeded_by: null,
+    seo_title: null,
+    seo_description: null,
+    tags: [],
     author: AUTHOR,
   };
 }

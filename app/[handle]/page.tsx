@@ -8,7 +8,8 @@ import { AuthorArchive } from "@/components/profile/AuthorArchive";
 import { Doodle } from "@/components/doodles/Doodle";
 import type { StoryWithAuthor } from "@/lib/types";
 import { absoluteUrl } from "@/lib/site";
-import { personJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
+import { profilePageJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
+import { deriveAuthorDescription } from "@/lib/author-seo";
 
 /** `/@handle` — a writer's public page. Also answers `/handle` without the @. */
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
@@ -22,11 +23,9 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
     ? author.display_name.trim()
     : `@${author.handle}`;
   const title = name;
-  // Doc §12: bio verbatim where present; otherwise a neutral, non-generic
-  // fallback — never a story count (that's UI chrome, not identity).
   const description = author.bio?.trim()
     ? author.bio.trim()
-    : "A Living Page author profile.";
+    : deriveAuthorDescription(name, stories);
   const url = absoluteUrl(`/@${author.handle}`);
 
   return {
@@ -66,7 +65,7 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
   const seeds = diversifyArchetypes(buildSeeds(withAuthor));
 
   const url = absoluteUrl(`/@${author.handle}`);
-  const personLd = personJsonLd({ name, url, image: author.avatar_url, description: bio || null });
+  const profileLd = profilePageJsonLd({ name, url, image: author.avatar_url, description: bio || null });
 
   return (
     <main className="frame author-page">
@@ -84,13 +83,13 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
         <span className="am am-8"><Doodle name="book" seed={88} size={66} ink="var(--ink-soft)" /></span>
       </div>
 
-      {/* Person structured data — only what's actually known about this
-          profile; nothing invented (no fabricated sameAs links, no fake
-          socials). See docs in the SEO strategy note on E-E-A-T. */}
+      {/* Person + ProfilePage structured data — only what's actually known
+          about this profile; nothing invented (no fabricated sameAs links,
+          no fake socials). See docs in the SEO strategy note on E-E-A-T. */}
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        {...jsonLdScriptProps(personLd)}
+        {...jsonLdScriptProps(profileLd)}
       />
 
       <nav className="topnav">
@@ -100,7 +99,7 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
       <section className="author-head">
         {author.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={author.avatar_url} alt="" className="author-avatar" />
+          <img src={author.avatar_url} alt={`${name}'s photo`} className="author-avatar" />
         ) : null}
         <h1 className="author-name">{name}</h1>
         {hasDisplayName ? <p className="author-handle">@{author.handle}</p> : null}
