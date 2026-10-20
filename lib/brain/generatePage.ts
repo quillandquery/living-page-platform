@@ -22,42 +22,65 @@ const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'no
 // blank page. Guarded so it only acts on a genuinely broken page.
 const FAILSAFE = `<script>/*__lpFailsafe*/(function(){function check(){try{var b=document.body;if(!b)return;var total=((b.innerText||'').replace(/\\s+/g,'')).length;if(total<120)return;var els=b.querySelectorAll('p,span,h1,h2,h3,h4,li,blockquote,em,strong,div,a');var shown=0;for(var i=0;i<els.length;i++){var e=els[i];var t=(e.textContent||'').trim();if(!t)continue;var cs=getComputedStyle(e);if(cs.visibility!=='hidden'&&cs.display!=='none'&&parseFloat(cs.opacity)>0.05)shown+=t.length;}if(shown<total*0.15){var s=document.createElement('style');s.textContent='*{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important}';document.head.appendChild(s);}}catch(e){}}setTimeout(check,3800);})();</script>`;
 
-const EXEMPLAR = `<!-- technique exemplar (do NOT copy its content, copy its approach) -->
+const EXEMPLAR = `<!-- technique exemplar: a FULL-BLEED world the words live INSIDE. Copy the approach (fixed layered scene that fills the screen and evolves with scroll; big varied type set into it; word-unveil; reveal-on-load), NOT the content. Your scene must be invented for the actual story. -->
 <style>
- :root{--p:0}
- body{margin:0;background:linear-gradient(180deg,#0a0a1a,#241f40);color:#eae6f4;font-family:Georgia,serif;line-height:1.8}
- .sky{position:fixed;inset:0;z-index:0;opacity:calc(.4+.6*var(--p));background:radial-gradient(60% 40% at 70% 18%,rgba(240,236,214,.5),transparent 60%)}
- .moon{position:fixed;left:72%;top:calc(22% - 8%*var(--p));width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#fdfbef,#ccc6b4 72%,transparent)}
- .essay{position:relative;z-index:2;max-width:34rem;margin:0 auto;padding:18vh 1.6rem 40vh}
- .beat{font-size:1.4rem;margin:0 0 11vh}
- .w{display:inline-block;opacity:0;filter:blur(8px);transform:translateY(12px);transition:.6s}
- .beat.seen .w{opacity:1;filter:none;transform:none}
- @media(prefers-reduced-motion:reduce){.w{opacity:1;filter:none;transform:none}}
+ :root{--p:0}*{margin:0;box-sizing:border-box}
+ body{background:#0b1026;color:#f3efe7;font-family:Georgia,serif;overflow-x:hidden}
+ .world{position:fixed;inset:0;z-index:0;overflow:hidden}
+ .sky{position:absolute;inset:0;background:linear-gradient(180deg,#0b1026 0%,#30406f 55%,#b56a4e 100%);filter:brightness(calc(.55+.75*var(--p)))}
+ .sun{position:absolute;left:58%;width:min(42vw,340px);aspect-ratio:1;border-radius:50%;top:calc(88% - 74%*var(--p));background:radial-gradient(circle at 44% 42%,#ffe9c6,#ff9a5a 62%,transparent 70%);filter:blur(1px)}
+ .ridge{position:absolute;left:0;right:0;bottom:0;height:46vh;background:linear-gradient(180deg,#152442,#0b1026);clip-path:polygon(0 38%,18% 20%,40% 44%,62% 16%,82% 40%,100% 24%,100% 100%,0 100%)}
+ .sea{position:absolute;left:0;right:0;bottom:0;height:22vh;background:linear-gradient(180deg,#1d3f63,#0d2033)}
+ .story{position:relative;z-index:2;max-width:52rem;margin:0 auto;padding:22vh 7vw 60vh}
+ .beat{font-size:clamp(1.35rem,3.4vw,2.2rem);line-height:1.45;margin:0 0 16vh;max-width:28ch}
+ .beat:nth-child(even){margin-left:auto;text-align:right}
+ .beat.lead{font-size:clamp(2.6rem,8vw,5.2rem);font-weight:700;line-height:1.02;letter-spacing:-.02em;max-width:16ch}
+ .w{display:inline-block;opacity:0;transform:translateY(16px);filter:blur(7px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+ .seen .w{opacity:1;transform:none;filter:none}
+ @media(prefers-reduced-motion:reduce){.w{opacity:1;transform:none;filter:none}}
 </style>
-<div class="sky"></div><div class="moon"></div>
-<article class="essay"><p class="beat">Each sentence is its own beat.</p></article>
+<div class="world"><div class="sky"></div><div class="sun"></div><div class="ridge"></div><div class="sea"></div></div>
+<article class="story">
+ <p class="beat lead">The world fills the screen; the words live inside it.</p>
+ <p class="beat">Each beat its own block, placed with intent — not a centred column of equal lines.</p>
+</article>
 <script>
- const r=document.documentElement;addEventListener('scroll',()=>{const h=document.body.scrollHeight-innerHeight;r.style.setProperty('--p',(h>0?scrollY/h:0).toFixed(3))},{passive:true});
+ const r=document.documentElement;const set=()=>{const h=document.body.scrollHeight-innerHeight;r.style.setProperty('--p',(h>0?Math.min(1,scrollY/h):0).toFixed(3))};addEventListener('scroll',set,{passive:true});set();
  document.querySelectorAll('.beat').forEach(b=>{b.innerHTML=b.textContent.split(/(\\s+)/).map(t=>/^\\s+$/.test(t)||!t?t:'<span class="w">'+t+'</span>').join('')});
- const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.w').forEach((w,i)=>w.style.transitionDelay=i*26+'ms');e.target.classList.add('seen');io.unobserve(e.target)}}),{threshold:.3,rootMargin:'0px 0px -14% 0px'});
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.w').forEach((w,i)=>w.style.transitionDelay=i*22+'ms');e.target.classList.add('seen');io.unobserve(e.target)}}),{threshold:.2,rootMargin:'0px 0px -12% 0px'});
  document.querySelectorAll('.beat').forEach(b=>io.observe(b));
+ addEventListener('load',()=>document.querySelectorAll('.beat').forEach(b=>{if(b.getBoundingClientRect().top<innerHeight*.92)b.classList.add('seen')}));
 </script>`;
 
 const SYSTEM = `You are a generative visual artist for Living Page. Given a personal story, you author ONE self-contained HTML document that renders it as a LIVING PAGE: a unique, evolving world with a bespoke background, hand-drawn SVG artwork motivated by the story, scroll-driven animation, and per-beat text that unveils as the reader arrives at it.
 
-DESIGN LANGUAGE (hold all of these):
-- ONE continuous world that EVOLVES as you scroll (brightens / builds / reacts) — never a static header image.
-- WORDS UNVEIL: each sentence assembles on arrival, never flat blog text.
-- ARTWORK is co-located with the words or part of the world — never a banner, never an icon-per-paragraph list. Draw it yourself in SVG, motivated by the story's imagery.
-- RESTRAINT: mostly quiet, 2-3 earned surprises, one visual grammar per page. Maximalism is dynamic, not cluttered.
-- MOTIVATED palette: colours drawn from the story's own imagery. No black-by-default, no neon-by-default.
-- READABLE always. Premium craft, never clip-art, never childish.
+THE BAR — aim for EXTRAORDINARY, not competent. Picture the most breathtaking piece of interactive storytelling you have ever seen: an award-winning scrollytelling feature, a film's title sequence, an immersive gallery installation. That is the ceiling you are reaching for — for ONE person's small, true story. The reader should scroll with their breath held and think "I did not know a story could look like this." Competent is a FAILURE. Build something that feels authored by a world-class interactive designer who fell in love with THIS story — then sweated every pixel, every easing curve, every shift of light.
 
-GO FAR — these are what make it feel alive, use them boldly (but on only the moments that earn it):
-- EXPRESSIVE TYPOGRAPHY: treat type as art. Mix typefaces to match tone — a display serif, a monospace, an italic — and change size/weight/style across beats and for key words. Important words can be large, coloured, letter-spaced, or set apart. Do not keep one uniform font down the page.
-- WORD BEHAVIOUR tied to MEANING: beyond the unveil, animate specific words to what they mean — "storm" can tremble, "fell"/"dropped" can fall from above, "drifted"/"floated" can rise and sway, a shouted word can slam in huge, "shattered" can scatter, a whispered line can fade. A few of these per page, each earned by the word.
-- DRAW THE STORY'S OBJECTS: find the concrete things the writer actually names (an anchor, headphones, a tram, rain, a candle, a phone) and draw each as a small bespoke SVG, co-located with its sentence or woven into the evolving world. These are the story's own objects, not generic icons.
-- SURPRISE: no two stories should feel alike. Invent a visual idea specific to THIS piece. Be genuinely creative — while keeping one coherent grammar and staying readable.
+THE ONE THING THAT MATTERS MOST: build a single FULL-BLEED WORLD that fills the whole viewport and that the words live INSIDE — a layered, atmospheric scene (sky, light, horizon, weather, interior, texture — whatever the story's setting is), fixed behind the text, that EVOLVES as the reader scrolls (dawn breaks, a room warms, rain clears, a city passes). The text is set into that world. This is the opposite of a blog post with decorations.
+
+DEADLY ANTI-PATTERNS — if you do any of these the page has FAILED:
+- A plain/flat/dark background with a centred column of equal-sized paragraphs. (This is a blog. Forbidden.)
+- A little clip-art icon, emoji or small SVG object sitting next to each paragraph (an anchor by the "anchor" line, a bowl by the "meal" line). NEVER draw a small object beside a sentence. Artwork is the WORLD, at full scale — not a glyph per beat.
+- A single header image with text below it.
+
+DESIGN LANGUAGE (hold all of these):
+- ONE continuous full-bleed world that EVOLVES as you scroll — never a static header, never a flat ground.
+- WORDS UNVEIL: each sentence assembles on arrival, never flat blog text.
+- COMPOSE the type: vary size, weight, alignment and placement beat to beat. One or two beats are huge display lines; others are smaller and set off-centre or to one side. Never one uniform centred column.
+- RESTRAINT: mostly quiet, 2-3 earned surprises, one visual grammar per page. Maximalism is dynamic, not cluttered.
+- MOTIVATED palette: colours drawn from the story's own setting and mood. No black-by-default, no neon-by-default.
+- READABLE always. Premium, filmic, hand-crafted — never clip-art, never childish, never an icon set.
+
+HOW THE EXTRAORDINARY IS MADE — reach for SEVERAL of these, but never all at once; restraint is what makes the loud moments land:
+- DEPTH / PARALLAX: build the world in layers that move at different rates as you scroll, so the scene has real space — a near foreground, a midground, a deep horizon. Flat is forgettable.
+- LIGHT IS A CHARACTER: a glow that tracks the emotion, a sun or lamp that rises or sets with the scroll, shadows that lengthen, a colour-temperature that warms or cools as the story turns.
+- ATMOSPHERE IN MOTION: a fine living layer — drifting rain, slow snow, dust in a sunbeam, embers, fog, grain — tuned LOW so it breathes under the words, never busy.
+- ONE BREATHTAKING MOMENT: engineer a single hero beat, on the story's turn, where everything crescendos — a full-screen transformation, a reveal, the whole world shifting. Earn it, land it, then return to quiet.
+- AN EMOTIONAL COLOUR ARC: the palette travels with the feeling. The end must not look like the beginning — open heavy/cold and resolve warm, or the reverse.
+- EXPRESSIVE TYPOGRAPHY: treat type as art. Mix typefaces to tone — a display serif, a monospace, an italic — and change size/weight/style across beats and for key words. One or two beats are poster-scale. Never a uniform font down the page.
+- WORD BEHAVIOUR tied to MEANING: beyond the unveil, animate specific words to what they mean — "storm" trembles, "fell"/"dropped" falls from above, "drifted" rises and sways, a shouted word slams in huge, "shattered" scatters, a whisper fades. A few per page, each earned by the word.
+- CRAFT YOU CAN FEEL: soft vignettes, a whisper of noise/grain texture, considered easing (never linear), generous negative space, type kerned and set like a poster. The difference between competent and extraordinary lives in these details.
+- SURPRISE: no two stories feel alike. Invent one visual idea that could ONLY belong to THIS piece.
 
 TECHNICAL CONTRACT (hard rules):
 - Output ONE complete HTML document and NOTHING else (no markdown fence, no commentary). Start at <!doctype html>.
@@ -115,6 +138,10 @@ function gradePage(html: string, beats: string[]): Grade {
   const gradients = (lower.match(/(linear|radial|conic)-gradient/g) ?? []).length;
   const noArt = svgShapes < 3 && gradients < 2;
   if (noArt) reasons.push("no real artwork (draw the story's objects in SVG, build a layered background)");
+  // 2b. a FULL-BLEED world, fixed behind the text and filling the viewport — the
+  // single thing that separates a living page from a dark blog with icons.
+  const fullBleed = /position\s*:\s*fixed/.test(lower) && (/inset\s*:\s*0/.test(lower) || /100vh/.test(lower) || /100vw/.test(lower) || (/top\s*:\s*0/.test(lower) && /bottom\s*:\s*0/.test(lower)));
+  if (!fullBleed) reasons.push("no full-bleed world — the scene must fill the viewport, fixed behind the words, not a flat background under a text column");
   // 3. it must MOVE — unveil / scroll-reactive world / animation
   const motion = /intersectionobserver/.test(lower) || /addeventlistener\(['"]scroll/.test(lower) || /@keyframes/.test(lower) || /transition\s*:/.test(lower) || /requestanimationframe/.test(lower);
   if (!motion) reasons.push("nothing moves (no unveil, no scroll reaction, no animation)");
