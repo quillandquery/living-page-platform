@@ -117,14 +117,16 @@ function MakeInner() {
   // ── Reveal: Bespoke (Opus, gated) ──
   const genArt = async () => {
     if (!text.trim() || genBusy) return;
-    setRestyleOpen(false); setGenBusy(true); setNote("painting a one-of-a-kind page… (~10–30s)");
+    setRestyleOpen(false); setGenBusy(true); setNote("painting a one-of-a-kind page… (this one takes ~30–60s)");
     try {
       const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
       const data = await res.json();
       if (data.ok) { setGenHtml(data.html); setNote("✨ a living page, made for this story"); }
       else if (data.reason === "no-key") setNote("Add ANTHROPIC_API_KEY to .env.local and restart.");
-      else setNote(`Couldn't paint it (${data.reason})${data.detail ? ": " + data.detail : ""}`);
-    } catch { setNote("The brain is unreachable right now."); } finally { setGenBusy(false); }
+      // Any other failure: the Auto world is still on screen, so this is never a
+      // dead end — keep it and invite another go, no scary internals.
+      else setNote("Couldn't paint a bespoke page just now — your live one is still here. Try Bespoke again?");
+    } catch { setNote("Couldn't reach the brain just now — your live page is still here. Try again in a moment."); } finally { setGenBusy(false); }
   };
 
   const bringToLife = () => {

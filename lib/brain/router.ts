@@ -50,51 +50,71 @@ export async function callClaude(
   const hit = cache.get(ck);
   if (hit !== undefined) return { ok: true, text: hit };
 
-  const ctrl = new AbortController();
-  let timer = setTimeout(() => ctrl.abort(), idleMs);
-  const bump = () => { clearTimeout(timer); timer = setTimeout(() => ctrl.abort(), idleMs); };
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: MODELS[tier], max_tokens: maxTokens, system, stream: true, messages: [{ role: "user", content: user }] }),
-      signal: ctrl.signal,
-    });
-    if (!res.ok || !res.body) {
-      let detail = `HTTP ${res.status}`;
-      try { const e = await res.json() as { error?: { message?: string } }; if (e?.error?.message) detail += `: ${e.error.message}`; } catch {}
-      return { ok: false, reason: "api-error", detail };
-    }
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "", out = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      bump();
-      buf += dec.decode(value, { stream: true });
-      let nl: number;
-      while ((nl = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        try {
-          const ev = JSON.parse(payload) as { type?: string; delta?: { type?: string; text?: string }; error?: { message?: string } };
-          if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") out += ev.delta.text ?? "";
-          else if (ev.type === "error") return { ok: false, reason: "api-error", detail: ev.error?.message ?? "stream error" };
-        } catch { /* skip malformed line */ }
+  // One streamed attempt. Returns the accumulated text, or an error. A stream
+  // that completes with NOTHING in it is reported as ok:true text:"" so the
+  // caller (below) can decide to retry — the Anthropic stream very occasionally
+  // closes clean but empty, and a single retry recovers it.
+  async function attempt(): Promise<CallResult> {
+    const ctrl = new AbortController();
+    let timer = setTimeout(() => ctrl.abort(), idleMs);
+    const bump = () => { clearTimeout(timer); timer = setTimeout(() => ctrl.abort(), idleMs); };
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": apiKey!, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({ model: MODELS[tier], max_tokens: maxTokens, system, stream: true, messages: [{ role: "user", content: user }] }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok || !res.body) {
+        let detail = `HTTP ${res.status}`;
+        try { const e = await res.json() as { error?: { message?: string } }; if (e?.error?.message) detail += `: ${e.error.message}`; } catch {}
+        return { ok: false, reason: "api-error", detail };
       }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", out = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        bump();
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          try {
+            const ev = JSON.parse(payload) as { type?: string; delta?: { type?: string; text?: string }; error?: { message?: string } };
+            if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") out += ev.delta.text ?? "";
+            else if (ev.type === "error") return { ok: false, reason: "api-error", detail: ev.error?.message ?? "stream error" };
+          } catch { /* skip malformed line */ }
+        }
+      }
+      return { ok: true, text: out };
+    } catch (e) {
+      const msg = e instanceof Error && e.name === "AbortError" ? "stalled (idle timeout)" : e instanceof Error ? e.message : "unreachable";
+      return { ok: false, reason: "api-error", detail: msg };
+    } finally {
+      clearTimeout(timer);
     }
-    cache.set(ck, out);
-    return { ok: true, text: out };
-  } catch (e) {
-    const msg = e instanceof Error && e.name === "AbortError" ? "stalled (idle timeout)" : e instanceof Error ? e.message : "unreachable";
-    return { ok: false, reason: "api-error", detail: msg };
-  } finally {
-    clearTimeout(timer);
   }
+
+  // Up to two attempts: retry only when the stream closed clean but empty, or
+  // on a transient network/idle error. A real API error (bad model, 4xx) is
+  // returned on the first try — retrying it would just burn time.
+  let last: CallResult = { ok: false, reason: "api-error", detail: "no attempt" };
+  for (let i = 0; i < 2; i++) {
+    last = await attempt();
+    if (last.ok && last.text.trim() !== "") { cache.set(ck, last.text); return last; }
+    if (!last.ok && /HTTP 4\d\d/.test(last.detail ?? "")) return last; // don't retry client errors
+    // else: empty success or transient error → loop and try once more
+  }
+  // Second attempt also empty/failed. An empty-but-"ok" result is really a
+  // failure for our callers, so surface it as one with a clear reason.
+  if (last.ok) return { ok: false, reason: "api-error", detail: "empty response (model returned no text)" };
+  return last;
 }
 
 /** Pull the first JSON object out of a model reply (tolerates prose/fences). */

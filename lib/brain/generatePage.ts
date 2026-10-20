@@ -71,6 +71,13 @@ export type GenResult =
 
 function processHtml(raw: string, beats: string[]): GenResult {
   let h = raw.trim();
+  // Nothing came back (or only a scrap). Report it honestly rather than wrapping
+  // "" into a bare <html> skeleton that then trips the "text missing" check — the
+  // router already retries empty streams, so reaching here means both tries were
+  // empty. Let the caller fall back to the live engine.
+  if (h.length < 40 || !/<[a-z]/i.test(h)) {
+    return { ok: false, reason: "api-error", detail: "empty generation" };
+  }
   const lower = h.toLowerCase();
   const start = lower.indexOf("<!doctype") >= 0 ? lower.indexOf("<!doctype") : lower.indexOf("<html");
   const end = lower.lastIndexOf("</html>");
