@@ -24,7 +24,9 @@ import { absoluteUrl, SITE_NAME } from "@/lib/site";
  * a route is as current as the database.
  */
 export const revalidate = 3600;
-export const contentType = "text/plain; charset=utf-8";
+// NB: a route handler must NOT export `contentType` — Next 15.5 rejects it as
+// an invalid route export (it's a Metadata-route field, not a Route one). The
+// Content-Type is set on the Response below, which is the correct place.
 
 export async function GET() {
   const stories = await publishedFeed(5000);
