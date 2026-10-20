@@ -11,10 +11,16 @@ import "server-only";
  * back to the deterministic renderer on any failure.
  */
 
-import { callClaude } from "@/lib/brain/router";
+import { callClaude, type Tier } from "@/lib/brain/router";
 import type { BrainCast } from "@/lib/brain/castWithAI";
 
 const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">`;
+
+// Watchdog injected into every generated page. If, a few seconds after load, the
+// page HAS text but almost none is actually rendered visible (the model's unveil
+// script didn't fire), force every element visible so the reader never faces a
+// blank page. Guarded so it only acts on a genuinely broken page.
+const FAILSAFE = `<script>/*__lpFailsafe*/(function(){function check(){try{var b=document.body;if(!b)return;var total=((b.innerText||'').replace(/\\s+/g,'')).length;if(total<120)return;var els=b.querySelectorAll('p,span,h1,h2,h3,h4,li,blockquote,em,strong,div,a');var shown=0;for(var i=0;i<els.length;i++){var e=els[i];var t=(e.textContent||'').trim();if(!t)continue;var cs=getComputedStyle(e);if(cs.visibility!=='hidden'&&cs.display!=='none'&&parseFloat(cs.opacity)>0.05)shown+=t.length;}if(shown<total*0.15){var s=document.createElement('style');s.textContent='*{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important}';document.head.appendChild(s);}}catch(e){}}setTimeout(check,3800);})();</script>`;
 
 const EXEMPLAR = `<!-- technique exemplar (do NOT copy its content, copy its approach) -->
 <style>
@@ -60,6 +66,8 @@ TECHNICAL CONTRACT (hard rules):
 - Scroll-driven: the world changes as you scroll (track scroll progress 0..1).
 - Words unveil per beat (IntersectionObserver).
 - Responsive: must work from ~380px to desktop. Respect prefers-reduced-motion (no motion, full opacity).
+- NEVER leave text permanently invisible. If words start hidden and animate in, reveal them on LOAD as well as on scroll, so a reader who never scrolls still sees everything — nothing may stay at opacity:0. The page must be fully readable within one second.
+- ALWAYS draw real artwork: at least 2-3 distinct pieces of hand-made SVG (the story's own objects and/or a built, layered world), not a single shape and not just a flat background. Ensure strong contrast — never text the same tone as its background.
 - Write COMPACT code: minimal whitespace, no comments, concise CSS/JS. This keeps generation fast — spend your budget on richness, not formatting.
 
 Here is a tiny exemplar of the TECHNIQUE (scroll var, layered fixed scene, word-unveil, reduced-motion). Match this quality bar and go far beyond it in artwork; do not reuse its content:
@@ -69,37 +77,63 @@ export type GenResult =
   | { ok: true; html: string }
   | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string };
 
-function processHtml(raw: string, beats: string[]): GenResult {
+/** Pull the HTML document out of the model's reply. No judgement of quality
+ *  here — that's the gate's job. Returns the raw document or an error. */
+function extractDoc(raw: string): { ok: true; html: string } | { ok: false; reason: "api-error" | "invalid"; detail: string } {
   let h = raw.trim();
-  // Nothing came back (or only a scrap). Report it honestly rather than wrapping
-  // "" into a bare <html> skeleton that then trips the "text missing" check — the
-  // router already retries empty streams, so reaching here means both tries were
-  // empty. Let the caller fall back to the live engine.
-  if (h.length < 40 || !/<[a-z]/i.test(h)) {
-    return { ok: false, reason: "api-error", detail: "empty generation" };
-  }
+  if (h.length < 40 || !/<[a-z]/i.test(h)) return { ok: false, reason: "api-error", detail: "empty generation" };
   const lower = h.toLowerCase();
   const start = lower.indexOf("<!doctype") >= 0 ? lower.indexOf("<!doctype") : lower.indexOf("<html");
   const end = lower.lastIndexOf("</html>");
   if (start >= 0 && end > start) h = h.slice(start, end + 7);
   else if (!/<html/i.test(h)) h = `<!doctype html><html><head></head><body>${h}</body></html>`;
   if (h.length > 400_000) return { ok: false, reason: "invalid", detail: "too large" };
-  // the writer's words must actually appear — but the page wraps words (and
-  // sometimes letters) in spans, or injects the text via a JS array. So drop
-  // only <style> (CSS noise) and the tags, KEEP script text, then require that
-  // at least one of the story's own content words survives somewhere.
-  const plain = h
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    .toLowerCase();
+  return { ok: true, html: h };
+}
+
+type Grade = { pass: boolean; fatal: boolean; reasons: string[] };
+/**
+ * THE QUALITY GATE. A bespoke page is one LLM shot and quality swings run to
+ * run, so we grade the output on the things that make it a *living page* (not a
+ * blank or a plain article) and reject the duds. "fatal" flaws (no text, no art)
+ * earn a regeneration with feedback; "soft" ones (one axis thin) are tolerated.
+ */
+function gradePage(html: string, beats: string[]): Grade {
+  const reasons: string[] = [];
+  const lower = html.toLowerCase();
+  const plain = html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ").toLowerCase();
+  // 1. the writer's own words actually render
   const words = [...new Set((beats.join(" ").toLowerCase().match(/[a-z']{5,}/g) ?? []))].slice(0, 40);
-  if (words.length >= 4 && !words.some((w) => plain.includes(w))) {
-    return { ok: false, reason: "invalid", detail: `text missing (page ${h.length} chars, text ${plain.replace(/\s+/g, " ").trim().length} chars)` };
-  }
-  // inject CSP (safety net on top of the iframe sandbox)
+  const present = words.filter((w) => plain.includes(w)).length;
+  const textMissing = words.length >= 5 && present < Math.ceil(words.length * 0.35);
+  if (textMissing) reasons.push("most of the story's words don't render");
+  // 2. real artwork — SVG shapes, or a built, layered CSS scene (gradients)
+  const svgShapes = (lower.match(/<(path|circle|rect|line|polygon|polyline|ellipse)\b/g) ?? []).length;
+  const gradients = (lower.match(/(linear|radial|conic)-gradient/g) ?? []).length;
+  const noArt = svgShapes < 3 && gradients < 2;
+  if (noArt) reasons.push("no real artwork (draw the story's objects in SVG, build a layered background)");
+  // 3. it must MOVE — unveil / scroll-reactive world / animation
+  const motion = /intersectionobserver/.test(lower) || /addeventlistener\(['"]scroll/.test(lower) || /@keyframes/.test(lower) || /transition\s*:/.test(lower) || /requestanimationframe/.test(lower);
+  if (!motion) reasons.push("nothing moves (no unveil, no scroll reaction, no animation)");
+  // 4. the beats are broken into their own blocks, not one wall
+  const blocks = (lower.match(/<(p|h1|h2|h3|section|article|blockquote|li)\b/g) ?? []).length;
+  if (blocks < Math.max(3, Math.ceil(beats.length * 0.6))) reasons.push("the beats aren't broken into their own blocks");
+  if (html.length < 1800) reasons.push("far too sparse");
+  // fatal = the page isn't a living page at all: no words, or no art. Those get a
+  // second shot. Thin-on-one-axis is a soft flaw; the page still ships.
+  const fatal = textMissing || noArt || html.length < 1800;
+  return { pass: reasons.length === 0, fatal, reasons };
+}
+
+/** Inject the CSP + the reveal failsafe, producing the final shippable page. */
+function finalize(html: string): string {
+  let h = html;
   if (/<head[^>]*>/i.test(h)) h = h.replace(/<head[^>]*>/i, (m) => m + CSP);
   else h = h.replace(/<html[^>]*>/i, (m) => `${m}<head>${CSP}</head>`);
-  return { ok: true, html: h };
+  h = /<\/body>/i.test(h) ? h.replace(/<\/body>/i, `${FAILSAFE}</body>`) : h + FAILSAFE;
+  return h;
 }
 
 export async function generatePage(text: string, title: string | undefined, cast?: BrainCast): Promise<GenResult> {
@@ -107,18 +141,40 @@ export async function generatePage(text: string, title: string | undefined, cast
   const guide = cast
     ? `\n\nART DIRECTION (from the read — honour it):\nstyle: ${cast.style}\nread: ${JSON.stringify(cast.read)}\npalette: ${JSON.stringify(cast.palette ?? {})}\nnote: ${cast.artNote ?? ""}`
     : "";
-  const user = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}${guide}`;
-  // Default to Sonnet: several times faster than Opus and strong at
-  // self-contained creative pages. Set BRAIN_GENERATE_TIER=opus for max quality
-  // (and a longer wait). Output capped so it can't run away.
-  const tier = (process.env.BRAIN_GENERATE_TIER === "opus" ? "opus" : "sonnet");
-  // 90s idle window (vs the 45s default): a big bespoke page can take the model a
-  // while to START emitting (it works the whole composition out first), and the
-  // default idle timeout was firing on that first-token latency, aborting a
-  // perfectly good generation as a false "stall" — which then got retried and
-  // doubled the wait. Once tokens flow they're continuous, so this only affects
-  // the warm-up, not a genuine hang.
-  const res = await callClaude(tier, SYSTEM, user, 12000, 90_000);
-  if (!res.ok) return res;
-  return processHtml(res.text, beats);
+  const baseUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}${guide}`;
+
+  // MODEL WATERFALL for the page (cuts the wait). A FAST first pass authors it;
+  // the gate catches any dud and the SECOND pass STEPS UP to a stronger model with
+  // feedback — so we only pay for the slow model when the fast one actually failed.
+  // Best case is Haiku in ~1/2–1/3 of Sonnet's time. Env can pin the whole run
+  // (BRAIN_GENERATE_TIER = haiku | sonnet | opus).
+  const pin = process.env.BRAIN_GENERATE_TIER as Tier | undefined;
+  const ladder: Tier[] = pin && (["haiku", "sonnet", "opus"] as const).includes(pin)
+    ? [pin, pin] : ["haiku", "sonnet"];
+
+  // Up to two shots, gated. The first is plain; if it comes back a dud (no words,
+  // no art), the second steps up a model AND is told EXACTLY what was wrong. We keep
+  // the best page seen so a soft-flawed one still ships rather than falling to Auto.
+  let best: { html: string; grade: Grade } | null = null;
+  let lastErr: GenResult = { ok: false, reason: "api-error", detail: "no generation" };
+  for (let shot = 0; shot < 2; shot++) {
+    const fix = shot === 0 || !best
+      ? ""
+      : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these. Draw real SVG artwork of the story's own objects, give the page a built, evolving background, animate the words in, and break each beat into its own block. Return the full corrected HTML document only.`;
+    // 90s idle window: a big page can take a while to START emitting; the default
+    // 45s was firing on that first-token latency and aborting good generations.
+    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 12000, 90_000);
+    if (!res.ok) { lastErr = res; if (best) break; else continue; }
+    const doc = extractDoc(res.text);
+    if (!doc.ok) { lastErr = doc; if (best) break; else continue; }
+    const grade = gradePage(doc.html, beats);
+    if (grade.pass) return { ok: true, html: finalize(doc.html) };
+    // keep the strongest attempt (fewest reasons)
+    if (!best || grade.reasons.length < best.grade.reasons.length) best = { html: doc.html, grade };
+    if (!grade.fatal) break; // soft flaw only — ship the best we have
+  }
+  // Ship the best non-fatal page; otherwise reject so the client keeps Auto.
+  if (best && !best.grade.fatal) return { ok: true, html: finalize(best.html) };
+  if (best) return { ok: false, reason: "invalid", detail: `low quality: ${best.grade.reasons.join("; ")}` };
+  return lastErr;
 }

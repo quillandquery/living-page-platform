@@ -18,10 +18,12 @@ import "server-only";
 
 export type Tier = "haiku" | "sonnet" | "opus";
 
+// Model ids follow the live "claude-<tier>-5-5" scheme (sonnet is confirmed
+// working in prod). Any can be overridden per-env without a code change.
 const MODELS: Record<Tier, string> = {
-  haiku: process.env.BRAIN_MODEL_HAIKU || "claude-haiku-4-5-20251001",
+  haiku: process.env.BRAIN_MODEL_HAIKU || "claude-haiku-5-5",
   sonnet: process.env.BRAIN_MODEL_SONNET || process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
-  opus: process.env.BRAIN_MODEL_OPUS || "claude-opus-4-6",
+  opus: process.env.BRAIN_MODEL_OPUS || "claude-opus-5-5",
 };
 
 export type CallResult =
@@ -62,7 +64,15 @@ export async function callClaude(
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey!, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: MODELS[tier], max_tokens: maxTokens, system, stream: true, messages: [{ role: "user", content: user }] }),
+        // Cache the system prompt (it's large and identical across a story's
+        // calls — e.g. a gated regeneration reuses it): cuts time-to-first-token
+        // and input cost on the repeat. Blocks under the model's min size simply
+        // aren't cached, so this is safe for the small prompts too.
+        body: JSON.stringify({
+          model: MODELS[tier], max_tokens: maxTokens, stream: true,
+          system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+          messages: [{ role: "user", content: user }],
+        }),
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) {
