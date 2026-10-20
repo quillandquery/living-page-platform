@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
-import { castWithAI, type BrainCast } from "@/lib/brain/castWithAI";
+import { type BrainCast } from "@/lib/brain/castWithAI";
 import { generatePage } from "@/lib/brain/generatePage";
 
 /**
  * POST /api/brain/generate  { text, title?, cast? } → { ok, html } | { ok:false, reason }
- * Stage 4 (Opus, gated): generate a bespoke self-contained living page. If the
- * caller didn't pass a Stage-1 cast, we run it first (Sonnet) for art direction.
- * Server-side; the key never reaches the client. Opus runs here only.
+ * Stage 4 (gated): generate a bespoke self-contained living page. The generator
+ * prompt is self-sufficient (it draws its own palette from the story), so we do
+ * NOT run a second "cast" call here — that only added ~5-10s and another point of
+ * failure to an already-long request. We honour a cast ONLY if the client already
+ * computed one (the Auto pass) and passed it along. Server-side; key never leaves.
  */
-export const maxDuration = 120;
+// A rich, dense page can take 80-120s to author. Give the function real headroom
+// so a long story doesn't get killed mid-generation and 504 (which the client
+// then shows as "couldn't reach the brain"). 300s is the Pro ceiling.
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   let body: { text?: string; title?: string; cast?: BrainCast };
@@ -16,13 +21,6 @@ export async function POST(req: Request) {
   const text = (body.text ?? "").trim();
   if (!text) return NextResponse.json({ ok: false, reason: "invalid" }, { status: 400 });
 
-  // The read is only art-direction guidance — a hiccup here must NOT block
-  // generation. Proceed with whatever we got (possibly none).
-  let cast = body.cast;
-  if (!cast) {
-    const c = await castWithAI(text, body.title);
-    if (c.ok) cast = c.cast;
-  }
-  const result = await generatePage(text, body.title, cast);
+  const result = await generatePage(text, body.title, body.cast);
   return NextResponse.json(result);
 }
