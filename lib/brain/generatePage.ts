@@ -62,7 +62,8 @@ GO FAR — these are what make it feel alive, use them boldly (but on only the m
 TECHNICAL CONTRACT (hard rules):
 - Output ONE complete HTML document and NOTHING else (no markdown fence, no commentary). Start at <!doctype html>.
 - Fully SELF-CONTAINED: inline all CSS, SVG and JS. NO external resources — no <link>, no web fonts, no CDN, no url(http...), no fetch/import/XHR/WebSocket. Images only as inline SVG or data: URIs. Use system fonts (Georgia, system-ui, "Courier New", etc.).
-- Render the writer's EXACT words, in order, split into beats (one per paragraph I give you). Do not rewrite, summarise, or invent text.
+- Render the writer's EXACT words, in order, split into beats (one per paragraph I give you). Do not rewrite, summarise, or invent text. Include EVERY word of every beat — numbers too (e.g. "5", "1000"). Dropping or paraphrasing any word is a failure.
+- The words must live DIRECTLY in the HTML as readable text inside the beat elements. If you animate per word, wrap words that are ALREADY in the markup in <span>s — do NOT build sentences in JavaScript or inject text from a JS array or data-attribute. The full story must be readable even if the JS never runs.
 - Scroll-driven: the world changes as you scroll (track scroll progress 0..1).
 - Words unveil per beat (IntersectionObserver).
 - Responsive: must work from ~380px to desktop. Respect prefers-reduced-motion (no motion, full opacity).
@@ -143,14 +144,16 @@ export async function generatePage(text: string, title: string | undefined, cast
     : "";
   const baseUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}${guide}`;
 
-  // MODEL WATERFALL for the page (cuts the wait). A FAST first pass authors it;
-  // the gate catches any dud and the SECOND pass STEPS UP to a stronger model with
-  // feedback — so we only pay for the slow model when the fast one actually failed.
-  // Best case is Haiku in ~1/2–1/3 of Sonnet's time. Env can pin the whole run
-  // (BRAIN_GENERATE_TIER = haiku | sonnet | opus).
+  // ART IS OPUS. The page is the one place quality must not bend, and the cheaper
+  // models drop words and draw generic clip-art — so the artwork pass is Opus.
+  // "Least expensive Opus": ONE Opus call in the normal case (prompt-cached, output
+  // capped). A SECOND Opus call happens ONLY when the first FATALLY fails the gate
+  // (no text / no art), which with Opus is rare — so we almost never pay twice.
+  // The cheap tiers (haiku/sonnet) stay on the story-refinement side (suggest/cast).
+  // Env can still pin the run (BRAIN_GENERATE_TIER = haiku | sonnet | opus).
   const pin = process.env.BRAIN_GENERATE_TIER as Tier | undefined;
   const ladder: Tier[] = pin && (["haiku", "sonnet", "opus"] as const).includes(pin)
-    ? [pin, pin] : ["haiku", "sonnet"];
+    ? [pin, pin] : ["opus", "opus"];
 
   // Up to two shots, gated. The first is plain; if it comes back a dud (no words,
   // no art), the second steps up a model AND is told EXACTLY what was wrong. We keep
@@ -163,7 +166,7 @@ export async function generatePage(text: string, title: string | undefined, cast
       : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these. Draw real SVG artwork of the story's own objects, give the page a built, evolving background, animate the words in, and break each beat into its own block. Return the full corrected HTML document only.`;
     // 90s idle window: a big page can take a while to START emitting; the default
     // 45s was firing on that first-token latency and aborting good generations.
-    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 12000, 90_000);
+    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 16000, 90_000);
     if (!res.ok) { lastErr = res; if (best) break; else continue; }
     const doc = extractDoc(res.text);
     if (!doc.ok) { lastErr = doc; if (best) break; else continue; }

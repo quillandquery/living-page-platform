@@ -190,7 +190,7 @@ function MakeInner() {
   // ── Reveal: Bespoke (Opus, gated) ──
   const genArt = async () => {
     if (!text.trim() || genBusy) return;
-    setRestyleOpen(false); setGenBusy(true); setNote("painting a one-of-a-kind page… usually under a minute, a little longer if it needs a second pass — keep this tab open");
+    setRestyleOpen(false); setGenBusy(true); setNote("painting a one-of-a-kind page with the most capable model… a minute or two for something rich — keep this tab open");
     try {
       const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
       const data = await res.json();
