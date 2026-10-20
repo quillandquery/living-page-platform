@@ -1,0 +1,273 @@
+{
+  "beats": [
+    {
+      "text": "In the dream the staircase went up into nothing and I kept climbing anyway.",
+      "type": "waiting",
+      "emotion": "fear",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.815,
+        "motion": "hold",
+        "position": "center",
+        "density": 0.2,
+        "opacity": 0.8,
+        "emphasis": 0.21
+      }
+    },
+    {
+      "text": "The walls were made of water and I could see my own face in them, doubled, tripled, wrong.",
+      "type": "observation",
+      "emotion": "disgust",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "settle",
+        "position": "right",
+        "density": 2.2,
+        "opacity": 0.95,
+        "emphasis": 0.21
+      }
+    },
+    {
+      "text": "A clock on the wall was melting, slow as honey.",
+      "type": "observation",
+      "emotion": "surprise",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "settle",
+        "position": "left",
+        "density": 2.2,
+        "opacity": 0.95,
+        "emphasis": 0.21
+      }
+    },
+    {
+      "text": "Somewhere a cassette tape had come unspooled and its ribbon floated in the air like a brown river.",
+      "type": "reflection",
+      "emotion": "disgust",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "driftslow",
+        "position": "narrow",
+        "density": 0.2,
+        "opacity": 0.8,
+        "emphasis": 0.31
+      }
+    },
+    {
+      "text": "I was weightless.",
+      "type": "interruption",
+      "emotion": "fear",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 0.95,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "I reached for the red thread that hung from the ceiling and when I touched it everything shattered into bright pieces and I woke up.",
+      "type": "arrival",
+      "emotion": "surprise",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 1.165,
+        "motion": "enter",
+        "position": "center",
+        "density": 3.2,
+        "opacity": 1.0,
+        "emphasis": 0.71
+      }
+    }
+  ],
+  "arc": [
+    0.05,
+    0.05,
+    0.05,
+    0.05,
+    0.14,
+    0.05
+  ],
+  "profile": {
+    "semantic": {
+      "concepts": [
+        {
+          "name": "staircase to nowhere",
+          "score": 0.729
+        },
+        {
+          "name": "unspooled cassette tape",
+          "score": 0.626
+        },
+        {
+          "name": "melting clock",
+          "score": 0.52
+        },
+        {
+          "name": "water reflection",
+          "score": 0.433
+        },
+        {
+          "name": "record player",
+          "score": 0.43
+        },
+        {
+          "name": "receipt",
+          "score": 0.407
+        },
+        {
+          "name": "clock face",
+          "score": 0.405
+        },
+        {
+          "name": "seashell",
+          "score": 0.405
+        },
+        {
+          "name": "ferry wake",
+          "score": 0.392
+        },
+        {
+          "name": "red thread",
+          "score": 0.386
+        },
+        {
+          "name": "unmade bed",
+          "score": 0.38
+        },
+        {
+          "name": "shattered glass",
+          "score": 0.377
+        }
+      ],
+      "emotions": [
+        {
+          "name": "surprise",
+          "score": 0.41
+        },
+        {
+          "name": "fear",
+          "score": 0.243
+        },
+        {
+          "name": "anger",
+          "score": 0.195
+        },
+        {
+          "name": "disgust",
+          "score": 0.085
+        },
+        {
+          "name": "neutral",
+          "score": 0.037
+        },
+        {
+          "name": "sadness",
+          "score": 0.028
+        },
+        {
+          "name": "joy",
+          "score": 0.002
+        }
+      ]
+    },
+    "linguistic": {
+      "objects": [
+        "dream",
+        "staircase",
+        "wall",
+        "water",
+        "face",
+        "clock",
+        "honey",
+        "cassette",
+        "tape",
+        "ribbon",
+        "air",
+        "thread",
+        "ceiling",
+        "piece"
+      ],
+      "actions": [
+        "go",
+        "keep",
+        "climb",
+        "make",
+        "see",
+        "double",
+        "triple",
+        "melt",
+        "come",
+        "float",
+        "reach",
+        "hang",
+        "touch",
+        "shatter",
+        "wake"
+      ],
+      "places": [
+        "river"
+      ],
+      "people": [],
+      "temporalReferences": [],
+      "sentenceLengths": [
+        14,
+        18,
+        10,
+        18,
+        3,
+        25
+      ],
+      "repetition": []
+    },
+    "visual": {
+      "intimacy": 0.184,
+      "chaos": 0.276,
+      "nostalgia": 0.363,
+      "surrealism": 0.254,
+      "physicality": 0.14,
+      "urgency": 0.139,
+      "fragmentation": 0.238,
+      "spatiality": 0.097
+    },
+    "meta": {
+      "backends": {
+        "linguistic": {
+          "backend": "spacy",
+          "model": "en_core_web_sm"
+        },
+        "concepts": {
+          "backend": "sentence-transformers",
+          "model": "sentence-transformers/all-MiniLM-L6-v2"
+        },
+        "emotion": {
+          "backend": "hf-transformers",
+          "model": "j-hartmann/emotion-english-distilroberta-base"
+        }
+      },
+      "tense": {
+        "Past": 12,
+        "Pres": 2
+      },
+      "chars": 464,
+      "fully_offline": false
+    }
+  },
+  "meta": {
+    "beat_count": 6,
+    "type_histogram": {
+      "observation": 2,
+      "waiting": 1,
+      "reflection": 1,
+      "interruption": 1,
+      "arrival": 1
+    },
+    "peak_energy": 0.14,
+    "mean_energy": 0.065
+  }
+}

@@ -33,12 +33,19 @@ export type StoryMode = "story" | "moment" | "thought" | "freeform";
  *  the core-loop signal analytics needs, so it is captured here rather
  *  than inferred later. `app/write/page.tsx` calls this with no argument
  *  (a plain "new piece" from the desk), which still defaults to "story". */
-export async function createStoryAction(mode: StoryMode = "story") {
+/** What the world-driven /make canvas carries into the new draft: the writer
+ *  may already have typed a title, the story, and (rarely) pinned a world
+ *  before pressing "Continue". All optional — a plain mode click passes none. */
+export type MakeSeed = { source?: string; title?: string; world?: string | null };
+
+export async function createStoryAction(mode: StoryMode = "story", seed: MakeSeed = {}) {
   const profile = await myProfile();
   // No profile yet (signed out, or signed in but never finished onboarding)
   // — send them through onboarding/login and carry /make + the mode they
   // picked along, so logging back in resumes the piece they were starting
-  // instead of dropping them on the desk.
+  // instead of dropping them on the desk. (A long typed draft isn't carried
+  // through the auth round-trip in the URL; the make canvas keeps it in
+  // sessionStorage and rehydrates on return.)
   if (!profile) redirect(`/onboarding?next=${encodeURIComponent(`/make?mode=${mode}`)}`);
 
   const supabase = await supabaseServer();
@@ -46,7 +53,12 @@ export async function createStoryAction(mode: StoryMode = "story") {
   const slug = `untitled-${Date.now().toString(36)}`;
   const { data, error } = await supabase
     .from("stories")
-    .insert({ author_id: profile.id, slug, place: "", date: "", fragment: "", status: "draft", type: mode })
+    .insert({
+      author_id: profile.id, slug, place: "", date: "", status: "draft", type: mode,
+      fragment: (seed.title ?? "").trim(),
+      source: (seed.source ?? "").trim(),
+      world: seed.world ?? null,
+    })
     .select("id")
     .single();
   if (error || !data) throw new Error(error?.message ?? "Could not create the piece.");
@@ -72,6 +84,10 @@ export type SaveInput = {
    *  the editor (lib/art-direction/generate.ts) so it round-trips exactly
    *  as previewed. Optional only for callers that predate this. */
   art_direction?: StoryArtDirection;
+  /** The writer-pinned living-page world (D9, migration 0005), or null to
+   *  auto-cast from the words at render time. Omitted by callers that predate
+   *  worlds; `null` explicitly clears a pin back to auto. */
+  world?: string | null;
   /** Optional SEO overrides (migration 0004) — null/`[]` means "keep
    *  deriving from the story's own words"; see lib/story-seo.ts. Optional
    *  on the type only for callers that predate this (e.g. gen-share-loops'
@@ -146,6 +162,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     blocks,
   };
   if (input.art_direction) patch.art_direction = input.art_direction;
+  if (input.world !== undefined) patch.world = input.world;
   if (input.seo_title !== undefined) patch.seo_title = input.seo_title;
   if (input.seo_description !== undefined) patch.seo_description = input.seo_description;
   if (input.tags !== undefined) patch.tags = input.tags;

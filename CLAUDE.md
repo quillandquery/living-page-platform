@@ -14,9 +14,12 @@ not reading an article.
 
 This file is the standing brief for every Code session. Full spec:
 `living-page-prd-v2`. Settled decisions: **`docs/DECISIONS.md`** (read it —
-those are not up for re-litigation). Style truth: **`docs/DESIGN-TOKENS.md`**.
-Current work: **`docs/PHASE-1-TICKETS.md`**. Locked copy: **`docs/COPY.md`**.
-What exists and what to reuse: **`docs/AUDIT.md`**.
+settled, but note D1 was revised and D9 added 2026-10-08 to adopt the
+living-page design language; where older text conflicts, D1/D9 and
+`docs/LIVING-PAGE-ARCHITECTURE.md` win). Reader-output design language +
+build plan: **`docs/LIVING-PAGE-ARCHITECTURE.md`**. Style truth:
+**`docs/DESIGN-TOKENS.md`**. Current work: **`docs/PHASE-1-TICKETS.md`**.
+Locked copy: **`docs/COPY.md`**. What exists and what to reuse: **`docs/AUDIT.md`**.
 
 ## Positioning
 Living Page is **a new way to tell a story** — general storytelling (Story /
@@ -61,10 +64,13 @@ wrote something ordinary and accidentally made something extraordinary.
   system.
 
 ## Engine guardrails (from `docs/DECISIONS.md`)
-- **Heuristic, no LLM** (D1). The Auto engine is a deterministic lexicon +
-  rules (`lib/annotate.ts` + the art-direction wrapper). No AI API, no
-  per-story cost, no network in the transform loop. Auto is good, not
-  omniscient — don't promise metaphor understanding.
+- **A two-stage brain** (D1, revised 2026-10-08). Stage 1 is the live heuristic
+  (`lib/annotate.ts`) — instant on keystroke, keeps "transform while you type".
+  Stage 2 is **the brain** (`brain/`): spaCy + sentence-transformers + a local
+  emotion model → `VisualProfile` → `SceneGraph` → casting, run server-side /
+  offline on save & publish. **Local models only** — no paid per-story LLM API,
+  no per-story cost. The brain understands concepts and emotion, so the old
+  "don't promise metaphor understanding" caveat no longer binds.
 - **No photography yet** (D2). Identity is hand-drawn / typographic / collage.
   The "Visuals" control offers Auto/Illustrated/Minimal/Collage/Maximal.
 - **Curated, not literal, taxonomy** (D6). ~12 world archetypes, ~20 motions.
@@ -132,3 +138,18 @@ to the actual story, not generic aesthetics.
 
 The whole thing succeeds when the user thinks:
 **"I didn't know I could tell a story like this."**
+
+## Reader output: the living page (D9 — the design language)
+A published story is a **living page**, not a styled article. The locked
+reader-output standard (full spec: `docs/LIVING-PAGE-ARCHITECTURE.md`):
+one continuous **world** that *evolves as you read* (brightens / builds /
+reacts — never a static header image); **words that unveil** (assemble on
+arrival, never flat blog text); artwork **co-located with the words** or part of
+the world (never a header, never an icon-per-paragraph list); **restraint**
+(mostly quiet, 2–3 earned surprises, one grammar per page); grounds and palettes
+**motivated by the story** (no black-by-default, no neon-by-default); and
+**curated, premium** elements (D2), never clip-art or childish. Built from three
+curated libraries the brain casts into — **worlds · behaviours · elements** —
+rendered by a `LivingStory` component. This governs over the older
+"nothing shouts / 70% plain" creed in `app/globals.css` (restraint stays as a
+*budget*, but the page is an immersive evolving world, not a quiet grey sheet).

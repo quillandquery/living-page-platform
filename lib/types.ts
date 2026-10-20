@@ -50,6 +50,11 @@ export type StoryRow = {
    *  `isCompleteArtDirection` in `lib/art-direction/types.ts`. */
   art_direction: Partial<StoryArtDirection>;
   type: StoryType;
+  /** The writer-pinned living-page world (D9, migration 0005), or null to
+   *  auto-cast from the story's own words at render time (lib/living/cast.ts).
+   *  A `WorldKey` string; kept loose here so lib/types stays free of the
+   *  worlds import. */
+  world: string | null;
   /** The live claim token for `/claim/<token>`, or null once claimed,
    *  revoked, or never generated. Never shown to a reader — only ever
    *  read server-side via the service-role client (lib/claim.ts). */
@@ -88,6 +93,8 @@ export type StoryDraftInput = {
   blocks: Block[];
   art_direction?: Partial<StoryArtDirection>;
   type?: StoryType;
+  /** Writer-pinned world (migration 0005) — null/undefined = auto-cast. */
+  world?: string | null;
   /** Optional SEO overrides (migration 0004) — see `StoryRow`. */
   seo_title?: string | null;
   seo_description?: string | null;

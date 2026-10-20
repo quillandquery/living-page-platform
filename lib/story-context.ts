@@ -28,6 +28,7 @@ import { themesOf } from "./discover";
 import { scoreEnvironments } from "./art-direction/generate";
 import { getBackdrop, BACKDROPS } from "./backdrops";
 import type { StoryArtDirection } from "./art-direction/types";
+import type { WritingSignals } from "./writing-opportunities";
 
 /* ── the writer-facing fields a story already has — no new ones added.
    `fragment` is the writer's own hook line and is treated as the human
@@ -50,6 +51,13 @@ export type StoryContextInput = {
    *  reused rather than re-derived, so the context agrees with what the
    *  reader actually renders. */
   artDirection?: Partial<StoryArtDirection> | null;
+  /** OPTIONAL — the writing-intelligence pass's own findings (§12 of the
+   *  writing-experience brief), when the writer went through it
+   *  (`app/write`'s Find-the-story pass). Every entry in it is the
+   *  writer's own words or a quoted excerpt — never invented. Absent for
+   *  any story that never ran that pass; every field below then falls
+   *  back to an honest empty array, exactly as before this was added. */
+  writingSignals?: WritingSignals | null;
 };
 
 export type StoryContext = {
@@ -88,6 +96,17 @@ export type StoryContext = {
   /** the full scored profile, for a caller (the slug deriver, the hero)
    *  that wants a signal this context didn't already surface. */
   profile: SemanticStoryProfile;
+  /** the writer's own strongest lines, sensory answers, named tensions,
+   *  moments and motifs (§12) — `[]` when the writer never ran the
+   *  writing-intelligence pass, never a guess standing in for it. The raw
+   *  material a future visual-world generator can draw on; nothing today
+   *  consumes it yet (see the P0 report). */
+  strongestLines: string[];
+  sensoryDetails: string[];
+  importantMoments: string[];
+  emotionalTensions: string[];
+  motifs: string[];
+  characters: string[];
 };
 
 /* ── body text ─────────────────────────────────────────────────────────
@@ -266,6 +285,16 @@ export function deriveStoryContext(input: StoryContextInput): StoryContext {
   const emotionalTone = profile.emotion[0]?.key ?? null;
   const specificity: "specific" | "generic" = profile.place.length > 0 || profile.objects.length > 0 ? "specific" : "generic";
   const semanticPhrases = deriveSemanticPhrases(profile, environment, storyType, themes);
+  const ws = input.writingSignals;
 
-  return { title, summary, place: input.place, environment, themes, storyType, timeContext, emotionalTone, specificity, semanticPhrases, profile };
+  return {
+    title, summary, place: input.place, environment, themes, storyType, timeContext,
+    emotionalTone, specificity, semanticPhrases, profile,
+    strongestLines: ws?.strongestLines ?? [],
+    sensoryDetails: ws?.sensoryDetails ?? [],
+    importantMoments: ws?.importantMoments ?? [],
+    emotionalTensions: ws?.emotionalTensions ?? [],
+    motifs: ws?.motifs ?? [],
+    characters: ws?.characters ?? [],
+  };
 }

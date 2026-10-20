@@ -13,3 +13,18 @@ to_delete_7sept
 # pre-generated share loops (generated artifacts)
 .loopframes/
 public/share-loops/
+.env.local.bak
+*.bak
+*.bak2
+*.bak3
+build-log.txt
+Claude outputs/
+
+# secrets & local backups (never commit)
+.env.local
+.env*.bak
+*.bak
+*.bak2
+*.bak3
+build-log.txt
+Claude outputs/

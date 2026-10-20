@@ -14,7 +14,10 @@ No Tailwind. No hard-coded hex in components — reference the tokens.
 
 Bright, warm-paper ground; dark ink; bold colour used as **interaction
 state**, not decoration (PRD §9). Muddy gradients and dark neutrals are banned
-as dominant fields.
+as dominant fields **in the Product UI only** (homepage, editor, dashboard,
+auth). Reader / living output is governed separately — see §2 and
+`docs/LIVING-PAGE-ARCHITECTURE.md` (D9) — and *may* use motivated atmospheric
+grounds, dark worlds and glows.
 
 ```css
 :root{
@@ -51,12 +54,18 @@ as dominant fields.
   full-bleed backgrounds (except deliberate momentary "it rained for 5s" beats).
 
 ## 2. Colour — Reader Output
-Reader output keeps the existing per-story engine: a story sets **one**
-`--accent` (from Auto or Mood) and everything derives from it via `oklch(from
-var(--accent) …)` and `color-mix`. A dark **world** overrides the scheme via
-`schemeVars()` (see `lib/backdrops.ts`). Do not apply the Product-UI palette to
-reader output. Rule stays: **one accent per story** (PRD §9, existing CLAUDE
-guardrail).
+Reader output is a **living page** (D9) built on the **Worlds** system: the
+brain casts the story into one continuous, motivated **world** that evolves as
+it is read. A world owns its **ground** (a motivated atmospheric field — e.g. a
+twilight gradient for a dusk essay — not the Product-UI paper, and not an
+arbitrary black) and **one `--accent`**; everything else derives from the accent
+via `oklch(from var(--accent) …)` and `color-mix`, and the world may be light or
+fully dark (D8). The one-accent rule stays (PRD §9). The ground must be *chosen
+from the story*, never defaulted. A single scroll-progress signal
+(`--lit` / `--progress`) drives the world's evolution (brighten / build / react).
+Spec: `docs/LIVING-PAGE-ARCHITECTURE.md`. The legacy single-`--accent`-on-warm-
+grey reader in `app/globals.css` is the pre-living-page baseline; it keeps old
+stories rendering (D4) but is no longer the target.
 
 ## 3. Typography
 Keep the four installed families (`app/layout.tsx`, `next/font/google`) — they
@@ -100,8 +109,10 @@ Page gutter: `max(1rem, 4vw)` on the outer wrapper; content max-width `66rem`.
 --shadow-lift: 0 6px 18px rgba(26,24,22,.10), 0 20px 48px rgba(26,24,22,.10);
 --grain: .04; /* subtle paper grain overlay opacity */
 ```
-Rounded but not "SaaS": prefer `--r-md`/`--r-lg`. **No glassmorphism, no dark
-gradients, no neon glow** (PRD §29 "avoid").
+Rounded but not "SaaS": prefer `--r-md`/`--r-lg`. **In the Product UI:** no
+glassmorphism, no dark gradients, no neon glow (PRD §29 "avoid"). **Reader /
+living output is exempt** — atmospheric gradients, dark grounds and soft glows
+are not only allowed but expected when the story's world calls for them (D9).
 
 ## 6. Motion vocabulary
 

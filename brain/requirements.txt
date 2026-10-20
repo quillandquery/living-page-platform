@@ -1,0 +1,15 @@
+# The new brain — prototype dependencies.
+# Pin loosely; these are the three models from the architecture.
+
+spacy>=3.7,<4.0                 # linguistic layer (entities, POS, tense, structure)
+sentence-transformers>=2.6      # semantic concept matching (embeddings)
+transformers>=4.40              # Hugging Face emotion classifier
+torch>=2.2                      # backend for the two transformer models (CPU is fine)
+
+# spaCy English model is NOT on PyPI — install it after the above with:
+#   python -m spacy download en_core_web_sm
+#
+# The two HF models download automatically on first run and are then cached
+# under ~/.cache/huggingface:
+#   sentence-transformers/all-MiniLM-L6-v2        (~80 MB)
+#   j-hartmann/emotion-english-distilroberta-base (~330 MB)

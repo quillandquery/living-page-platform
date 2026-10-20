@@ -6,19 +6,31 @@ Owner: Reshika. Source of truth for scope: `living-page-prd-v2` + this log.
 
 ---
 
-## D1 — Engine intelligence: **heuristic, no LLM**
-The Auto art-direction engine is a deterministic lexicon + rules system. No
-LLM call at authoring, render or publish time. No AI API key, no per-story
-cost, no network in the loop.
+## D1 — Engine intelligence: **a two-stage brain (local models, no paid LLM)**
+*Revised 2026-10-08. Supersedes the original "heuristic, no LLM" rule, which
+was too weak to drive the living-page design language (D9).*
 
-- **Why:** the "watch it transform while I type" promise needs instant, free,
-  deterministic feedback. Per-keystroke LLM calls can't deliver that.
-- **Implication:** Auto will be *good, not omniscient*. It pattern-matches
-  concrete nouns, weather, time and emotional cue-words. It will NOT truly
-  understand metaphor or "my grandmother's kitchen" the way PRD §15/§17
-  imagine. Write the copy and set expectations accordingly. An LLM pass can be
-  added later as an optional enhancement — architect the engine so a smarter
-  provider could slot in, but do not build it now.
+The Auto engine is now **two stages**:
+1. **Live heuristic** — the deterministic lexicon + rules pass (`lib/annotate.ts`)
+   stays, and still runs instantly on keystroke so "watch it transform while I
+   type" keeps working in the editor.
+2. **The brain** — a richer pass run **server-side / offline on save & publish**
+   (`brain/`): spaCy (linguistics) + sentence-transformers (semantic concepts,
+   matched against the visual-concept library) + a local emotion classifier,
+   producing a `VisualProfile` → `SceneGraph` → casting into the living-page
+   libraries (worlds / behaviours / elements — see D9 and
+   `docs/LIVING-PAGE-ARCHITECTURE.md`).
+
+- **Why the change:** the heuristic-only engine could not read a story richly
+  enough to choose a motivated world, a narrative arc, or which beats earn a
+  signature behaviour. The brain can. It understands concepts and emotion, not
+  just cue-words — so "don't promise metaphor understanding" no longer applies
+  as a hard caveat.
+- **What is still true (the original cost discipline holds):** the brain uses
+  **local models only** — no paid per-story LLM API, no per-story cost, no
+  external network dependency in production beyond loading the (cached) model
+  weights. The instant, free feel at the keyboard is preserved by stage 1;
+  the deeper transform happens once, on save/publish.
 
 ## D2 — Photography: **revised 2026-09-14 — imagery allowed via a curated
 library; sourcing still open**
@@ -105,3 +117,84 @@ bright / calm. The **reader output** (a published story) is dynamic and may go
 fully dark when the world calls for it. These are two token sets; don't let the
 dark reader theme leak into the editor, and don't let the bright product theme
 flatten the reader.
+
+## D9 — The living-page design language (reader output)
+*Added 2026-10-08. The settled design language from the living-page prototypes
+(airport, cartographer, noir, Chiswell). This is now the reader-output standard
+and governs over any earlier reader styling, including the "nothing shouts /
+70% plain" creed in `app/globals.css` and the restraint-only framing of
+`docs/EXPRESSIVE-ENGINE-PLAN.md` (now superseded for reader output). Full spec:
+`docs/LIVING-PAGE-ARCHITECTURE.md`.*
+
+A published story renders as a **living page**, built from three curated
+libraries the brain casts into (worlds · behaviours · elements). Non-negotiable
+invariants — every one of these was a failure mode we fixed, not a preference:
+
+1. **No header images.** The visual is present throughout and *changes as you
+   read* — never a banner parked at the top.
+2. **Elements stay with the words.** Art is co-located with its sentence, or is
+   part of the continuous world — never an icon-per-paragraph list.
+3. **Words unveil.** The type assembles / comes into focus on arrival. It must
+   never read like flat blog text.
+4. **The world evolves with the narrative** — brighten-with-progress /
+   build-on-scroll / react-to-beats. Static is dead.
+5. **Restraint.** Mostly quiet; 2–3 earned surprises; one grammar per page.
+   (This keeps PRD §32; restraint is the *budget*, not the ceiling — the page is
+   now an immersive evolving world, not a quiet grey sheet.)
+6. **Motivated, never default.** Ground / palette / world are chosen from the
+   story (a dusk essay → twilight). No black-by-default, no neon-by-default.
+7. **Curated, premium craft.** Elements come from a curated, tagged illustration
+   library (D2), never procedural clip-art, never childish.
+
+Abstract / internal stories with no concrete objects are a first-class case:
+they live on world + word-unveil + typographic behaviour alone, and must still
+look beautiful. "No element" is never a broken state.
+
+---
+
+## D10 — Every surface is generative (2026-10-09)
+
+**Decision.** Every reader surface — a **world** (atmosphere the story is set
+inside) or a **medium** (the text becomes an artifact: postcard, evidence board,
+maximalist, manuscript) — MUST be a **generative capability over any story**,
+never a bespoke per-story render. This is a standing requirement for all new
+surface work.
+
+**Shape.** Each surface is two parts:
+1. an **adapter** `xInput(scene: LivingScene) → Props` in `lib/living/cast.ts`
+   that reads ONLY the director's output (emphasis `em` spans, the recurring
+   `motif`, the climax/scream, the `dek`, the beats) and maps it to the surface,
+   and
+2. a **component** that renders those props.
+
+No story content is hardcoded in a component. The proof bar is the Maximalist
+pattern: `maximalistInput` picks the scream word and refrain from the scored
+beats, verified to produce TERRIFIED / "wasting my life", WRONG, HOME on three
+unrelated stories. Worlds are generative by construction — the scene component
+is a pure backdrop and the writer's words flow through `LivingStory`'s text
+layer on top.
+
+**Consequence.** A new medium/world is not "done" until it has an adapter and
+renders correctly on several unrelated stories. Bespoke HTML prototypes are a
+design step, not a deliverable.
+
+---
+
+## D11 — Stage 2 is the Claude API; per-story art direction (2026-10-19)
+
+**Decision.** The two-stage brain (D1) keeps Stage 1 (the live, free TS director)
+but **Stage 2 is now the Claude API**, not local models. On publish (or an
+explicit re-roll) Claude reads the story's tone/mood/vibe, casts it to a **style**
+(a world or a medium) with motivated variance, and returns a validated
+`ArtDirection` spec that our renderer realises. Full design: `docs/BRAIN-API.md`.
+
+**This revises D1** (local-only, no per-story cost) for Stage 2 only: cost is
+**per-publish, cached** by text-hash + model version, never per-view; a failed
+call falls back to the deterministic director. **It loosens D6** (closed
+taxonomy): the LLM composes within an **open, expressive grammar** rather than a
+fixed list.
+
+**Hard rule.** The LLM is the art *director*, not the *coder*: it emits a
+schema-validated spec (incl. **sanitised SVG** for bespoke art), never raw
+HTML/CSS/JS. Invalid output → fall back. This preserves safety, caching,
+versioning and the "one medium" coherence while making every story different.

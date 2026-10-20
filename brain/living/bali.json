@@ -1,0 +1,235 @@
+{
+  "worldKey": "storm",
+  "eyebrow": null,
+  "title": "Bali",
+  "beats": [
+    {
+      "text": "When I first got to Bali, I felt like a square peg in a round hole.",
+      "behavior": "unveil",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Unseen, out of place, faintly wrong.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "I know this nerve.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "I've met it before.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "And I know its only balm is time, which is annoying, because time is the one thing I can't optimize.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "So I did what I do with everything: I built a routine and clung to it like a life raft.",
+      "behavior": "rush",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Beach walk, 6pm, every day.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "An anchor.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Very healthy.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Very stable.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Until the anchor tried to kill me.",
+      "behavior": "swell",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "The plan was the usual walk.",
+      "behavior": "rush",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "The execution was two-plus kilometres in the direction with the fewest people, because apparently my instinct for safety is \"go where no one could possibly help you.\"",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Denim shorts, black strapless top, hair gone full feral in the humidity, big bulky headphones on.",
+      "behavior": "hold",
+      "element": "phone",
+      "loud": false
+    },
+    {
+      "text": "I tried to lose myself in the music.",
+      "behavior": "rush",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "I succeeded.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Completely.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Literally.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "I stopped tracking the direction because ABBA was on and priorities are priorities.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "6pm became 7.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "The moody sky became a raging storm.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Fine - not a storm.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "A torrential downpour.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "But you know how Mumbai girls are.",
+      "behavior": "swell",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Rain?",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Meh.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Drizzle.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "We don't run.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": true
+    },
+    {
+      "text": "Only it wasn't drizzle.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Five minutes in, soaked through to the bone.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "I finally look up and take stock of my surroundings, and my surroundings are: nothing.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Every shop shuttered.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "No clubs, no hotels, no people.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Just me, standing in what appeared to be the aftermath of a minor flood, dressed for a rooftop bar.",
+      "behavior": "unveil",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Breathe in.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "Breathe out.",
+      "behavior": "drift",
+      "element": "none",
+      "loud": false
+    },
+    {
+      "text": "ABBA is still here.",
+      "behavior": "hold",
+      "element": "none",
+      "loud": true
+    },
+    {
+      "text": "That's something.",
+      "behavior": "tremor",
+      "element": "none",
+      "loud": false
+    }
+  ]
+}

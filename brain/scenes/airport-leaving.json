@@ -1,0 +1,417 @@
+{
+  "beats": [
+    {
+      "text": "The departures board kept changing and I couldn't make it stop.",
+      "type": "waiting",
+      "emotion": "neutral",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.815,
+        "motion": "hold",
+        "position": "center",
+        "density": 0.2,
+        "opacity": 0.85,
+        "emphasis": 0.21
+      }
+    },
+    {
+      "text": "Rome.",
+      "type": "interruption",
+      "emotion": "neutral",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 1.0,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "Gone.",
+      "type": "interruption",
+      "emotion": "sadness",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 0.95,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "Istanbul.",
+      "type": "interruption",
+      "emotion": "fear",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 0.95,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "Gone.",
+      "type": "interruption",
+      "emotion": "sadness",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 0.95,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "My flight wasn't up yet.",
+      "type": "silence",
+      "emotion": "sadness",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 0.792,
+        "motion": "still",
+        "position": "center",
+        "density": 0,
+        "opacity": 0.7,
+        "emphasis": 0.228
+      }
+    },
+    {
+      "text": "I was sweating.",
+      "type": "interruption",
+      "emotion": "disgust",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 1.0,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "People rushed past me dragging suitcases, phones against their ears, shouting in languages I didn't know.",
+      "type": "rush",
+      "emotion": "disgust",
+      "energy": 0.21,
+      "visualBehavior": {
+        "scale": 1.213,
+        "motion": "scatter",
+        "position": "scattered",
+        "density": 7.84,
+        "opacity": 1.0,
+        "emphasis": 0.842
+      }
+    },
+    {
+      "text": "I checked my passport again.",
+      "type": "interruption",
+      "emotion": "fear",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 1.142,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.56,
+        "opacity": 0.95,
+        "emphasis": 0.778
+      }
+    },
+    {
+      "text": "Again.",
+      "type": "repetition",
+      "emotion": "neutral",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 0.892,
+        "motion": "echo",
+        "position": "stacked",
+        "density": 4.56,
+        "opacity": 0.9,
+        "emphasis": 0.528
+      }
+    },
+    {
+      "text": "The stamp from last summer was still there, smudged.",
+      "type": "reflection",
+      "emotion": "disgust",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "driftslow",
+        "position": "narrow",
+        "density": 0.2,
+        "opacity": 0.8,
+        "emphasis": 0.31
+      }
+    },
+    {
+      "text": "Suddenly they called my gate and I ran.",
+      "type": "rush",
+      "emotion": "fear",
+      "energy": 0.505,
+      "visualBehavior": {
+        "scale": 1.302,
+        "motion": "scatter",
+        "position": "scattered",
+        "density": 9.02,
+        "opacity": 0.95,
+        "emphasis": 0.901
+      }
+    },
+    {
+      "text": "I ran through the whole terminal, my bag slamming against my hip, and I made it just as the doors were closing.",
+      "type": "rush",
+      "emotion": "surprise",
+      "energy": 0.153,
+      "visualBehavior": {
+        "scale": 1.196,
+        "motion": "scatter",
+        "position": "scattered",
+        "density": 7.61,
+        "opacity": 1.0,
+        "emphasis": 0.831
+      }
+    },
+    {
+      "text": "My heart would not slow down for an hour.",
+      "type": "anticipation",
+      "emotion": "sadness",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.915,
+        "motion": "rise",
+        "position": "center",
+        "density": 1.2,
+        "opacity": 0.85,
+        "emphasis": 0.46
+      }
+    }
+  ],
+  "arc": [
+    0.05,
+    0.14,
+    0.14,
+    0.14,
+    0.14,
+    0.14,
+    0.14,
+    0.21,
+    0.14,
+    0.14,
+    0.05,
+    0.505,
+    0.153,
+    0.05
+  ],
+  "profile": {
+    "semantic": {
+      "concepts": [
+        {
+          "name": "passport stamp",
+          "score": 0.451
+        },
+        {
+          "name": "airport board",
+          "score": 0.421
+        },
+        {
+          "name": "receipt",
+          "score": 0.403
+        },
+        {
+          "name": "ticket stub",
+          "score": 0.397
+        },
+        {
+          "name": "telephone cord",
+          "score": 0.386
+        },
+        {
+          "name": "faded photograph",
+          "score": 0.379
+        },
+        {
+          "name": "train window",
+          "score": 0.348
+        },
+        {
+          "name": "keys on a hook",
+          "score": 0.343
+        },
+        {
+          "name": "cup of tea cooling",
+          "score": 0.336
+        },
+        {
+          "name": "newspaper clipping",
+          "score": 0.335
+        },
+        {
+          "name": "handwritten note",
+          "score": 0.328
+        },
+        {
+          "name": "open suitcase spilling",
+          "score": 0.314
+        }
+      ],
+      "emotions": [
+        {
+          "name": "surprise",
+          "score": 0.328
+        },
+        {
+          "name": "fear",
+          "score": 0.306
+        },
+        {
+          "name": "anger",
+          "score": 0.164
+        },
+        {
+          "name": "disgust",
+          "score": 0.088
+        },
+        {
+          "name": "neutral",
+          "score": 0.064
+        },
+        {
+          "name": "sadness",
+          "score": 0.047
+        },
+        {
+          "name": "joy",
+          "score": 0.004
+        }
+      ]
+    },
+    "linguistic": {
+      "objects": [
+        "departure",
+        "board",
+        "flight",
+        "people",
+        "suitcase",
+        "phone",
+        "ear",
+        "language",
+        "passport",
+        "stamp",
+        "summer",
+        "gate",
+        "terminal",
+        "bag",
+        "hip",
+        "door",
+        "heart",
+        "hour"
+      ],
+      "actions": [
+        "keep",
+        "change",
+        "make",
+        "stop",
+        "go",
+        "sweat",
+        "rush",
+        "drag",
+        "shout",
+        "know",
+        "check",
+        "smudge",
+        "call",
+        "run",
+        "slam",
+        "close",
+        "slow"
+      ],
+      "places": [
+        "Istanbul",
+        "Rome"
+      ],
+      "people": [],
+      "temporalReferences": [
+        "last summer",
+        "an hour",
+        "now",
+        "suddenly",
+        "still",
+        "yet"
+      ],
+      "sentenceLengths": [
+        12,
+        1,
+        1,
+        1,
+        1,
+        6,
+        3,
+        17,
+        5,
+        1,
+        9,
+        8,
+        22,
+        9
+      ],
+      "repetition": []
+    },
+    "visual": {
+      "intimacy": 0.319,
+      "chaos": 0.257,
+      "nostalgia": 0.536,
+      "surrealism": 0.038,
+      "physicality": 0.083,
+      "urgency": 0.221,
+      "fragmentation": 0.31,
+      "spatiality": 0.12
+    },
+    "meta": {
+      "backends": {
+        "linguistic": {
+          "backend": "spacy",
+          "model": "en_core_web_sm"
+        },
+        "concepts": {
+          "backend": "sentence-transformers",
+          "model": "sentence-transformers/all-MiniLM-L6-v2"
+        },
+        "emotion": {
+          "backend": "hf-transformers",
+          "model": "j-hartmann/emotion-english-distilroberta-base"
+        }
+      },
+      "tense": {
+        "Past": 10,
+        "Pres": 6
+      },
+      "chars": 521,
+      "fully_offline": false
+    }
+  },
+  "meta": {
+    "beat_count": 14,
+    "type_histogram": {
+      "interruption": 6,
+      "rush": 3,
+      "waiting": 1,
+      "silence": 1,
+      "repetition": 1,
+      "reflection": 1,
+      "anticipation": 1
+    },
+    "peak_energy": 0.505,
+    "mean_energy": 0.153
+  }
+}

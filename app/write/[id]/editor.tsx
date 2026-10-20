@@ -4,8 +4,9 @@ import Link from "next/link";
 import React, { useMemo, useState, useTransition } from "react";
 import { annotate, toBlocks } from "@/lib/annotate";
 import { FormatSelect } from "@/components/living/FormatSelect";
-import { FormatRender } from "@/components/living/formats/render";
-import { getBackdrop } from "@/lib/backdrops";
+import { LivingEmbed } from "@/components/living/LivingEmbed";
+import { castLivingScene } from "@/lib/living/cast";
+import { WORLDS as LIVING_WORLDS, type WorldKey } from "@/lib/living/worlds";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
 import type { StoryRow } from "@/lib/types";
@@ -86,6 +87,12 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [moodSel, setMood] = useState<Mood>("auto");
   const [visSel, setVis] = useState<Visual>("auto");
   const [worldSel, setWorld] = useState<string>("auto");
+  // The living-page WORLD (D9) — the reader-output theme, distinct from the
+  // legacy `worldSel` (art-direction backdrop/environment). "auto" casts it
+  // from the words; a pick pins it (persisted as story.world, migration 0005).
+  const [livingWorld, setLivingWorld] = useState<"auto" | WorldKey>(
+    (story.world && story.world in LIVING_WORLDS ? (story.world as WorldKey) : "auto"),
+  );
   const [veil, setVeil] = useState(story.veil);
 
   const [place, setPlace] = useState(story.place);
@@ -173,7 +180,6 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const accent = artDirection.accent;
   const density = visSel === "auto" ? spec.density : VISUAL_DENSITY[visSel];
   const budget = spec.budget;
-  const dark = getBackdrop(world)?.scheme === "dark";
 
   const blocks = useMemo(
     () => dramatize(toBlocks(annotate(raw, { doodleDensity: density, voiceBudget: budget / 100, register }))),
@@ -202,6 +208,18 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   }, [blocks, artDirection, format, autoKey]);
   const selValue = format;
 
+  // The living page (D9) the reader will actually see — cast from the words,
+  // world "auto" (chosen from the text) unless the writer pinned one. This is
+  // what the "the page" preview renders, so it matches the published reader.
+  const livingScene = useMemo(
+    () => castLivingScene(raw, {
+      title: fragment || place || undefined,
+      eyebrow: [place, date].filter(Boolean).join(" · ") || undefined,
+      world: livingWorld === "auto" ? undefined : livingWorld,
+    }),
+    [raw, fragment, place, date, livingWorld],
+  );
+
   const lines = raw.trim() ? raw.trim().split(/\n+/).filter(Boolean).length : 0;
   const hint = lines === 0 ? "" : lines < 4 ? "Your page is taking shape." : "Keep going. We'll handle the rest.";
 
@@ -215,6 +233,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
     id: story.id, place, date, fragment, accent,
     backdrop: world, veil, source: raw, blocks, imagery,
     art_direction: { ...artDirection, format: fmtSel === "auto" ? undefined : fmtSel },
+    world: livingWorld === "auto" ? null : livingWorld,
     seo_title: seoTitle.trim() || null,
     seo_description: seoDescription.trim() || null,
     tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
@@ -239,6 +258,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
         <span className="ed-bar-r">
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
           <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>See it come alive →</button>
+          <button className="ed-ghost" disabled={!raw.trim()} onClick={() => { try { sessionStorage.setItem("lp-living", JSON.stringify({ text: raw, title: fragment || place || "Untitled", eyebrow: [place, date].filter(Boolean).join(" · ") || "A living page", world: livingWorld === "auto" ? undefined : livingWorld })); } catch {} window.open("/living/preview", "_blank"); }}>Full preview →</button>
           <button className="ed-ghost" disabled={pending} onClick={() => run(saveDraftAction, "save")}>Save</button>
           <button className="ed-pub" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>{published ? "Update" : "Publish"}</button>
         </span>
@@ -314,7 +334,13 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
                   </select>
                 </label>
                 <label className="ed-ctl">World
-                  <select value={worldSel} onChange={(e) => { const v = e.target.value; setWorld(v); track("engine_control_changed", { control: "world", value: v, story_id: story.id }); }}>
+                  <select value={livingWorld} onChange={(e) => { const v = e.target.value as "auto" | WorldKey; setLivingWorld(v); track("engine_control_changed", { control: "world", value: v, story_id: story.id }); }}>
+                    <option value="auto">auto ({livingScene.world.label})</option>
+                    {Object.values(LIVING_WORLDS).map((w) => <option key={w.key} value={w.key}>{w.label}</option>)}
+                  </select>
+                </label>
+                <label className="ed-ctl">Classic backdrop
+                  <select value={worldSel} onChange={(e) => { const v = e.target.value; setWorld(v); }}>
                     <option value="auto">auto ({world})</option>
                     {BACKDROP_NAMES.map((n) => <option key={n} value={n}>{BACKDROPS[n].label}</option>)}
                   </select>
@@ -412,34 +438,18 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             <button onClick={() => setTab("words")} aria-selected={tab === "words"}>your words</button>
           </div>
           {tab === "page" ? (
-            <div className={`ed-live${dark ? " dark" : ""}`} style={{ ["--accent" as string]: accent }} key={`${world}-${format}`}>
-              {raw.trim() ? (
-                // The live "coming alive" preview goes through the SAME
-                // format renderer the reader page does (FormatRender), so
-                // the "Format" control actually changes this stage instead
-                // of a generic flow that never varied with it. `scoped`
-                // keeps the world's palette local to this box rather than
-                // painting :root, and `contain: paint` below (CSS) is what
-                // keeps the format's fixed-position layers (backdrop, hero
-                // subject, letterbox bars, …) inside this pane instead of
-                // covering the whole editor.
-                <FormatRender
-                  format={format}
-                  scoped
-                  chrome={false}
-                  veil={veil}
-                  place={place}
-                  date={date}
-                  fragment={fragment}
-                  accent={accent}
-                  backdrop={world}
-                  blocks={blocks}
-                  artDirection={artDirection}
-                  seed={story.id}
-                />
-              ) : (
-                <p className="ed-blank">Your living page appears here as you write.</p>
-              )}
+            // The live preview IS the published living page (D9), at full
+            // fidelity: an iframe of /living/embed renders the REAL cast world
+            // — CoastStorm / NoirRoom / LivingStory — so a Bali story shows the
+            // real coast-storm, not a boxed-down generic. Cast from the words
+            // (or the writer's pinned world); different story, different world.
+            <div className="ed-live-world">
+              <LivingEmbed
+                text={raw}
+                title={fragment || place || undefined}
+                eyebrow={[place, date].filter(Boolean).join(" · ") || undefined}
+                world={livingWorld === "auto" ? undefined : livingWorld}
+              />
             </div>
           ) : (
             <pre className="ed-words">{raw || "(nothing written yet)"}</pre>
@@ -554,6 +564,10 @@ const CSS = `
      are added. */
   contain: paint; }
 .ed-live.dark{ background:#14161B; color:#ECE8DF; }
+/* the living-page preview (D9) — a bounded stage holding the full-fidelity
+   living page via an iframe (real CoastStorm / NoirRoom / LivingStory). */
+.ed-live-world{ position:relative; flex:1; min-height:0; overflow:hidden; background:#0a0912; }
+.ed-live-world iframe{ width:100%; height:100%; border:0; display:block; }
 .ed-live .frame{ max-width:34rem; }
 .ed-live .flow{ gap:.2rem; }
 .ed-blank{ font-family:var(--f-mono); font-size:.8rem; color:var(--mute); text-align:center; padding-top:8vh; }

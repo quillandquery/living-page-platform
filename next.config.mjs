@@ -14,10 +14,16 @@
  * that further is a follow-up, not a blocker for shipping the rest of this
  * policy now.
  */
+// Next's dev server (Fast Refresh / webpack HMR) evaluates code via eval() —
+// without 'unsafe-eval' the whole client bundle throws on load in `next dev`
+// (every click handler dead, no console error pointing at "your" code). Only
+// relaxed for dev; the production CSP this was audited against is untouched.
+const isDev = process.env.NODE_ENV !== "production";
+
 const CSP = [
   "default-src 'self'",
   // www.googletagmanager.com: GA's gtag.js loader (app/layout.tsx).
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com`,
   // The homepage's inline <style>{CSS}</style> block and React inline
   // `style={{...}}` props used throughout components/living/* all need
   // 'unsafe-inline' here too.

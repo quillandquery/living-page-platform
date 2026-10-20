@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { StoryStage } from "@/components/living/StoryStage";
+import { LivingReader } from "@/components/living/LivingReader";
 import { resolveFormat, fittingFormats, curatedFormats } from "@/lib/formats";
 import { publishedStory, otherPublishedStories } from "@/lib/db";
 import { themesOf } from "@/lib/discover";
@@ -58,10 +59,10 @@ export async function generateMetadata(
 
 /** `/@handle/slug` — the reader. Renders the story's blocks at request time. */
 export default async function StoryReaderPage(
-  { params, searchParams }: { params: Promise<{ handle: string; slug: string }>; searchParams: Promise<{ as?: string }> },
+  { params, searchParams }: { params: Promise<{ handle: string; slug: string }>; searchParams: Promise<{ as?: string; render?: string }> },
 ) {
   const { handle, slug } = await params;
-  const { as } = await searchParams;
+  const { as, render } = await searchParams;
   const story = await publishedStory(clean(handle), slug);
   if (!story) notFound();
 
@@ -133,6 +134,7 @@ export default async function StoryReaderPage(
     <script type="application/ld+json" {...jsonLdScriptProps(articleLd)} />
     <script type="application/ld+json" {...jsonLdScriptProps(breadcrumbLd)} />
     <ReaderTracking storyId={story.id} authorHandle={story.author.handle} slug={slug} format={format} />
+    {render === "classic" ? (
     <StoryStage
       format={format}
       formats={fitting}
@@ -159,6 +161,19 @@ export default async function StoryReaderPage(
         surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place, fragment: surprise.fragment, accent: surprise.accent, backdrop: surprise.backdrop } : null,
       }}
     />
+    ) : (
+    <LivingReader
+      source={story.source}
+      world={story.world}
+      title={seo.title}
+      eyebrow={[story.place, story.date].filter(Boolean).join(" · ") || undefined}
+      share={buildShareProps(story)}
+      more={{
+        same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, fragment: same.fragment } : null,
+        surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place, fragment: surprise.fragment } : null,
+      }}
+    />
+    )}
     </>
   );
 }

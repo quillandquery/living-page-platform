@@ -1,0 +1,269 @@
+{
+  "beats": [
+    {
+      "text": "We drove to the coast before dawn.",
+      "type": "movement",
+      "emotion": "fear",
+      "energy": 0.189,
+      "visualBehavior": {
+        "scale": 0.957,
+        "motion": "drift",
+        "position": "left",
+        "density": 3.76,
+        "opacity": 0.95,
+        "emphasis": 0.388
+      }
+    },
+    {
+      "text": "The sea was flat and silver and went all the way to the horizon, further than I could hold in my eyes.",
+      "type": "observation",
+      "emotion": "fear",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "settle",
+        "position": "right",
+        "density": 2.2,
+        "opacity": 0.9,
+        "emphasis": 0.21
+      }
+    },
+    {
+      "text": "We left footprints in the wet sand and the tide took them almost at once.",
+      "type": "repetition",
+      "emotion": "disgust",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "echo",
+        "position": "stacked",
+        "density": 4.2,
+        "opacity": 0.9,
+        "emphasis": 0.51
+      }
+    },
+    {
+      "text": "Neither of us said anything.",
+      "type": "silence",
+      "emotion": "neutral",
+      "energy": 0.14,
+      "visualBehavior": {
+        "scale": 0.792,
+        "motion": "still",
+        "position": "center",
+        "density": 0,
+        "opacity": 0.75,
+        "emphasis": 0.228
+      }
+    },
+    {
+      "text": "The sky opened slowly over the water, pink and then gold.",
+      "type": "interruption",
+      "emotion": "neutral",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 1.115,
+        "motion": "snap",
+        "position": "edge",
+        "density": 5.2,
+        "opacity": 1.0,
+        "emphasis": 0.76
+      }
+    },
+    {
+      "text": "I have never felt so small and so calm at the same time.",
+      "type": "release",
+      "emotion": "joy",
+      "energy": 0.05,
+      "visualBehavior": {
+        "scale": 0.865,
+        "motion": "settle",
+        "position": "center",
+        "density": 1.2,
+        "opacity": 0.9,
+        "emphasis": 0.41
+      }
+    }
+  ],
+  "arc": [
+    0.189,
+    0.05,
+    0.05,
+    0.14,
+    0.05,
+    0.05
+  ],
+  "profile": {
+    "semantic": {
+      "concepts": [
+        {
+          "name": "footprints in sand",
+          "score": 0.699
+        },
+        {
+          "name": "ocean horizon",
+          "score": 0.546
+        },
+        {
+          "name": "puddle",
+          "score": 0.478
+        },
+        {
+          "name": "ferry wake",
+          "score": 0.456
+        },
+        {
+          "name": "highway vanishing point",
+          "score": 0.398
+        },
+        {
+          "name": "water reflection",
+          "score": 0.396
+        },
+        {
+          "name": "train window",
+          "score": 0.396
+        },
+        {
+          "name": "seashell",
+          "score": 0.384
+        },
+        {
+          "name": "lightning",
+          "score": 0.367
+        },
+        {
+          "name": "storm clouds",
+          "score": 0.352
+        },
+        {
+          "name": "morning mist",
+          "score": 0.345
+        },
+        {
+          "name": "fog over a field",
+          "score": 0.345
+        }
+      ],
+      "emotions": [
+        {
+          "name": "neutral",
+          "score": 0.534
+        },
+        {
+          "name": "fear",
+          "score": 0.277
+        },
+        {
+          "name": "sadness",
+          "score": 0.067
+        },
+        {
+          "name": "joy",
+          "score": 0.042
+        },
+        {
+          "name": "disgust",
+          "score": 0.034
+        },
+        {
+          "name": "surprise",
+          "score": 0.031
+        },
+        {
+          "name": "anger",
+          "score": 0.016
+        }
+      ]
+    },
+    "linguistic": {
+      "objects": [
+        "dawn",
+        "way",
+        "horizon",
+        "eye",
+        "footprint",
+        "sand",
+        "tide",
+        "sky",
+        "water",
+        "gold",
+        "time"
+      ],
+      "actions": [
+        "drive",
+        "go",
+        "hold",
+        "leave",
+        "take",
+        "say",
+        "open",
+        "feel"
+      ],
+      "places": [
+        "coast",
+        "sea"
+      ],
+      "people": [],
+      "temporalReferences": [
+        "then",
+        "never",
+        "dawn",
+        "once"
+      ],
+      "sentenceLengths": [
+        7,
+        22,
+        15,
+        5,
+        11,
+        13
+      ],
+      "repetition": []
+    },
+    "visual": {
+      "intimacy": 0.158,
+      "chaos": 0.19,
+      "nostalgia": 0.485,
+      "surrealism": 0.065,
+      "physicality": 0.116,
+      "urgency": 0.096,
+      "fragmentation": 0.114,
+      "spatiality": 0.336
+    },
+    "meta": {
+      "backends": {
+        "linguistic": {
+          "backend": "spacy",
+          "model": "en_core_web_sm"
+        },
+        "concepts": {
+          "backend": "sentence-transformers",
+          "model": "sentence-transformers/all-MiniLM-L6-v2"
+        },
+        "emotion": {
+          "backend": "hf-transformers",
+          "model": "j-hartmann/emotion-english-distilroberta-base"
+        }
+      },
+      "tense": {
+        "Past": 7
+      },
+      "chars": 355,
+      "fully_offline": false
+    }
+  },
+  "meta": {
+    "beat_count": 6,
+    "type_histogram": {
+      "movement": 1,
+      "observation": 1,
+      "repetition": 1,
+      "silence": 1,
+      "interruption": 1,
+      "release": 1
+    },
+    "peak_energy": 0.189,
+    "mean_energy": 0.088
+  }
+}

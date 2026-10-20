@@ -103,7 +103,31 @@ function MediaFigure({ block }: { block: Extract<Block, { kind: "media" }> }) {
   );
 }
 
+/** Derive the new bespoke elements + behaviours per beat, from the beat's own
+ *  text — additive over the original engine (Beat renders exactly as before when
+ *  these are absent). Restraint: a given element is summoned only once (the first
+ *  beat that cues it), so it reads as a moment, not a repeating motif. */
+type Enliven = { element?: "phone" | "flame"; behavior?: "tremor" | "heartbeat" };
+function enliven(blocks: Block[]): Enliven[] {
+  const usedEl = new Set<string>();
+  return blocks.map((b) => {
+    if ((b as { kind?: string }).kind !== "beat") return {};
+    const t = ((b as { text?: string }).text ?? "");
+    const out: Enliven = {};
+    // behaviour (Beat supports tremor | heartbeat)
+    if (/\b[A-Z]{3,}\b|\b(panic|afraid|terror|behind|screamed|shaking|pounding)\b/.test(t)) out.behavior = "tremor";
+    else if (/\b(heart|heartbeat|breathe|breathing|pulse)\b/i.test(t)) out.behavior = "heartbeat";
+    // element (summoned once)
+    let el: "phone" | "flame" | undefined;
+    if (/\b(missed call|phone|ringing|the number|dial)\b/i.test(t)) el = "phone";
+    else if (/\b(lighter|flame|cigarette|candle|a light)\b/i.test(t)) el = "flame";
+    if (el && !usedEl.has(el)) { usedEl.add(el); out.element = el; }
+    return out;
+  });
+}
+
 export function StoryRender({ blocks }: { blocks: Block[] }) {
+  const tags = enliven(blocks);
   return (
     <>
       {blocks.map((b, i) => {
@@ -124,6 +148,8 @@ export function StoryRender({ blocks }: { blocks: Block[] }) {
             ink={b.ink}
             side={b.side === "left" ? "left" : "right"}
             seed={i * 7 + 3}
+            element={tags[i]?.element}
+            behavior={tags[i]?.behavior}
           >
             {b.text}
           </Beat>
