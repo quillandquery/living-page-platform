@@ -101,18 +101,22 @@ export async function callClaude(
     }
   }
 
-  // Up to two attempts: retry only when the stream closed clean but empty, or
-  // on a transient network/idle error. A real API error (bad model, 4xx) is
-  // returned on the first try — retrying it would just burn time.
+  // Up to two attempts, but we retry ONLY a FAST failure/empty — a quick hiccup
+  // that a second try recovers. We never retry a SLOW one: a long attempt that
+  // ends empty or stalls is the model's real behaviour for this input, and
+  // retrying would just stack another long wait (a bespoke page is ~100s, so two
+  // attempts = ~200s). In that case we stop and let the caller fall back.
   let last: CallResult = { ok: false, reason: "api-error", detail: "no attempt" };
   for (let i = 0; i < 2; i++) {
+    const started = Date.now();
     last = await attempt();
     if (last.ok && last.text.trim() !== "") { cache.set(ck, last.text); return last; }
-    if (!last.ok && /HTTP 4\d\d/.test(last.detail ?? "")) return last; // don't retry client errors
-    // else: empty success or transient error → loop and try once more
+    if (!last.ok && /HTTP 4\d\d/.test(last.detail ?? "")) return last; // client error — won't change
+    if (Date.now() - started > 20_000) break;                          // slow — don't stack a retry
+    // else: a FAST empty success or FAST transient error → one quick retry.
   }
-  // Second attempt also empty/failed. An empty-but-"ok" result is really a
-  // failure for our callers, so surface it as one with a clear reason.
+  // Still empty/failed. An empty-but-"ok" result is really a failure for our
+  // callers, so surface it as one with a clear reason.
   if (last.ok) return { ok: false, reason: "api-error", detail: "empty response (model returned no text)" };
   return last;
 }

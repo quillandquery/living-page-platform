@@ -112,7 +112,13 @@ export async function generatePage(text: string, title: string | undefined, cast
   // self-contained creative pages. Set BRAIN_GENERATE_TIER=opus for max quality
   // (and a longer wait). Output capped so it can't run away.
   const tier = (process.env.BRAIN_GENERATE_TIER === "opus" ? "opus" : "sonnet");
-  const res = await callClaude(tier, SYSTEM, user, 12000);
+  // 90s idle window (vs the 45s default): a big bespoke page can take the model a
+  // while to START emitting (it works the whole composition out first), and the
+  // default idle timeout was firing on that first-token latency, aborting a
+  // perfectly good generation as a false "stall" — which then got retried and
+  // doubled the wait. Once tokens flow they're continuous, so this only affects
+  // the warm-up, not a genuine hang.
+  const res = await callClaude(tier, SYSTEM, user, 12000, 90_000);
   if (!res.ok) return res;
   return processHtml(res.text, beats);
 }
