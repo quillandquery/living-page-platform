@@ -23,10 +23,72 @@ type Sharpen = { anchor: string; mode: "replace" | "add"; question: string; sugg
 type Sug = { title: string; cleaned: string; notes: string; sharpen: Sharpen[] };
 type Palette = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string };
 
-const applyReplace = (t: string, anchor: string, to: string) => { const i = t.indexOf(anchor); return i >= 0 ? t.slice(0, i) + to + t.slice(i + anchor.length) : t; };
+// Locate an anchor the model gave us inside the writer's actual text. The model
+// quotes the anchor back approximately — a curly apostrophe where the text has a
+// straight one, different capitalisation, collapsed spacing, an em-dash for a
+// hyphen — so a literal indexOf misses and the suggestion silently no-ops. We
+// match on a NORMALISED copy of the text while keeping a map back to the real
+// offsets, so edits land on the original characters. Returns null only when the
+// anchor genuinely isn't there.
+function normMap(s: string): { norm: string; map: number[] } {
+  let norm = ""; const map: number[] = []; let prevWs = false;
+  for (let i = 0; i < s.length; i++) {
+    let c = s[i];
+    if (c === "’" || c === "‘" || c === "ʼ" || c === "`") c = "'";
+    else if (c === "“" || c === "”") c = '"';
+    else if (c === "–" || c === "—") c = "-";
+    else if (c === "…") c = ".";
+    if (/\s/.test(c)) { if (prevWs) continue; norm += " "; map.push(i); prevWs = true; }
+    else { norm += c.toLowerCase(); map.push(i); prevWs = false; }
+  }
+  return { norm, map };
+}
+// token = a normalised word with its real offsets in the source text.
+function tokenize(s: string): { w: string; i: number; j: number }[] {
+  const out: { w: string; i: number; j: number }[] = [];
+  const re = /\S+/g; let m: RegExpExecArray | null;
+  while ((m = re.exec(s))) {
+    const w = normMap(m[0]).norm.replace(/[^a-z0-9']/g, "");
+    if (w) out.push({ w, i: m.index, j: m.index + m[0].length });
+  }
+  return out;
+}
+function lev(a: string, b: string): number {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+// two tokens count as "the same word" if equal or within a small edit distance
+// (so a typo in the raw text still matches the model's corrected anchor).
+const tokenEq = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 4 && lev(a, b) <= 2);
+
+function findAnchor(text: string, anchorRaw: string): { start: number; end: number } | null {
+  const anchor = anchorRaw.replace(/^[\s"'“”‘’.…]+|[\s"'“”‘’.…]+$/g, "");
+  if (!anchor) return null;
+  // 1) fast path: exact, normalised substring (quotes/case/spacing tolerant).
+  const A = normMap(text);
+  const needle = normMap(anchor).norm.trim();
+  if (needle) {
+    const idx = A.norm.indexOf(needle);
+    if (idx >= 0) return { start: A.map[idx], end: A.map[idx + needle.length - 1] + 1 };
+  }
+  // 2) fuzzy path: best window of word-tokens, tolerating typos & a dropped word.
+  const at = tokenize(text), bw = tokenize(anchor).map((t) => t.w);
+  if (!bw.length || !at.length) return null;
+  let best = { score: 0, s: -1, e: -1 };
+  for (let p = 0; p + bw.length <= at.length; p++) {
+    let sc = 0;
+    for (let k = 0; k < bw.length; k++) if (tokenEq(at[p + k].w, bw[k])) sc++;
+    if (sc > best.score) best = { score: sc, s: at[p].i, e: at[p + bw.length - 1].j };
+  }
+  return best.score >= Math.max(1, Math.ceil(bw.length * 0.6)) ? { start: best.s, end: best.e } : null;
+}
+const applyReplace = (t: string, anchor: string, to: string) => { const m = findAnchor(t, anchor); return m ? t.slice(0, m.start) + to + t.slice(m.end) : t; };
 const applyAdd = (t: string, anchor: string, line: string) => {
-  const i = t.indexOf(anchor); if (i < 0) return t.replace(/\s*$/, "") + "\n\n" + line;
-  let end = t.indexOf("\n\n", i + anchor.length); if (end < 0) end = t.length;
+  const m = findAnchor(t, anchor); if (!m) return t.replace(/\s*$/, "") + "\n\n" + line;
+  let end = t.indexOf("\n\n", m.end); if (end < 0) end = t.length;
   return t.slice(0, end).replace(/\s+$/, "") + "\n\n" + line + t.slice(end);
 };
 const applySharpenTo = (t: string, s: Sharpen, replacement: string) => s.mode === "add" ? applyAdd(t, s.anchor, replacement) : applyReplace(t, s.anchor, replacement);
@@ -90,13 +152,24 @@ function MakeInner() {
     if (!sug || sug.cleaned.trim() === text.trim()) return;
     setPrevText(text); setText(sug.cleaned); // re-breaks + corrects; the effect re-reads the cleaned text for fresh sharpen
   };
-  const applyS = (i: number, replacement: string) => {
+  // forceOnMiss: when even the normalised matcher can't find a "replace"
+  // anchor, append the line rather than no-op, so the click always does
+  // something and the card can clear. Used by the explicit "apply mine" path.
+  const applyS = (i: number, replacement: string, forceOnMiss = false) => {
     if (!sug || !replacement.trim()) return; const s = sug.sharpen[i];
-    setPrevText(text); const next = applySharpenTo(text, s, replacement.trim()); suggestedFor.current = next; setText(next);
+    let next = applySharpenTo(text, s, replacement.trim());
+    if (next === text) {
+      // Couldn't locate the line. First try: open type-yourself seeded with the
+      // suggestion so the writer can place it — never a silent no-op.
+      if (!forceOnMiss) { setEditingSharpen(i); setCustomText(replacement.trim()); return; }
+      // They confirmed anyway: append it so the thought isn't lost.
+      next = text.replace(/\s*$/, "") + "\n\n" + replacement.trim();
+    }
+    setPrevText(text); suggestedFor.current = next; setText(next);
     setEditingSharpen(null); setSug({ ...sug, sharpen: sug.sharpen.filter((_, j) => j !== i) });
   };
   const useSharpen = (i: number) => { if (sug) applyS(i, sug.sharpen[i].suggestion); };
-  const applyCustom = (i: number) => applyS(i, customText);
+  const applyCustom = (i: number) => applyS(i, customText, true);
   const dismissSharpen = (i: number) => { setEditingSharpen(null); if (sug) setSug({ ...sug, sharpen: sug.sharpen.filter((_, j) => j !== i) }); };
   const startTypeYourself = (i: number) => { if (!sug) return; setEditingSharpen(i); setCustomText(sug.sharpen[i].suggestion); };
   const undo = () => { if (prevText != null) { suggestedFor.current = prevText; setText(prevText); setPrevText(null); } };
