@@ -97,6 +97,78 @@ TECHNICAL CONTRACT (hard rules):
 Here is a tiny exemplar of the TECHNIQUE (scroll var, layered fixed scene, word-unveil, reduced-motion). Match this quality bar and go far beyond it in artwork; do not reuse its content:
 ${EXEMPLAR}`;
 
+// ── DECOMPOSED PIPELINE (SVG-ORA inspired) ──────────────────────────────────
+// Instead of one model drawing the whole page, a SHELL call designs the full
+// bespoke page — layout, CSS, text, motion — but leaves EMPTY art slots; then
+// each slot's artwork is drawn by a focused, parameterised SVG call (in
+// parallel). Bespoke layout + clean, controllable, parallel art.
+
+const SHELL_SYSTEM = `You are a generative interactive designer for Living Page. Given a personal story, author ONE self-contained HTML document that renders it as an immersive LIVING PAGE: a single FULL-BLEED world the words live inside, that EVOLVES as the reader scrolls, with the beats unveiling on arrival. Aim for extraordinary — the quality of an award-winning scrollytelling piece.
+
+CRUCIAL DIFFERENCE: you do NOT draw the artwork yourself. Wherever the page needs a drawn picture (the full-bleed background world, a key object, a scene), you place an EMPTY slot and describe what belongs there, and it will be drawn and inserted for you:
+<div class="art" data-art="a vivid, specific description of exactly what to draw here AND its role — e.g. 'full-bleed background: a rain-soaked night city skyline under a heavy sky that breaks into warm dawn toward the end'" data-fit="cover"></div>
+- Use 1 to 4 slots. ONE should be the full-bleed background world (position:fixed;inset:0, behind the text). Others can be placed in the layout (a mid-ground object, a scene).
+- Size/position each slot with your own CSS. The drawing will fill its slot.
+- Make the data-art descriptions concrete and motivated by THIS story's setting and mood.
+
+You STILL build everything else, fully and well:
+- The complete layout and all CSS; a composed, varied typographic treatment (some beats poster-scale, placed with intent — never a uniform centred column).
+- The beats as REAL text directly in the markup (every word, numbers too), split into their own blocks. Never inject text from JS.
+- The word-unveil (wrap existing words in spans, reveal on scroll via IntersectionObserver AND on load; nothing stays invisible).
+- A scroll-progress CSS var (0..1) that your slots and styles can react to, so the world evolves.
+- prefers-reduced-motion handling. Fully self-contained (no external resources). Start at <!doctype html>, output ONLY the HTML.`;
+
+/** Draw ONE self-contained SVG for a slot — the SVG-ORA move: focused, bounded,
+ *  parameterised, clean-extracted. */
+async function generateSvgPiece(tier: Tier, desc: string, fit: string, palette: string): Promise<string> {
+  const sys = `You are a world-class SVG artist. Draw ONE high-quality, self-contained SVG for a slot in an immersive, cinematic story page.
+RULES:
+- Return ONLY raw SVG code (<svg ...>...</svg>). No markdown, no commentary.
+- Give it a viewBox and preserveAspectRatio="xMidYMid slice" so it fills a "${fit}" slot edge to edge, minimal empty margin.
+- Premium, atmospheric, hand-crafted — layered paths, rich gradients, real depth and light. NEVER clip-art, flat icons, or childish shapes.
+- Palette/mood: ${palette}. Strong but motivated colour.
+- Fully self-contained: inline everything, no <image>, no external refs, no web fonts. Subtle inline CSS/SMIL animation is welcome if it suits the subject.`;
+  const res = await callClaude(tier, sys, `Draw this: ${desc}`, 5000, 60_000);
+  if (!res.ok) return "";
+  const t = res.text; const a = t.search(/<svg/i); const b = t.toLowerCase().lastIndexOf("</svg>");
+  return a >= 0 && b > a ? t.slice(a, b + 6) : "";
+}
+
+const SLOT_RE = /<div\b([^>]*\bdata-art=(?:"([^"]*)"|'([^']*)')[^>]*)>\s*<\/div>/gi;
+
+/** The decomposed generation: shell → parse slots → draw each SVG in parallel → assemble. */
+async function runDecomposed(beats: string[], title: string | undefined, palette: string, tier: Tier): Promise<GenResult> {
+  const shellUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}`;
+  const sres = await callClaude(tier, SHELL_SYSTEM, shellUser, 12000, 90_000);
+  if (!sres.ok) return sres;
+  const doc = extractDoc(sres.text);
+  if (!doc.ok) return doc;
+  let html = doc.html;
+
+  // collect the slots the shell declared
+  const slots: { desc: string; fit: string }[] = [];
+  for (const m of html.matchAll(SLOT_RE)) {
+    const attrs = m[1]; const desc = (m[2] ?? m[3] ?? "").trim();
+    const fit = (attrs.match(/data-fit=(?:"([^"]*)"|'([^']*)')/)?.[1] ?? "cover");
+    if (desc) slots.push({ desc, fit });
+  }
+  // draw them all at once
+  const svgs = await Promise.all(slots.map((s) => generateSvgPiece(tier, s.desc, s.fit, palette)));
+  // inject each drawn SVG back into its slot, in order
+  let i = 0;
+  html = html.replace(SLOT_RE, (whole, attrs) => {
+    const svg = svgs[i++];
+    return svg ? `<div${attrs}>${svg}</div>` : whole;
+  });
+  // make every slot's SVG fill its box
+  const fillCss = `<style>.art{overflow:hidden}.art>svg{width:100%;height:100%;display:block}</style>`;
+  html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${fillCss}</head>`) : fillCss + html;
+
+  const grade = gradePage(html, beats);
+  if (grade.fatal) return { ok: false, reason: "invalid", detail: `decomposed low quality: ${grade.reasons.join("; ")} (${slots.length} slots)`, debugHtml: finalize(html) };
+  return { ok: true, html: finalize(html) };
+}
+
 export type GenResult =
   | { ok: true; html: string }
   | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string; debugHtml?: string };
@@ -173,9 +245,16 @@ export async function generatePage(
   text: string,
   title: string | undefined,
   cast?: BrainCast,
-  opts?: { tier?: Tier; maxTokens?: number },
+  opts?: { tier?: Tier; maxTokens?: number; mode?: "single" | "decomposed" },
 ): Promise<GenResult> {
   const beats = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+
+  // Decomposed path: shell designs the page + art slots, focused SVG calls fill them.
+  if (opts?.mode === "decomposed") {
+    const dTier: Tier = opts.tier && (["haiku", "sonnet", "opus"] as const).includes(opts.tier) ? opts.tier : "sonnet";
+    const palette = cast?.palette ? JSON.stringify(cast.palette) : "drawn from the story's own setting and mood; no black-by-default, no neon-by-default";
+    return runDecomposed(beats, title, palette, dTier);
+  }
   const guide = cast
     ? `\n\nART DIRECTION (from the read — honour it):\nstyle: ${cast.style}\nread: ${JSON.stringify(cast.read)}\npalette: ${JSON.stringify(cast.palette ?? {})}\nnote: ${cast.artNote ?? ""}`
     : "";
