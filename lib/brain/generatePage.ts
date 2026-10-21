@@ -187,13 +187,20 @@ export async function generatePage(text: string, title: string | undefined, cast
   // the best page seen so a soft-flawed one still ships rather than falling to Auto.
   let best: { html: string; grade: Grade } | null = null;
   let lastErr: GenResult = { ok: false, reason: "api-error", detail: "no generation" };
+  // Hard wall: Vercel kills the function at 300s. An Opus page is ~150-200s, so a
+  // SECOND Opus pass would blow the ceiling and 504 (the client's "couldn't reach").
+  // So we only start a regeneration while there's budget left for it to finish.
+  const started = Date.now();
+  const REGEN_BUDGET_MS = 90_000;
   for (let shot = 0; shot < 2; shot++) {
+    if (shot > 0 && Date.now() - started > REGEN_BUDGET_MS) break; // no time for another pass — ship best / fall back
     const fix = shot === 0 || !best
       ? ""
       : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these. Draw real SVG artwork of the story's own objects, give the page a built, evolving background, animate the words in, and break each beat into its own block. Return the full corrected HTML document only.`;
     // 90s idle window: a big page can take a while to START emitting; the default
     // 45s was firing on that first-token latency and aborting good generations.
-    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 16000, 90_000);
+    // Output capped at 8000 tokens so a single pass can't run past the 300s ceiling.
+    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 8000, 90_000);
     if (!res.ok) { lastErr = res; if (best) break; else continue; }
     const doc = extractDoc(res.text);
     if (!doc.ok) { lastErr = doc; if (best) break; else continue; }
