@@ -50,6 +50,12 @@ export async function callClaude(
   user: string,
   maxTokens = 1024,
   idleMs = 45_000,
+  // The 5-5 models reason BY DEFAULT, and that reasoning counts against
+  // max_tokens. A demanding prompt made them spend the ENTIRE budget thinking and
+  // emit zero HTML (empty) or a truncated fragment. "off" turns thinking off so
+  // every token goes to the answer; a number gives a bounded thinking budget
+  // (the rest of max_tokens is left for the answer).
+  thinking: "off" | number = "off",
 ): Promise<CallResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, reason: "no-key" };
@@ -76,6 +82,7 @@ export async function callClaude(
         // aren't cached, so this is safe for the small prompts too.
         body: JSON.stringify({
           model: MODELS[tier], max_tokens: maxTokens, stream: true,
+          thinking: thinking === "off" ? { type: "disabled" } : { type: "enabled", budget_tokens: thinking },
           system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
           messages: [{ role: "user", content: user }],
         }),
