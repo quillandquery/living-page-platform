@@ -16,11 +16,15 @@ import { generatePage } from "@/lib/brain/generatePage";
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
-  let body: { text?: string; title?: string; cast?: BrainCast };
+  let body: { text?: string; title?: string; cast?: BrainCast; tier?: "haiku" | "sonnet" | "opus"; maxTokens?: number };
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, reason: "invalid" }, { status: 400 }); }
   const text = (body.text ?? "").trim();
   if (!text) return NextResponse.json({ ok: false, reason: "invalid" }, { status: 400 });
 
-  const result = await generatePage(text, body.title, body.cast);
+  // Optional per-call overrides (tuning / comparison). Ignored unless valid.
+  const tier = ["haiku", "sonnet", "opus"].includes(body.tier as string) ? body.tier : undefined;
+  const maxTokens = typeof body.maxTokens === "number" && body.maxTokens >= 1000 && body.maxTokens <= 20000 ? body.maxTokens : undefined;
+
+  const result = await generatePage(text, body.title, body.cast, { tier, maxTokens });
   return NextResponse.json(result);
 }

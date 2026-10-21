@@ -164,7 +164,12 @@ function finalize(html: string): string {
   return h;
 }
 
-export async function generatePage(text: string, title: string | undefined, cast?: BrainCast): Promise<GenResult> {
+export async function generatePage(
+  text: string,
+  title: string | undefined,
+  cast?: BrainCast,
+  opts?: { tier?: Tier; maxTokens?: number },
+): Promise<GenResult> {
   const beats = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   const guide = cast
     ? `\n\nART DIRECTION (from the read — honour it):\nstyle: ${cast.style}\nread: ${JSON.stringify(cast.read)}\npalette: ${JSON.stringify(cast.palette ?? {})}\nnote: ${cast.artNote ?? ""}`
@@ -178,9 +183,14 @@ export async function generatePage(text: string, title: string | undefined, cast
   // (no text / no art), which with Opus is rare — so we almost never pay twice.
   // The cheap tiers (haiku/sonnet) stay on the story-refinement side (suggest/cast).
   // Env can still pin the run (BRAIN_GENERATE_TIER = haiku | sonnet | opus).
-  const pin = process.env.BRAIN_GENERATE_TIER as Tier | undefined;
+  const pin = (opts?.tier ?? (process.env.BRAIN_GENERATE_TIER as Tier | undefined));
   const ladder: Tier[] = pin && (["haiku", "sonnet", "opus"] as const).includes(pin)
     ? [pin, pin] : ["opus", "opus"];
+  // Opus reasons before it writes, so it needs real output headroom — capping it
+  // at 8k left no room for the page and it came back EMPTY. 16k lets reasoning +
+  // a full rich page fit; the model self-limits well under it (pages run ~4-7k
+  // tokens), so a single pass still finishes inside the 300s ceiling.
+  const maxTokens = opts?.maxTokens ?? 16000;
 
   // Up to two shots, gated. The first is plain; if it comes back a dud (no words,
   // no art), the second steps up a model AND is told EXACTLY what was wrong. We keep
@@ -199,8 +209,7 @@ export async function generatePage(text: string, title: string | undefined, cast
       : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these. Draw real SVG artwork of the story's own objects, give the page a built, evolving background, animate the words in, and break each beat into its own block. Return the full corrected HTML document only.`;
     // 90s idle window: a big page can take a while to START emitting; the default
     // 45s was firing on that first-token latency and aborting good generations.
-    // Output capped at 8000 tokens so a single pass can't run past the 300s ceiling.
-    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, 8000, 90_000);
+    const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, maxTokens, 90_000);
     if (!res.ok) { lastErr = res; if (best) break; else continue; }
     const doc = extractDoc(res.text);
     if (!doc.ok) { lastErr = doc; if (best) break; else continue; }
