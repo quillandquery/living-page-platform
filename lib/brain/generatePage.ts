@@ -98,6 +98,29 @@ TECHNICAL CONTRACT (hard rules):
 Here is a tiny exemplar of the TECHNIQUE (scroll var, layered fixed scene, word-unveil, reduced-motion). Match this quality bar and go far beyond it in artwork; do not reuse its content:
 ${EXEMPLAR}`;
 
+// DETERMINISTIC WORD BEHAVIOUR. Like the art primitives, meaning-tied word
+// motion shouldn't depend on the LLM remembering to do it. We inject a tiny
+// dictionary (meaning → motion) that tags matching word-spans after they're
+// wrapped — "storm"/"shaking" tremble, "drifted"/"floating" sway, "gold"/"glow"
+// warm-glow, "whisper"/"faded" breathe, "heart"/"love" pulse, "rise"/"stars"
+// lift. Subtle, looping, reduced-motion-safe. Applied to the decomposed page.
+const WORD_FX = `<style>
+@keyframes fxTremble{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px) rotate(-.5deg)}75%{transform:translateX(1.5px) rotate(.5deg)}}
+@keyframes fxSway{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(2.5deg)}}
+@keyframes fxGlow{0%,100%{text-shadow:0 0 6px rgba(255,210,140,.3)}50%{text-shadow:0 0 16px rgba(255,210,140,.85)}}
+@keyframes fxFade{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes fxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.13)}}
+@keyframes fxRise{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.fx-tremble{display:inline-block;animation:fxTremble .35s ease-in-out infinite}
+.fx-sway{display:inline-block;animation:fxSway 4s ease-in-out infinite}
+.fx-glow{animation:fxGlow 3.5s ease-in-out infinite;color:#ffd9a0}
+.fx-fade{display:inline-block;animation:fxFade 4.5s ease-in-out infinite}
+.fx-pulse{display:inline-block;animation:fxPulse 1.7s ease-in-out infinite;color:#ff9a9a}
+.fx-rise{display:inline-block;animation:fxRise 4.5s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){[class*=fx-]{animation:none!important}}
+</style>
+<script>/*__lpWordFx*/(function(){var M={tremble:['shaking','shaky','trembling','tremble','storm','stormy','afraid','scared','nervous','shook','shiver','quiver','trembled'],sway:['drifted','drift','drifting','floating','float','floated','sway','adrift','wander','wandering','swaying'],glow:['gold','golden','warm','warmth','glow','glowing','sun','sunlight','fire','ember','embers','shine','shining','shimmer','bright','radiant'],fade:['fade','faded','fading','whisper','whispered','gone','vanish','vanished','disappear','disappeared','quiet','silence','silent','dissolve'],pulse:['heart','heartbeat','love','loved','beating','pulse','alive'],rise:['rise','rose','rising','soar','soaring','soared','lift','lifted','upward','sky','stars','starlight']};var map={};for(var k in M){M[k].forEach(function(w){map[w]='fx-'+k})}function tag(){try{var ws=document.querySelectorAll('span.w');for(var i=0;i<ws.length;i++){var s=ws[i];if(s.querySelector('*'))continue;var t=(s.textContent||'').toLowerCase().replace(/[^a-z']/g,'');var c=map[t];if(c&&!/fx-/.test(s.className))s.classList.add(c)}}catch(e){}}tag();setTimeout(tag,1400);})();</script>`;
+
 // ── DECOMPOSED PIPELINE (SVG-ORA inspired) ──────────────────────────────────
 // Instead of one model drawing the whole page, a SHELL call designs the full
 // bespoke page — layout, CSS, text, motion — but leaves EMPTY art slots; then
@@ -119,7 +142,7 @@ Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma
 You STILL build everything else, fully and well:
 - The complete layout and all CSS; a composed, varied typographic treatment (some beats poster-scale, placed with intent — never a uniform centred column).
 - The beats as REAL text directly in the markup (every word, numbers too), split into their own blocks. Never inject text from JS.
-- The word-unveil (wrap existing words in spans, reveal on scroll via IntersectionObserver AND on load; nothing stays invisible).
+- The word-unveil: wrap each word in <span class="w"> (use exactly that class name) and reveal on scroll via IntersectionObserver AND on load; nothing stays invisible.
 - A scroll-progress CSS var (0..1) that your slots and styles can react to, so the world evolves.
 - prefers-reduced-motion handling. Fully self-contained (no external resources). Start at <!doctype html>, output ONLY the HTML.`;
 
@@ -178,14 +201,17 @@ async function runDecomposed(beats: string[], title: string | undefined, palette
   const fillCss = `<style>.art{overflow:hidden}.art>svg{width:100%;height:100%;display:block}</style>`;
   html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${fillCss}</head>`) : fillCss + html;
 
+  // deterministic meaning-tied word motion
+  html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${WORD_FX}</body>`) : html + WORD_FX;
+
   const grade = gradePage(html, beats);
-  if (grade.fatal) return { ok: false, reason: "invalid", detail: `decomposed low quality: ${grade.reasons.join("; ")} (${slots.length} slots)`, debugHtml: finalize(html) };
+  if (grade.fatal) return { ok: false, reason: "invalid", detail: `decomposed low quality: ${grade.reasons.join("; ")} (${slots.length} slots)` };
   return { ok: true, html: finalize(html) };
 }
 
 export type GenResult =
   | { ok: true; html: string }
-  | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string; debugHtml?: string };
+  | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string };
 
 /** Pull the HTML document out of the model's reply. No judgement of quality
  *  here — that's the gate's job. Returns the raw document or an error. */
@@ -259,7 +285,7 @@ export async function generatePage(
   text: string,
   title: string | undefined,
   cast?: BrainCast,
-  opts?: { tier?: Tier; maxTokens?: number; mode?: "single" | "decomposed" },
+  opts?: { tier?: Tier; mode?: "single" | "decomposed" },
 ): Promise<GenResult> {
   const beats = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
@@ -284,11 +310,7 @@ export async function generatePage(
   const pin = (opts?.tier ?? (process.env.BRAIN_GENERATE_TIER as Tier | undefined));
   const ladder: Tier[] = pin && (["haiku", "sonnet", "opus"] as const).includes(pin)
     ? [pin, pin] : ["opus", "opus"];
-  // Opus reasons before it writes, so it needs real output headroom — capping it
-  // at 8k left no room for the page and it came back EMPTY. 16k lets reasoning +
-  // a full rich page fit; the model self-limits well under it (pages run ~4-7k
-  // tokens), so a single pass still finishes inside the 300s ceiling.
-  const maxTokens = opts?.maxTokens ?? 16000;
+  const maxTokens = 16000;
 
   // Up to two shots, gated. The first is plain; if it comes back a dud (no words,
   // no art), the second steps up a model AND is told EXACTLY what was wrong. We keep
@@ -319,6 +341,6 @@ export async function generatePage(
   }
   // Ship the best non-fatal page; otherwise reject so the client keeps Auto.
   if (best && !best.grade.fatal) return { ok: true, html: finalize(best.html) };
-  if (best) return { ok: false, reason: "invalid", detail: `low quality: ${best.grade.reasons.join("; ")}`, debugHtml: best.html };
+  if (best) return { ok: false, reason: "invalid", detail: `low quality: ${best.grade.reasons.join("; ")}` };
   return lastErr;
 }
