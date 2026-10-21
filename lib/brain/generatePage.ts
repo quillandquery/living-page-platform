@@ -99,7 +99,7 @@ ${EXEMPLAR}`;
 
 export type GenResult =
   | { ok: true; html: string }
-  | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string };
+  | { ok: false; reason: "no-key" | "api-error" | "invalid"; detail?: string; debugHtml?: string };
 
 /** Pull the HTML document out of the model's reply. No judgement of quality
  *  here — that's the gate's job. Returns the raw document or an error. */
@@ -125,12 +125,16 @@ type Grade = { pass: boolean; fatal: boolean; reasons: string[] };
 function gradePage(html: string, beats: string[]): Grade {
   const reasons: string[] = [];
   const lower = html.toLowerCase();
-  const plain = html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<[^>]+>/g, " ").toLowerCase();
+  const noTags = html.replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<script[\s\S]*?<\/script>/gi, " ");
+  // Two strips: one keeps word gaps (tags → space), one is DENSE (tags → "") so
+  // that per-letter or per-word animation spans — <span>t</span><span>r</span> —
+  // rejoin into findable words instead of becoming "t r a v". A word counts if it
+  // survives in EITHER. This stopped the gate from rejecting perfectly good pages.
+  const spaced = (" " + noTags.replace(/<[^>]+>/g, " ") + " ").replace(/\s+/g, " ").toLowerCase();
+  const dense = noTags.replace(/<[^>]+>/g, "").toLowerCase();
   // 1. the writer's own words actually render
   const words = [...new Set((beats.join(" ").toLowerCase().match(/[a-z']{5,}/g) ?? []))].slice(0, 40);
-  const present = words.filter((w) => plain.includes(w)).length;
+  const present = words.filter((w) => spaced.includes(w) || dense.includes(w)).length;
   const textMissing = words.length >= 5 && present < Math.ceil(words.length * 0.35);
   if (textMissing) reasons.push("most of the story's words don't render");
   // 2. real artwork — SVG shapes, or a built, layered CSS scene (gradients)
@@ -145,8 +149,9 @@ function gradePage(html: string, beats: string[]): Grade {
   // 3. it must MOVE — unveil / scroll-reactive world / animation
   const motion = /intersectionobserver/.test(lower) || /addeventlistener\(['"]scroll/.test(lower) || /@keyframes/.test(lower) || /transition\s*:/.test(lower) || /requestanimationframe/.test(lower);
   if (!motion) reasons.push("nothing moves (no unveil, no scroll reaction, no animation)");
-  // 4. the beats are broken into their own blocks, not one wall
-  const blocks = (lower.match(/<(p|h1|h2|h3|section|article|blockquote|li)\b/g) ?? []).length;
+  // 4. the beats are broken into their own blocks, not one wall (div counts —
+  // many pages wrap each beat in a styled div rather than a <p>)
+  const blocks = (lower.match(/<(p|h1|h2|h3|h4|section|article|blockquote|li|div)\b/g) ?? []).length;
   if (blocks < Math.max(3, Math.ceil(beats.length * 0.6))) reasons.push("the beats aren't broken into their own blocks");
   if (html.length < 1800) reasons.push("far too sparse");
   // fatal = the page isn't a living page at all: no words, or no art. Those get a
@@ -221,6 +226,6 @@ export async function generatePage(
   }
   // Ship the best non-fatal page; otherwise reject so the client keeps Auto.
   if (best && !best.grade.fatal) return { ok: true, html: finalize(best.html) };
-  if (best) return { ok: false, reason: "invalid", detail: `low quality: ${best.grade.reasons.join("; ")}` };
+  if (best) return { ok: false, reason: "invalid", detail: `low quality: ${best.grade.reasons.join("; ")}`, debugHtml: best.html };
   return lastErr;
 }
