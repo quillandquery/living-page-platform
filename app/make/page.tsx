@@ -111,7 +111,11 @@ function MakeInner() {
   const [editingSharpen, setEditingSharpen] = useState<number | null>(null);
   const [customText, setCustomText] = useState("");
   const [prevText, setPrevText] = useState<string | null>(null);
+  const [justApplied, setJustApplied] = useState<string | null>(null); // transient "✓ applied" confirmation
   const suggestedFor = useRef("");
+
+  // clear the applied-confirmation after a moment
+  useEffect(() => { if (!justApplied) return; const t = setTimeout(() => setJustApplied(null), 2600); return () => clearTimeout(t); }, [justApplied]);
 
   // ── Reveal stage: the look ──
   const [worldSel, setWorldSel] = useState<string>("auto");
@@ -150,7 +154,11 @@ function MakeInner() {
 
   const applyReshape = () => {
     if (!sug || sug.cleaned.trim() === text.trim()) return;
-    setPrevText(text); setText(sug.cleaned); // re-breaks + corrects; the effect re-reads the cleaned text for fresh sharpen
+    // Mark the reshaped text as already-suggested so the auto-suggest effect does
+    // NOT immediately re-run and resurface the same chip/cards — that re-ask was
+    // what made a landed reshape feel like it "reverted". The sharpen cards we
+    // already have still anchor fine to the reshaped text.
+    setPrevText(text); suggestedFor.current = sug.cleaned; setText(sug.cleaned); setJustApplied("tidied & reshaped into paragraphs");
   };
   // forceOnMiss: when even the normalised matcher can't find a "replace"
   // anchor, append the line rather than no-op, so the click always does
@@ -167,6 +175,7 @@ function MakeInner() {
     }
     setPrevText(text); suggestedFor.current = next; setText(next);
     setEditingSharpen(null); setSug({ ...sug, sharpen: sug.sharpen.filter((_, j) => j !== i) });
+    setJustApplied("added to your story — see it in the preview");
   };
   const useSharpen = (i: number) => { if (sug) applyS(i, sug.sharpen[i].suggestion); };
   const applyCustom = (i: number) => applyS(i, customText, true);
@@ -270,6 +279,7 @@ function MakeInner() {
                     {sug?.title && !title ? <button className="mk-chip title" onClick={() => setTitle(sug.title)} type="button">title: “{sug.title}”</button> : null}
                     {prevText != null ? <button className="mk-undo" onClick={undo} type="button">⟲ undo</button> : null}
                   </div>
+                  {justApplied ? <div className="mk-applied">✓ {justApplied}</div> : null}
                 </>
               )}
             </div>
@@ -404,6 +414,8 @@ const CSS = `
 .mk-chip.sharp{ border-color:var(--warm); color:#a56a16; } .mk-chip.sharp b{ background:var(--warm); } .mk-chip.sharp.on{ background:#fbeedd; }
 .mk-chip.title{ border-style:dashed; }
 .mk-undo{ font-family:var(--f-mono); font-size:.68rem; background:none; border:none; color:var(--mute); text-decoration:underline; cursor:pointer; }
+.mk-applied{ font-family:var(--f-mono); font-size:.72rem; color:var(--good); margin-top:.6rem; animation:mkFade .3s ease; }
+@keyframes mkFade{ from{ opacity:0; transform:translateY(-3px); } to{ opacity:1; transform:none; } }
 
 .mk-sharpen{ display:flex; flex-direction:column; gap:.7rem; margin-bottom:2rem; }
 .mk-sc{ background:var(--paper-2); border:1px solid var(--line); border-left:3px solid var(--warm); border-radius:10px; padding:.85rem 1rem; }

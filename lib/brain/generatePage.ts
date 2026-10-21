@@ -139,8 +139,14 @@ FREE ATMOSPHERE GENERATORS: for texture and atmospheric LAYERS — rain, grain, 
 <div class="art" data-gen="rain" data-colors="#cfd8e6" data-angle="12"></div>
 Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). Reserve the described data-art slots ONLY for the story's bespoke focal SUBJECTS (a lone figure, a specific building, an object). Prefer generators for anything atmospheric.
 
+LENGTH & READABILITY — the reader must actually want to READ this, especially when it's long:
+- Judge the length from the beats. A SHORT, sparse piece (a few beats) can be maximalist — one beat per full screen. A LONGER piece must be READABLE prose first: group its paragraphs into flowing, comfortably-measured reading passages (do NOT force one paragraph per full viewport — that turns a long story into an exhausting scroll). Reserve the full-screen, poster-scale drama for only 2-3 EARNED key moments (the opening line, the turn, the final line).
+- VARY TYPOGRAPHY HARD so a long read has rhythm and the point lands: pull 2-4 pivotal sentences out at large display scale, change size / weight / italic / alignment between passages, let a key line breathe alone. Never render every paragraph at the same size and weight — that is the #1 reason a long page feels flat and unread.
+- Comfortable reading measure (~34-46rem), generous line-height and paragraph spacing for the body passages; big dramatic type only for the earned moments.
+- If a beat arrives as one long UNBROKEN block of text, break it into natural paragraphs yourself at sentence/topic shifts for readability — you may add paragraph breaks and spacing, you must never change or drop a word.
+
 You STILL build everything else, fully and well:
-- The complete layout and all CSS; a composed, varied typographic treatment (some beats poster-scale, placed with intent — never a uniform centred column).
+- The complete layout and all CSS; a composed, varied typographic treatment as above — never a uniform centred column of equal-size paragraphs.
 - The beats as REAL text directly in the markup (every word, numbers too), split into their own blocks. Never inject text from JS.
 - The word-unveil: wrap each word in <span class="w"> (use exactly that class name) and reveal on scroll via IntersectionObserver AND on load; nothing stays invisible.
 - A scroll-progress CSS var (0..1) that your slots and styles can react to, so the world evolves.
