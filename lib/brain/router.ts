@@ -33,6 +33,12 @@ export type CallResult =
 const cache = new Map<string, string>();
 const keyOf = (t: Tier, s: string, u: string, m: number) => `${t}|${m}|${s.length}|${u}`;
 
+/** Diagnostics from the most recent streamed call — what the API actually did
+ *  (stop reason, token usage, whether it emitted reasoning blocks we don't keep,
+ *  which delta types arrived). Surfaced to a debug caller to explain empties and
+ *  truncations. Overwritten each call. */
+export let lastDiag: Record<string, unknown> | null = null;
+
 /**
  * Streamed call. The output arrives token-by-token, so a long generation never
  * trips a single-request timeout; we only abort if the stream goes IDLE for
@@ -82,7 +88,10 @@ export async function callClaude(
       }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
+      const t0 = Date.now();
       let buf = "", out = "";
+      const deltaTypes: Record<string, number> = {}; const blockTypes: Record<string, number> = {};
+      let stop: string | undefined, usageOut: number | undefined;
       for (;;) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -96,12 +105,15 @@ export async function callClaude(
           const payload = line.slice(5).trim();
           if (!payload || payload === "[DONE]") continue;
           try {
-            const ev = JSON.parse(payload) as { type?: string; delta?: { type?: string; text?: string }; error?: { message?: string } };
-            if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") out += ev.delta.text ?? "";
-            else if (ev.type === "error") return { ok: false, reason: "api-error", detail: ev.error?.message ?? "stream error" };
+            const ev = JSON.parse(payload) as { type?: string; delta?: { type?: string; text?: string; stop_reason?: string }; content_block?: { type?: string }; usage?: { output_tokens?: number }; error?: { message?: string } };
+            if (ev.type === "content_block_start" && ev.content_block?.type) blockTypes[ev.content_block.type] = (blockTypes[ev.content_block.type] ?? 0) + 1;
+            if (ev.type === "content_block_delta" && ev.delta?.type) { deltaTypes[ev.delta.type] = (deltaTypes[ev.delta.type] ?? 0) + 1; if (ev.delta.type === "text_delta") out += ev.delta.text ?? ""; }
+            else if (ev.type === "message_delta") { if (ev.delta?.stop_reason) stop = ev.delta.stop_reason; if (ev.usage?.output_tokens) usageOut = ev.usage.output_tokens; }
+            else if (ev.type === "error") { lastDiag = { phase: "error", msg: ev.error?.message, ms: Date.now() - t0, blockTypes, deltaTypes }; return { ok: false, reason: "api-error", detail: ev.error?.message ?? "stream error" }; }
           } catch { /* skip malformed line */ }
         }
       }
+      lastDiag = { tier, stop, usageOut, textLen: out.length, ms: Date.now() - t0, blockTypes, deltaTypes };
       return { ok: true, text: out };
     } catch (e) {
       const msg = e instanceof Error && e.name === "AbortError" ? "stalled (idle timeout)" : e instanceof Error ? e.message : "unreachable";

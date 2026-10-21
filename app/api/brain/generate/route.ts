@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { type BrainCast } from "@/lib/brain/castWithAI";
 import { generatePage } from "@/lib/brain/generatePage";
+import * as router from "@/lib/brain/router";
 
 /**
  * POST /api/brain/generate  { text, title?, cast? } → { ok, html } | { ok:false, reason }
@@ -26,5 +27,5 @@ export async function POST(req: Request) {
   const maxTokens = typeof body.maxTokens === "number" && body.maxTokens >= 1000 && body.maxTokens <= 20000 ? body.maxTokens : undefined;
 
   const result = await generatePage(text, body.title, body.cast, { tier, maxTokens });
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, diag: router.lastDiag });
 }
