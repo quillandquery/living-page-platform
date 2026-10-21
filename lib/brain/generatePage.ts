@@ -13,6 +13,7 @@ import "server-only";
 
 import { callClaude, type Tier } from "@/lib/brain/router";
 import type { BrainCast } from "@/lib/brain/castWithAI";
+import { renderPrimitive, ART_PRIMITIVES } from "@/lib/brain/artPrimitives";
 
 const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">`;
 
@@ -111,6 +112,10 @@ CRUCIAL DIFFERENCE: you do NOT draw the artwork yourself. Wherever the page need
 - Size/position each slot with your own CSS. The drawing will fill its slot.
 - Make the data-art descriptions concrete and motivated by THIS story's setting and mood.
 
+FREE ATMOSPHERE GENERATORS: for texture and atmospheric LAYERS — rain, grain, a mesh-gradient sky, waves/sea/hills, fog/mist, stars — do NOT describe an art slot. Instead drop a generator slot, which is filled instantly and perfectly for free:
+<div class="art" data-gen="rain" data-colors="#cfd8e6" data-angle="12"></div>
+Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). Reserve the described data-art slots ONLY for the story's bespoke focal SUBJECTS (a lone figure, a specific building, an object). Prefer generators for anything atmospheric.
+
 You STILL build everything else, fully and well:
 - The complete layout and all CSS; a composed, varied typographic treatment (some beats poster-scale, placed with intent — never a uniform centred column).
 - The beats as REAL text directly in the markup (every word, numbers too), split into their own blocks. Never inject text from JS.
@@ -135,6 +140,7 @@ RULES:
 }
 
 const SLOT_RE = /<div\b([^>]*\bdata-art=(?:"([^"]*)"|'([^']*)')[^>]*)>\s*<\/div>/gi;
+const GEN_RE = /<div\b([^>]*\bdata-gen=(?:"[^"]*"|'[^']*')[^>]*)>\s*<\/div>/gi;
 
 /** The decomposed generation: shell → parse slots → draw each SVG in parallel → assemble. */
 async function runDecomposed(beats: string[], title: string | undefined, palette: string, tier: Tier): Promise<GenResult> {
@@ -145,7 +151,15 @@ async function runDecomposed(beats: string[], title: string | undefined, palette
   if (!doc.ok) return doc;
   let html = doc.html;
 
-  // collect the slots the shell declared
+  // 0. FREE: fill every generator slot deterministically (no model call).
+  html = html.replace(GEN_RE, (whole: string, attrs: string) => {
+    const raw: Record<string, string> = {};
+    for (const a of attrs.matchAll(/data-([a-z]+)=(?:"([^"]*)"|'([^']*)')/gi)) raw[a[1].toLowerCase()] = a[2] ?? a[3] ?? "";
+    const svg = renderPrimitive(raw["gen"] ?? "", raw);
+    return svg ? `<div${attrs}>${svg}</div>` : whole;
+  });
+
+  // collect the bespoke-subject slots the shell declared (these go to the LLM)
   const slots: { desc: string; fit: string }[] = [];
   for (const m of html.matchAll(SLOT_RE)) {
     const attrs = m[1]; const desc = (m[2] ?? m[3] ?? "").trim();
