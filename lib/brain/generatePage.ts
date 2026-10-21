@@ -15,6 +15,28 @@ import { callClaude, type Tier } from "@/lib/brain/router";
 import type { BrainCast } from "@/lib/brain/castWithAI";
 import { renderPrimitive, ART_PRIMITIVES } from "@/lib/brain/artPrimitives";
 
+/**
+ * Split the writer's text into SHORT, readable beats. Paragraph breaks are
+ * honoured first; then any paragraph that's still a long run of sentences is
+ * broken down to ~1-2 sentences (~160 chars) per beat, so the page never renders
+ * a dense four-sentence wall. The words are never changed, only grouped.
+ */
+function splitBeats(text: string): string[] {
+  const paras = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const out: string[] = [];
+  for (const p of paras) {
+    if (p.length <= 170) { out.push(p); continue; }
+    const sentences = p.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [p];
+    let buf = "";
+    for (const s of sentences) {
+      if (buf && (buf + s).length > 170) { out.push(buf.trim()); buf = s; }
+      else buf += s;
+    }
+    if (buf.trim()) out.push(buf.trim());
+  }
+  return out.length ? out : paras;
+}
+
 const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">`;
 
 // Watchdog injected into every generated page. If, a few seconds after load, the
@@ -140,7 +162,7 @@ FREE ATMOSPHERE GENERATORS: for texture and atmospheric LAYERS — rain, grain, 
 Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). Reserve the described data-art slots ONLY for the story's bespoke focal SUBJECTS (a lone figure, a specific building, an object). Prefer generators for anything atmospheric.
 
 LENGTH & READABILITY — the reader must actually want to READ this, especially when it's long:
-- Judge the length from the beats. A SHORT, sparse piece (a few beats) can be maximalist — one beat per full screen. A LONGER piece must be READABLE prose first: group its paragraphs into flowing, comfortably-measured reading passages (do NOT force one paragraph per full viewport — that turns a long story into an exhausting scroll). Reserve the full-screen, poster-scale drama for only 2-3 EARNED key moments (the opening line, the turn, the final line).
+- Judge the length from the beats. A SHORT, sparse piece (a few beats) can be maximalist — one beat per full screen. A LONGER piece must be READABLE prose first. The beats I give you are already short (1-2 sentences). Do NOT put each short beat in its own full-viewport section — that makes a long story an exhausting 15-screen scroll. Instead GROUP several consecutive beats into a handful of flowing reading sections, each holding multiple short paragraphs with generous spacing between them, like a well-set page of a book. A ~300-word story should be a few readable sections, not fifteen full screens. Reserve the full-screen, poster-scale drama for only 2-3 EARNED key moments (the opening line, the turn, the final line).
 - VARY TYPOGRAPHY HARD so a long read has rhythm and the point lands: pull 2-4 pivotal sentences out at large display scale, change size / weight / italic / alignment between passages, let a key line breathe alone. Never render every paragraph at the same size and weight — that is the #1 reason a long page feels flat and unread.
 - Comfortable reading measure (~34-46rem), generous line-height and paragraph spacing for the body passages; big dramatic type only for the earned moments.
 - If a beat arrives as one long UNBROKEN block of text, break it into natural paragraphs yourself at sentence/topic shifts for readability — you may add paragraph breaks and spacing, you must never change or drop a word.
@@ -293,7 +315,7 @@ export async function generatePage(
   cast?: BrainCast,
   opts?: { tier?: Tier; mode?: "single" | "decomposed" },
 ): Promise<GenResult> {
-  const beats = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const beats = splitBeats(text);
 
   // Decomposed path: shell designs the page + art slots, focused SVG calls fill them.
   if (opts?.mode === "decomposed") {
