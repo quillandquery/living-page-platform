@@ -12,6 +12,8 @@ const TITLES = [
   "thought i wanted to leave", "640 train", "pretrip anxiety", "roadside dhaba",
   "andaman", "sabbatical", "hostek dorm", "hostel dorm", "3 cities later",
   "three cities later", "mace & croisant", "mace & croissant", "new apartment", "1am again",
+  "yolo", "pre-trip anxiety", "pretrip anxiety", "why bother",
+  "should you solo travel", "should you solo travek", "definition of success",
 ];
 const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const wanted = TITLES.map(norm);
@@ -23,7 +25,8 @@ const { data, error } = await c.from("stories").select("id,slug,place,fragment,s
 if (error) { console.error(error.message); process.exit(1); }
 
 // match on place or fragment, whole-phrase or contained (e.g. "A PARKED CAR" ~ "parked car")
-const hit = (s) => [s.place, s.fragment].map(norm).some((t) => t && wanted.some((w) => t === w || t.includes(w)));
+// whole-word match, so "yolo" can't hit a word that merely contains it
+const hit = (s) => [s.place, s.fragment].map(norm).some((t) => t && wanted.some((w) => ` ${t} `.includes(` ${w} `)));
 const matches = data.filter(hit);
 console.log(`${data.length} stories in DB, ${matches.length} match:\n`);
 for (const s of matches) console.log(`  ${s.status.padEnd(9)} ${s.id}  [${s.place}] ${s.fragment.slice(0, 60)}`);
