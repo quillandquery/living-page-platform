@@ -151,15 +151,22 @@ const WORD_FX = `<style>
 
 const SHELL_SYSTEM = `You are a generative interactive designer for Living Page. Given a personal story, author ONE self-contained HTML document that renders it as an immersive LIVING PAGE: a single FULL-BLEED world the words live inside, that EVOLVES as the reader scrolls, with the beats unveiling on arrival. Aim for extraordinary — the quality of an award-winning scrollytelling piece.
 
-CRUCIAL DIFFERENCE: you do NOT draw the artwork yourself. Wherever the page needs a drawn picture (the full-bleed background world, a key object, a scene), you place an EMPTY slot and describe what belongs there, and it will be drawn and inserted for you:
-<div class="art" data-art="a vivid, specific description of exactly what to draw here AND its role — e.g. 'full-bleed background: a rain-soaked night city skyline under a heavy sky that breaks into warm dawn toward the end'" data-fit="cover"></div>
-- Use 1 to 4 slots. ONE should be the full-bleed background world (position:fixed;inset:0, behind the text). Others can be placed in the layout (a mid-ground object, a scene).
-- Size/position each slot with your own CSS. The drawing will fill its slot.
-- Make the data-art descriptions concrete and motivated by THIS story's setting and mood.
+TASTE — this must feel GROWN-UP and PREMIUM, like a fine editorial feature, an A24 title sequence, or a gallery piece. The #1 failure to avoid is looking JUVENILE or CARTOONISH. So:
+- NO cute cartoon characters (no cartoon girl in a polka-dot dress, no mascots), NO clip-art storefronts or literal logos, NO childish flat illustration, NO bright primary/candy colours, NO emoji-like objects. These make it look like a kids' app and are forbidden.
+- Favour the SOPHISTICATED and ATMOSPHERIC over the literal: abstraction, texture, light and shadow, mood, negative space, a restrained and cohesive palette (muted, tonal, filmic — never garish). Suggest rather than illustrate.
+- TYPOGRAPHY is refined and intentional: ONE characterful display face used only for the few big moments, and ONE clean, elegant reading face for the body. Do not switch fonts constantly. Tight, considered sizes.
+- COLOUR: pull the text colour FROM the palette so it belongs to the world — never generic pure-white-on-everything. Every passage must have BOTH strong contrast AND tonal harmony with the ground behind it.
+- ALIGNMENT: choose ONE primary alignment and hold it; vary only once or twice for a deliberate accent. Constant left/right/centre ping-pong reads as amateur and jarring — avoid it.
+
+CRUCIAL DIFFERENCE: you do NOT draw the artwork yourself. Wherever the page needs a drawn picture (the full-bleed background world, an atmospheric scene), you place an EMPTY slot and describe what belongs there, and it will be drawn and inserted for you:
+<div class="art" data-art="a vivid, specific, GROWN-UP description — atmospheric and abstract, not a literal cartoon — e.g. 'full-bleed background: a rain-blurred night street reduced to pools of bokeh light and wet reflection, deep indigo warming to amber at the horizon; impressionistic, filmic, no literal figures or signage'" data-fit="cover"></div>
+- Describe ATMOSPHERE and PLACE and LIGHT, not cartoon characters or props. If the story has a person, evoke them through mood, a distant abstract silhouette, or an empty space where they'd be — never a detailed cartoon figure. No storefronts, no logos, no cute objects.
+- Use 1 to 3 slots. ONE is the full-bleed background world (position:fixed;inset:0, behind the text). A second can be a subtle atmospheric accent.
+- Size/position each slot with your own CSS. Make the descriptions motivated by THIS story's setting and mood, and always premium/editorial in tone.
 
 FREE ATMOSPHERE GENERATORS: for texture and atmospheric LAYERS — rain, grain, a mesh-gradient sky, waves/sea/hills, fog/mist, stars — do NOT describe an art slot. Instead drop a generator slot, which is filled instantly and perfectly for free:
 <div class="art" data-gen="rain" data-colors="#cfd8e6" data-angle="12"></div>
-Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). Reserve the described data-art slots ONLY for the story's bespoke focal SUBJECTS (a lone figure, a specific building, an object). Prefer generators for anything atmospheric.
+Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). PREFER these generators to carry most of the atmosphere — a page can be gorgeous from generators + typography alone. Use a described data-art slot only for ONE bespoke atmospheric background, and keep it abstract/editorial.
 
 PACING — immersive AND readable, never sacrifice either:
 - This is an IMMERSIVE COMPOSED WORLD, not an article with a background photo. Atmosphere, composition, light and motion lead; the words live INSIDE the scene. This is the quality bar — hold it.
@@ -178,13 +185,14 @@ You STILL build everything else, fully and well:
 /** Draw ONE self-contained SVG for a slot — the SVG-ORA move: focused, bounded,
  *  parameterised, clean-extracted. */
 async function generateSvgPiece(tier: Tier, desc: string, fit: string, palette: string): Promise<string> {
-  const sys = `You are a world-class SVG artist. Draw ONE high-quality, self-contained SVG for a slot in an immersive, cinematic story page.
+  const sys = `You are a fine-art SVG artist producing a GALLERY-GRADE, filmic background for an editorial story page. Think moody abstraction, atmospheric painting, light and shadow — the opposite of a cartoon.
 RULES:
 - Return ONLY raw SVG code (<svg ...>...</svg>). No markdown, no commentary.
-- Give it a viewBox and preserveAspectRatio="xMidYMid slice" so it fills a "${fit}" slot edge to edge, minimal empty margin.
-- Premium, atmospheric, hand-crafted — layered paths, rich gradients, real depth and light. NEVER clip-art, flat icons, or childish shapes.
-- Palette/mood: ${palette}. Strong but motivated colour.
-- Fully self-contained: inline everything, no <image>, no external refs, no web fonts. Subtle inline CSS/SMIL animation is welcome if it suits the subject.`;
+- viewBox + preserveAspectRatio="xMidYMid slice" so it fills a "${fit}" slot edge to edge, minimal margin.
+- STYLE: painterly and atmospheric — soft layered gradients, blurred depth (feGaussianBlur), grain/texture (feTurbulence), bloom and light, impressionistic forms. Suggest the scene through light, colour and shape, not literal detail.
+- STRICTLY FORBIDDEN (these look juvenile): cartoon people or characters, faces, mascots, storefronts, readable signage or logos, flat clip-art icons, hard outlines, bright primary/candy colours, cute rounded props. If a human presence is wanted, imply it with at most a soft distant silhouette or an empty-feeling space — never a detailed figure.
+- Palette/mood: ${palette}. Muted, tonal, cohesive — never garish.
+- Fully self-contained: inline everything, no <image>, no external refs, no web fonts. Subtle inline CSS/SMIL animation welcome if it suits the mood.`;
   const res = await callClaude(tier, sys, `Draw this: ${desc}`, 5000, 60_000);
   if (!res.ok) return "";
   const t = res.text; const a = t.search(/<svg/i); const b = t.toLowerCase().lastIndexOf("</svg>");
