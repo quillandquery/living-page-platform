@@ -25,11 +25,11 @@ function splitBeats(text: string): string[] {
   const paras = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   const out: string[] = [];
   for (const p of paras) {
-    if (p.length <= 170) { out.push(p); continue; }
+    if (p.length <= 240) { out.push(p); continue; } // only split a genuine wall, not every sentence
     const sentences = p.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [p];
     let buf = "";
     for (const s of sentences) {
-      if (buf && (buf + s).length > 170) { out.push(buf.trim()); buf = s; }
+      if (buf && (buf + s).length > 240) { out.push(buf.trim()); buf = s; }
       else buf += s;
     }
     if (buf.trim()) out.push(buf.trim());
@@ -161,11 +161,12 @@ FREE ATMOSPHERE GENERATORS: for texture and atmospheric LAYERS — rain, grain, 
 <div class="art" data-gen="rain" data-colors="#cfd8e6" data-angle="12"></div>
 Available data-gen values: ${ART_PRIMITIVES.join(", ")}. Pass data-colors (comma-separated, from your palette) and any generator hints (data-angle, data-speed, data-opacity, data-layers, data-count). Use these for the sky/gradient background, rain, grain overlay, fog, stars, waves — layer several (e.g. a mesh sky UNDER a rain overlay UNDER a grain overlay). Reserve the described data-art slots ONLY for the story's bespoke focal SUBJECTS (a lone figure, a specific building, an object). Prefer generators for anything atmospheric.
 
-LENGTH & READABILITY — the reader must actually want to READ this, especially when it's long:
-- Judge the length from the beats. A SHORT, sparse piece (a few beats) can be maximalist — one beat per full screen. A LONGER piece must be READABLE prose first. The beats I give you are already short (1-2 sentences). Do NOT put each short beat in its own full-viewport section — that makes a long story an exhausting 15-screen scroll. Instead GROUP several consecutive beats into a handful of flowing reading sections, each holding multiple short paragraphs with generous spacing between them, like a well-set page of a book. A ~300-word story should be a few readable sections, not fifteen full screens. Reserve the full-screen, poster-scale drama for only 2-3 EARNED key moments (the opening line, the turn, the final line).
-- VARY TYPOGRAPHY HARD so a long read has rhythm and the point lands: pull 2-4 pivotal sentences out at large display scale, change size / weight / italic / alignment between passages, let a key line breathe alone. Never render every paragraph at the same size and weight — that is the #1 reason a long page feels flat and unread.
-- Comfortable reading measure (~34-46rem), generous line-height and paragraph spacing for the body passages; big dramatic type only for the earned moments.
-- If a beat arrives as one long UNBROKEN block of text, break it into natural paragraphs yourself at sentence/topic shifts for readability — you may add paragraph breaks and spacing, you must never change or drop a word.
+PACING — immersive AND readable, never sacrifice either:
+- This is an IMMERSIVE COMPOSED WORLD, not an article with a background photo. Atmosphere, composition, light and motion lead; the words live INSIDE the scene. This is the quality bar — hold it.
+- Body text stays at a confident, readable size and in SHORT paragraphs — never a dense multi-sentence wall, never tiny. But do NOT flatten the page into a plain centred book column: every passage is still composed into the world with intent (placement, overlap, varied alignment, the scene reacting around it).
+- VARY TYPOGRAPHY HARD: 2-4 pivotal lines at large display scale; the rest at a readable but still characterful size; change size / weight / italic / alignment between beats. Never one uniform size down the page.
+- CONTROL THE SCROLL: a short, sparse piece can be one beat per full screen. A longer one should NOT become 15 full screens — group some consecutive beats so the reader flows — but keep EVERY screen a composed, atmospheric frame, not a block of text on a flat ground. Reserve full-screen poster drama for the 2-3 earned moments (opening, the turn, the last line).
+- If a beat arrives as one long UNBROKEN block, break it into short paragraphs yourself (add breaks and spacing, never change or drop a word).
 
 You STILL build everything else, fully and well:
 - The complete layout and all CSS; a composed, varied typographic treatment as above — never a uniform centred column of equal-size paragraphs.
