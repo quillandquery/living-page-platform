@@ -127,6 +127,7 @@ function MakeInner() {
   const [note, setNote] = useState<string | null>(null);
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
+  const castSeq = useRef(0); // supersede in-flight casts so a newer story always wins
   const autoFired = useRef(false);
 
   const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -186,16 +187,24 @@ function MakeInner() {
 
   // ── Reveal: Auto cast (Sonnet, fast) ──
   const castAI = async () => {
-    if (!text.trim() || castBusy) return;
+    // Each cast carries a sequence token so a LATER cast supersedes an earlier
+    // one. Revealing a new story while a previous cast is still in flight must
+    // not be dropped — the old `castBusy` early-return did exactly that, leaving
+    // the new story wearing the previous story's world. We always start the
+    // latest cast and apply only the newest response, ignoring any that land late.
+    const myText = text, myTitle = title;
+    if (!myText.trim()) return;
+    const seq = ++castSeq.current;
     setCastBusy(true); setNote("reading your story…"); setGenHtml(null);
     try {
-      const res = await fetch("/api/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
+      const res = await fetch("/api/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle }) });
       const data = await res.json();
-      castedFor.current = text;
+      if (seq !== castSeq.current) return; // a newer story is being cast — drop this stale result
+      castedFor.current = myText;
       if (data.ok) { setWorldSel(data.cast.style); setAiPalette(data.cast.palette ?? null); setAiExp(data.cast.experience ?? null); setNote(`✨ ${data.cast.style} — ${data.cast.rationale}`); }
       else if (data.reason === "no-key") setNote("Add ANTHROPIC_API_KEY to .env.local and restart.");
       else setNote(`Couldn't read it (${data.reason}) — showing the live engine.`);
-    } catch { setNote("The brain is unreachable right now."); } finally { setCastBusy(false); }
+    } catch { if (seq === castSeq.current) setNote("The brain is unreachable right now."); } finally { if (seq === castSeq.current) setCastBusy(false); }
   };
 
   const bringToLife = () => {
