@@ -46,13 +46,14 @@ WORLDS (story set inside an evolving atmosphere; immersive, place/mood-driven):
 MEDIUMS (the text BECOMES an artifact):
  postcard(one remembered place/person; wistful nostalgic longing) · evidence(investigation, obsession, unease) · maximalist(a loud reckoning/declaration; one word screams) · manuscript(the mundane made epic/sacred; dry wit)
 
-COMPOSE THE WORLD — this is the heart of it. Read the story and design its OWN world from this curated kit; the crafted engine renders exactly what you specify, so each story looks bespoke yet always premium:
-- palette.scheme: "dark" for night/storm/grief/dread/dream; "light" for warm/hopeful/reflective/day.
-- palette.ground: the full-bleed background, a CSS gradient motivated by the story (deep indigo→amber dusk, cold grey storm, warm dawn, etc.). Rich, tonal, never flat black, never garish.
-- palette.warm: a CSS radial-gradient for the horizon GLOW-BLOOM (the signature light), colour from the story's light source.
-- palette.accent: a hex for the tinted key words.
-- palette.ambient: ONE of stars | rain | fog | motes | none — the atmosphere that breathes (stars for night/awe, rain for storm/grief, fog for mystery/memory, motes for warm/quiet).
-- palette.silhouette: ONE of palms | city | pines | mountains | hills | dunes | none — the elegant shape on the horizon that fits the setting (a coast → palms, a city night → city, a forest → pines, open country → hills, desert → dunes, nowhere specific → none).
+COMPOSE THE WORLD — the heart of it. The BAR is the reference piece "rained out": a deep indigo night melting into a warm amber GLOW-BLOOM on the horizon, elegant palm silhouettes, a breathing atmosphere, fine grain — immersive and cinematic. Every story must reach that level of RICHNESS. Design THIS story's own world from the curated kit:
+- Make it IMMERSIVE and ATMOSPHERIC, not a flat page of text on a plain wash. It needs DEPTH: a rich gradient + a strong glow-bloom + a silhouette + an ambient. A bare gradient with text is a FAILURE.
+- palette.scheme: lean "dark" — deep, moody, cinematic reads best and is the bar. Use "light" only for a genuinely bright, airy, hopeful piece, and even then give it a strong glow and a silhouette so it's still immersive.
+- palette.ground: a rich, tonal CSS gradient with real range, motivated by the story (deep indigo→plum→amber dusk; storm greys→slate; dawn rose→gold). Never flat black, never a single muddy tone, never garish.
+- palette.warm: a GENEROUS CSS radial-gradient for the horizon glow-bloom — the signature light. Make it present and luminous, the emotional centre.
+- palette.accent: a hex for the tinted key words, drawn from the glow.
+- palette.ambient: ONE of stars | rain | fog | motes — pick the one that breathes with the mood (stars for night/awe, rain for storm/grief, fog for memory/mystery, motes for warm/quiet). Avoid "none".
+- palette.silhouette: almost ALWAYS pick one that fits the setting — palms (coast/tropics), city (streets/urban), pines (forest/cold), mountains (heights/journey), hills (open country), dunes (desert/heat). Use "none" only for a truly placeless, abstract interior piece.
 Every choice traceable to the read. Only linear-gradient()/radial-gradient() and hex/rgb/rgba — no url(), no external anything.
 
 Keep every read value SHORT — a word or short phrase, never a sentence (except one_line_read and rationale, each one sentence). Respond with ONLY this JSON, no prose, no markdown:
