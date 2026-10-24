@@ -143,6 +143,10 @@ export type StoryArtDirection = {
   look?: string;
   /** the author's chosen format (standard/scrapbook/…), if any */
   format?: string;
+  /** a hand-built bespoke living page (Opus), generated on publish and stored
+   *  so readers get the rich per-story world with no per-view LLM cost or wait.
+   *  Rendered in a sandboxed iframe by the reader. */
+  bespokeHtml?: string;
   /** for the reader: --accent / --accent2, unaffected by any of the above */
   accent: string;
   secondaryAccent?: string;

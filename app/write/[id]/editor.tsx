@@ -249,6 +249,27 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       } else setStatus({ tone: "bad", text: res.message ?? `Could not ${verb}.` });
     });
 
+  // Publish = generate the BESPOKE living page (Opus, ~1–2 min) on the client —
+  // NOT inside the server action, which would time out — then store the HTML so
+  // readers get the rich per-story world with no per-view cost. Any failure falls
+  // back to a normal publish (the spec-kit experience stays as the placeholder).
+  const publishNow = () =>
+    start(async () => {
+      let bespokeHtml: string | undefined;
+      try {
+        const r = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: raw, title: fragment || place || undefined, mode: "single", tier: "opus" }) });
+        const d = await r.json();
+        if (d.ok && d.html) bespokeHtml = d.html as string;
+      } catch { /* fall through to a normal publish */ }
+      const base = input();
+      const inp: SaveInput = bespokeHtml && base.art_direction
+        ? { ...base, art_direction: { ...base.art_direction, bespokeHtml } }
+        : base;
+      const res = await publishAction(inp);
+      if (res.ok) { setStatus({ tone: "ok", text: "Published — live on your page." }); setPublished(true); }
+      else setStatus({ tone: "bad", text: res.message ?? "Could not publish." });
+    });
+
   return (
     <main className="ed">
       <style>{CSS}</style>
@@ -467,7 +488,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             autoKey={autoKey}
             onSelect={(k) => setFmt(k)}
             onClose={() => setReveal(false)}
-            onPublish={() => { run(publishAction, "publish", true); }}
+            onPublish={publishNow}
             publishing={pending}
             published={published}
           />

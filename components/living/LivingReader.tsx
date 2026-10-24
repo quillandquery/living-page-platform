@@ -29,11 +29,12 @@ export type LivingReaderProps = {
   title?: string;
   eyebrow?: string;
   experience?: ExperienceSpec | null;
+  bespokeHtml?: string | null;
   share: ShareControlsProps;
   more: { same: ReadNextLink; surprise: ReadNextLink };
 };
 
-export function LivingReader({ source, world, title, eyebrow, experience, share, more }: LivingReaderProps) {
+export function LivingReader({ source, world, title, eyebrow, experience, bespokeHtml, share, more }: LivingReaderProps) {
   const scene = useMemo(
     () => castLivingScene(source, {
       title: title || undefined,
@@ -46,7 +47,9 @@ export function LivingReader({ source, world, title, eyebrow, experience, share,
   // The brain composed this story's bespoke living experience at publish time —
   // render it (the primary path). Older stories with no saved spec fall back to
   // the heuristic worlds (never a blank page — D4 preserve-data).
-  const page = experience
+  const page = bespokeHtml
+    ? <iframe title="living page" sandbox="allow-scripts" srcDoc={bespokeHtml} style={{ width: "100%", height: "100vh", border: 0, display: "block", background: "#0a0912" }} />
+    : experience
     ? <LivingExperience text={source} spec={experience} title={title || undefined} eyebrow={eyebrow || undefined} dek={scene.dek} />
     : scene.world.key === "noir-room" ? <NoirRoom {...noirRoomInput(scene)} />
     : RICH_WORLDS.has(scene.world.key) ? <CoastStorm {...coastStormInput(scene)} />

@@ -169,6 +169,7 @@ export default async function StoryReaderPage(
       title={seo.title}
       eyebrow={[story.place, story.date].filter(Boolean).join(" · ") || undefined}
       experience={sanitizeExperience((story.art_direction as { experience?: unknown } | null)?.experience)}
+      bespokeHtml={(story.art_direction as { bespokeHtml?: string } | null)?.bespokeHtml ?? null}
       share={buildShareProps(story)}
       more={{
         same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, fragment: same.fragment } : null,
