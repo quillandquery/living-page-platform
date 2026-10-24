@@ -13,17 +13,17 @@
  */
 
 import { useEffect, useState } from "react";
-import { LivingStory } from "@/components/living/LivingStory";
 import { NoirRoom } from "@/components/living/scenes/NoirRoom";
 import { CoastStorm } from "@/components/living/scenes/CoastStorm";
 import { Maximalist } from "@/components/living/mediums/Maximalist";
 import { Postcard } from "@/components/living/mediums/Postcard";
 import { EvidenceBoard } from "@/components/living/mediums/EvidenceBoard";
 import { Manuscript } from "@/components/living/mediums/Manuscript";
-import { castLivingScene, coastStormInput, noirRoomInput, maximalistInput, postcardInput, evidenceInput, manuscriptInput, RICH_WORLDS, MEDIUMS, type LivingScene } from "@/lib/living/cast";
+import { castLivingScene, coastStormInput, noirRoomInput, maximalistInput, postcardInput, evidenceInput, manuscriptInput, MEDIUMS, type LivingScene } from "@/lib/living/cast";
 import { WORLDS, type WorldKey } from "@/lib/living/worlds";
+import { resolveSilhouette } from "@/lib/living/silhouettes";
 
-type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string };
+type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string; ambient?: "stars" | "rain" | "fog" | "motes" | "none"; silhouette?: string };
 type Msg = { type: "lp-embed"; text?: string; title?: string; eyebrow?: string; world?: string; palette?: PaletteMsg };
 
 export default function LivingEmbed() {
@@ -67,8 +67,20 @@ export default function LivingEmbed() {
     if (surface === "evidence") return <EvidenceBoard {...evidenceInput(scene)} />;
     if (surface === "manuscript") return <Manuscript {...manuscriptInput(scene)} />;
     if (scene.world.key === "noir-room") return <NoirRoom {...noirRoomInput(scene)} />;
-    if (RICH_WORLDS.has(scene.world.key)) return <CoastStorm {...coastStormInput(scene)} />;
-    return <LivingStory scene={scene} palette={palette} />;
+    // Every other story renders through the crafted CoastStorm ENGINE, skinned by
+    // the LLM-composed world spec (palette + glow + ambient + silhouette) merged
+    // over the world's defaults — so each story is a bespoke, premium world.
+    const base = coastStormInput(scene);
+    const p = palette;
+    const spec = (p || base.spec) ? {
+      bg: p?.ground ?? base.spec?.bg,
+      glow: p?.warm ?? base.spec?.glow,
+      accent: p?.accent ?? base.spec?.accent,
+      scheme: p?.scheme ?? base.spec?.scheme,
+      ambient: p?.ambient ?? base.spec?.ambient,
+      silhouette: resolveSilhouette(p?.silhouette) ?? base.spec?.silhouette,
+    } : undefined;
+    return <CoastStorm {...base} spec={spec} />;
   };
 
   return (

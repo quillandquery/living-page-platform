@@ -18,7 +18,14 @@ export type StoryRead = {
   tone: string[]; mood: string; vibe: string; form: string;
   intensity: number; one_line_read: string;
 };
-export type Palette = { scheme: "light" | "dark"; ground?: string; accent?: string; warm?: string };
+export type Palette = {
+  scheme: "light" | "dark"; ground?: string; accent?: string; warm?: string;
+  // the LLM also composes these from a CURATED kit, so the crafted engine renders
+  // a bespoke world per story (not a fixed skin): which atmosphere layer breathes,
+  // and which elegant silhouette anchors the horizon.
+  ambient?: "stars" | "rain" | "fog" | "motes" | "none";
+  silhouette?: "palms" | "city" | "pines" | "mountains" | "hills" | "dunes" | "none";
+};
 export type BrainCast = {
   read: StoryRead; style: string; rationale: string;
   palette?: Palette; artNeeded: boolean; artNote?: string;
@@ -39,10 +46,17 @@ WORLDS (story set inside an evolving atmosphere; immersive, place/mood-driven):
 MEDIUMS (the text BECOMES an artifact):
  postcard(one remembered place/person; wistful nostalgic longing) · evidence(investigation, obsession, unease) · maximalist(a loud reckoning/declaration; one word screams) · manuscript(the mundane made epic/sacred; dry wit)
 
-PALETTE: choose colours from the story's own imagery (its "palette feeling"). Give a CSS gradient for the ground, an accent hex, and optionally a warm CSS radial-gradient. Use ONLY linear-gradient()/radial-gradient() and hex/rgb/rgba colours — no url(), no external anything.
+COMPOSE THE WORLD — this is the heart of it. Read the story and design its OWN world from this curated kit; the crafted engine renders exactly what you specify, so each story looks bespoke yet always premium:
+- palette.scheme: "dark" for night/storm/grief/dread/dream; "light" for warm/hopeful/reflective/day.
+- palette.ground: the full-bleed background, a CSS gradient motivated by the story (deep indigo→amber dusk, cold grey storm, warm dawn, etc.). Rich, tonal, never flat black, never garish.
+- palette.warm: a CSS radial-gradient for the horizon GLOW-BLOOM (the signature light), colour from the story's light source.
+- palette.accent: a hex for the tinted key words.
+- palette.ambient: ONE of stars | rain | fog | motes | none — the atmosphere that breathes (stars for night/awe, rain for storm/grief, fog for mystery/memory, motes for warm/quiet).
+- palette.silhouette: ONE of palms | city | pines | mountains | hills | dunes | none — the elegant shape on the horizon that fits the setting (a coast → palms, a city night → city, a forest → pines, open country → hills, desert → dunes, nowhere specific → none).
+Every choice traceable to the read. Only linear-gradient()/radial-gradient() and hex/rgb/rgba — no url(), no external anything.
 
 Keep every read value SHORT — a word or short phrase, never a sentence (except one_line_read and rationale, each one sentence). Respond with ONLY this JSON, no prose, no markdown:
-{"read":{"tone":["..."],"mood":"...","vibe":"...","form":"...","intensity":0.0,"one_line_read":"..."},"style":"<one key above>","rationale":"one sentence","palette":{"scheme":"light|dark","ground":"linear-gradient(180deg,#..,#..)","accent":"#..","warm":"radial-gradient(...)"},"art":{"needed":true|false,"note":"what bespoke artwork would add, or why a palette-tinted world is enough"}}`;
+{"read":{"tone":["..."],"mood":"...","vibe":"...","form":"...","intensity":0.0,"one_line_read":"..."},"style":"<one key above>","rationale":"one sentence","palette":{"scheme":"light|dark","ground":"linear-gradient(180deg,#..,#..)","accent":"#..","warm":"radial-gradient(...)","ambient":"stars|rain|fog|motes|none","silhouette":"palms|city|pines|mountains|hills|dunes|none"},"art":{"needed":true|false,"note":"..."}}`;
 
 /* ── sanitisers — a palette goes into an inline style, so keep it to safe CSS ── */
 const SAFE_COLOR = /^#[0-9a-fA-F]{3,8}$|^rgba?\([\d.,\s%]+\)$/;
@@ -77,8 +91,15 @@ function validate(o: unknown): BrainCast | null {
     one_line_read: typeof r.one_line_read === "string" ? r.one_line_read : "",
   };
   const p = (x.palette ?? {}) as Record<string, unknown>;
+  const AMB = ["stars", "rain", "fog", "motes", "none"];
+  const SIL = ["palms", "city", "pines", "mountains", "hills", "dunes", "none"];
   const palette: Palette | undefined = p
-    ? { scheme: p.scheme === "dark" ? "dark" : "light", ground: safeGradient(p.ground), accent: safeColor(p.accent), warm: safeGradient(p.warm) }
+    ? {
+        scheme: p.scheme === "dark" ? "dark" : "light",
+        ground: safeGradient(p.ground), accent: safeColor(p.accent), warm: safeGradient(p.warm),
+        ambient: AMB.includes(p.ambient as string) ? (p.ambient as Palette["ambient"]) : undefined,
+        silhouette: SIL.includes(p.silhouette as string) ? (p.silhouette as Palette["silhouette"]) : undefined,
+      }
     : undefined;
   const art = (x.art ?? {}) as Record<string, unknown>;
   return {

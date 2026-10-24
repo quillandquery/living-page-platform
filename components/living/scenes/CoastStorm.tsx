@@ -9,7 +9,7 @@
  * under `.coast-storm`.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 export type CoastStormBeat = {
   text: string;
@@ -17,9 +17,21 @@ export type CoastStormBeat = {
   doodle?: boolean;
   storm?: boolean;
 };
-export type CoastStormProps = { eyebrow?: string; title?: string; dek?: string; beats: CoastStormBeat[] };
+/** Per-world visual spec. CoastStorm is one crafted renderer; the SPEC is the
+ *  skin — background, horizon glow, accent, text tone, ambient and silhouette —
+ *  so every world in the library (lib/living/worlds.ts) renders distinctly at
+ *  the same craft bar. Absent fields fall back to the original coast-storm look. */
+export type CoastStormSpec = {
+  bg?: string;            // background gradient (world.ground)
+  glow?: string;          // horizon glow gradient (world.warm)
+  accent?: string;        // key-word / swell accent
+  scheme?: "light" | "dark";
+  ambient?: "rain" | "stars" | "fog" | "motes" | "none";
+  silhouette?: string;    // SVG markup for the bottom silhouette (else palms; "none" to hide)
+};
+export type CoastStormProps = { eyebrow?: string; title?: string; dek?: string; beats: CoastStormBeat[]; spec?: CoastStormSpec };
 
-export function CoastStorm({ eyebrow, title, dek, beats }: CoastStormProps) {
+export function CoastStorm({ eyebrow, title, dek, beats, spec }: CoastStormProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = ref.current; if (!root) return;
@@ -62,18 +74,29 @@ export function CoastStorm({ eyebrow, title, dek, beats }: CoastStormProps) {
       dangerouslySetInnerHTML={{ __html: (b.doodle ? WAVE : "") + b.text }} />;
   };
 
+  const light = spec?.scheme === "light";
+  const rootStyle: Record<string, string> = {};
+  if (spec?.bg) rootStyle["--bg"] = spec.bg;
+  if (spec?.glow) rootStyle["--glow"] = spec.glow;
+  if (spec?.accent) rootStyle["--accent"] = spec.accent;
+  if (light) { rootStyle["--text"] = "#2a2334"; rootStyle["--soft"] = "rgba(42,35,52,.66)"; rootStyle["--faint"] = "rgba(42,35,52,.42)"; }
+  const sil = spec?.silhouette;                 // markup | "none" | undefined(→palms)
+  const showStars = spec ? spec.ambient === "stars" : !light;   // default coast: stars
+  const wet = spec ? spec.ambient === "rain" : true;            // default coast: rain + lightning
+
   return (
-    <div className="coast-storm" ref={ref}>
+    <div className={`coast-storm${light ? " cs-light" : ""}`} ref={ref} style={rootStyle as CSSProperties}>
       {/* responsive scene layers (viewport-fraction anchored) */}
-      <div className="cs-stars" />
+      {showStars ? <div className="cs-stars" /> : null}
       <div className="cs-clouds" />
       <div className="cs-horizon" />
       <div className="cs-sea"><svg className="cs-waves" viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M0 8 Q12 3 25 8 T50 8 T75 8 T100 8" /><path d="M0 16 Q12 11 25 16 T50 16 T75 16 T100 16" /></svg></div>
       <div className="cs-glowret" />
-      <div className="cs-palm cs-palm-l" dangerouslySetInnerHTML={{ __html: PALM }} />
-      <div className="cs-palm cs-palm-r" dangerouslySetInnerHTML={{ __html: PALM }} />
-      <div className="cs-flash" />
-      <div className="cs-rain" />
+      {sil === "none" ? null : sil
+        ? <div className="cs-scene" dangerouslySetInnerHTML={{ __html: sil }} />
+        : (<><div className="cs-palm cs-palm-l" dangerouslySetInnerHTML={{ __html: PALM }} /><div className="cs-palm cs-palm-r" dangerouslySetInnerHTML={{ __html: PALM }} /></>)}
+      {wet ? <div className="cs-flash" /> : null}
+      {wet ? <div className="cs-rain" /> : null}
       <div className="cs-vignette" />
       <div className="cs-grain" />
 
@@ -108,7 +131,7 @@ const CSS = `
 .coast-storm{ --cloud:0; --dusk:1; --rainO:0; --glowret:0;
   --text:#EFE9F4; --soft:rgba(239,233,244,.62); --faint:rgba(239,233,244,.34); --accent:#C7AEF2; --warm:#F2B06A;
   color:var(--text); font-family:var(--f-body,"Newsreader",Georgia,serif); line-height:1.78; min-height:100vh;
-  background:linear-gradient(180deg,#1a1230 0%,#241a46 38%,#2e2250 66%,#3a2a4e 100%); }
+  background:var(--bg, linear-gradient(180deg,#1a1230 0%,#241a46 38%,#2e2250 66%,#3a2a4e 100%)); }
 
 /* scene layers — fixed, anchored to viewport fractions so they hold at any aspect */
 .coast-storm .cs-stars{ position:fixed; top:0; left:0; right:0; height:56%; z-index:0; pointer-events:none;
@@ -117,7 +140,14 @@ const CSS = `
 .coast-storm .cs-clouds{ position:fixed; top:0; left:0; right:0; height:46%; z-index:0; pointer-events:none;
   opacity:var(--cloud); background:linear-gradient(180deg,#0c0917 0%,#0c0917 42%,transparent 100%); }
 .coast-storm .cs-horizon{ position:fixed; left:0; right:0; top:34%; height:30%; z-index:0; pointer-events:none;
-  opacity:var(--dusk); background:radial-gradient(70% 120% at 50% 100%, rgba(244,168,94,.85), rgba(197,107,122,.32) 42%, transparent 72%); }
+  opacity:var(--dusk); background:var(--glow, radial-gradient(70% 120% at 50% 100%, rgba(244,168,94,.85), rgba(197,107,122,.32) 42%, transparent 72%)); }
+/* a world-provided full-scene silhouette layer (e.g. a city street), in place of the palms */
+.coast-storm .cs-scene{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+.coast-storm .cs-scene svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+/* light worlds: dark text, drop the dark sea/vignette weight */
+.coast-storm.cs-light .cs-sea{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent); }
+.coast-storm.cs-light .cs-vignette{ background:radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(60,40,20,.18)); }
+.coast-storm.cs-light .cs-clouds{ background:linear-gradient(180deg, rgba(255,255,255,.5) 0%, transparent 100%); }
 .coast-storm .cs-sea{ position:fixed; left:0; right:0; top:64%; bottom:0; z-index:0; pointer-events:none;
   background:linear-gradient(180deg,#1c1838,#141130); }
 .coast-storm .cs-waves{ position:absolute; top:6%; left:0; width:100%; height:40px; opacity:.3; }

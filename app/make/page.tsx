@@ -21,7 +21,7 @@ import { track } from "@/lib/analytics/client";
 
 type Sharpen = { anchor: string; mode: "replace" | "add"; question: string; suggestion: string };
 type Sug = { title: string; cleaned: string; notes: string; sharpen: Sharpen[] };
-type Palette = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string };
+type Palette = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string; ambient?: "stars" | "rain" | "fog" | "motes" | "none"; silhouette?: string };
 
 // Locate an anchor the model gave us inside the writer's actual text. The model
 // quotes the anchor back approximately — a curly apostrophe where the text has a
@@ -122,7 +122,6 @@ function MakeInner() {
   const [aiPalette, setAiPalette] = useState<Palette | null>(null);
   const [genHtml, setGenHtml] = useState<string | null>(null);
   const [castBusy, setCastBusy] = useState(false);
-  const [genBusy, setGenBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
@@ -195,20 +194,6 @@ function MakeInner() {
       else if (data.reason === "no-key") setNote("Add ANTHROPIC_API_KEY to .env.local and restart.");
       else setNote(`Couldn't read it (${data.reason}) — showing the live engine.`);
     } catch { setNote("The brain is unreachable right now."); } finally { setCastBusy(false); }
-  };
-  // ── Reveal: Bespoke (Opus, gated) ──
-  const genArt = async () => {
-    if (!text.trim() || genBusy) return;
-    setRestyleOpen(false); setGenBusy(true); setNote("painting a one-of-a-kind page with the most capable model… this can take two to three minutes — keep this tab open");
-    try {
-      const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
-      const data = await res.json();
-      if (data.ok) { setGenHtml(data.html); setNote("✨ a living page, made for this story"); }
-      else if (data.reason === "no-key") setNote("Add ANTHROPIC_API_KEY to .env.local and restart.");
-      // Any other failure: the Auto world is still on screen, so this is never a
-      // dead end — keep it and invite another go, no scary internals.
-      else setNote("Couldn't paint a bespoke page just now — your live one is still here. Try Bespoke again?");
-    } catch { setNote("Couldn't reach the brain just now — your live page is still here. Try again in a moment."); } finally { setGenBusy(false); }
   };
 
   const bringToLife = () => {
@@ -338,15 +323,12 @@ function MakeInner() {
           {/* the one RESTYLE control — Auto / Bespoke / Yours */}
           <div className="mk-restyle">
             <button className="mk-restyle-btn" onClick={() => setRestyleOpen((v) => !v)} type="button">
-              {castBusy ? "reading…" : genBusy ? "painting…" : "✧ Restyle"}
+              {castBusy ? "reading…" : "✧ Restyle"}
             </button>
             {restyleOpen ? (
               <div className="mk-restyle-menu">
                 <button onClick={() => { setRestyleOpen(false); setGenHtml(null); castAI(); }} type="button">
-                  <b>Auto</b><span>read it and cast a world — instant</span>
-                </button>
-                <button onClick={genArt} type="button">
-                  <b>Bespoke ✨</b><span>paint a one-of-a-kind page — Opus, a short wait</span>
+                  <b>Auto</b><span>read it and cast the right world — instant</span>
                 </button>
                 <div className="mk-restyle-yours">
                   <b>Yours</b>

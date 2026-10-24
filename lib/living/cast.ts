@@ -360,7 +360,11 @@ export function spansToHtml(spans: Span[], cls: Partial<Record<Mark, string>>): 
 }
 
 /* ── worlds that have a bespoke rich scene component ── */
-export const RICH_WORLDS = new Set<WorldKey>(["storm", "noir-room"]);
+// Worlds that render through the crafted, now spec-driven CoastStorm engine —
+// each in its OWN palette/glow/ambient/silhouette (see coastStormInput). noir-room
+// has its own bespoke component; the light non-coastal worlds stay on LivingStory
+// for now. Grow this set as more worlds get their skins dialled in (D6).
+export const RICH_WORLDS = new Set<WorldKey>(["storm", "twilight-street", "dream", "nocturne"]);
 
 /* ── MEDIUMS — surfaces where the text becomes an artifact (not a world the
  *    story is set inside). Selected alongside worlds; the text casts the same,
@@ -487,6 +491,7 @@ export type CoastStormInput = {
   title?: string;
   dek?: string;
   beats: { text: string; kind?: "lead" | "echo" | "whisper" | "swell" | "close" | "plain"; doodle?: boolean; storm?: boolean }[];
+  spec?: { bg?: string; glow?: string; accent?: string; scheme?: "light" | "dark"; ambient?: "rain" | "stars" | "motes"; silhouette?: string };
 };
 /** Adapt a cast LivingScene into the CoastStorm world's props — map behaviours to
  *  its treatments, render the directed spans into its own class names (em /
@@ -511,7 +516,17 @@ export function coastStormInput(scene: LivingScene): CoastStormInput {
     const text = spansToHtml(spansOf(b), { em: "em", motif: "abba", heartbeat: "hb" });
     return { text, kind, doodle, storm };
   });
-  return { eyebrow: scene.eyebrow, title: scene.title, dek: scene.dek, beats };
+  // SPEC — the per-world skin (D6): each world renders in its own palette, glow,
+  // ambient and silhouette through this one crafted renderer, so the library can
+  // grow to any number of distinct premium worlds just by adding rows to WORLDS.
+  const w = scene.world;
+  // "storm" IS CoastStorm's native, hand-tuned look (the "rained out" bar) — leave
+  // it on the default skin. Every OTHER world supplies its own skin (palette, glow,
+  // ambient, silhouette) so it renders distinctly through the same crafted engine.
+  const silhouette = w.sceneSvg ? w.sceneSvg : (w.key === "dream" ? "none" : undefined);
+  const spec = w.key === "storm" ? undefined
+    : { bg: w.ground, glow: w.warm, accent: w.accent, scheme: w.scheme, ambient: w.ambient, silhouette };
+  return { eyebrow: scene.eyebrow, title: scene.title, dek: scene.dek, beats, spec };
 }
 
 /* ── NOIR-ROOM adapter ── (unchanged grammar; now reads spans for plain text) */

@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string };
+export type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string; ambient?: "stars" | "rain" | "fog" | "motes" | "none"; silhouette?: string };
 export type LivingEmbedProps = {
   text: string;
   title?: string;
