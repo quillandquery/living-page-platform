@@ -16,7 +16,6 @@
  */
 
 import { useEffect, useMemo, useRef, type CSSProperties } from "react";
-import { resolveSilhouette } from "@/lib/living/silhouettes";
 import type { ExperienceSpec, SceneDirective } from "@/lib/living/experience";
 
 export type LivingExperienceProps = {
@@ -42,7 +41,6 @@ export function LivingExperience({ text, spec, title, eyebrow, dek }: LivingExpe
   const rootRef = useRef<HTMLDivElement>(null);
   const paras = useMemo(() => paragraphs(text), [text]);
   const dark = spec.scheme !== "light";
-  const sil = resolveSilhouette(spec.silhouette);
 
   const rootStyle = {
     "--sky": spec.sky,
@@ -110,15 +108,10 @@ export function LivingExperience({ text, spec, title, eyebrow, dek }: LivingExpe
     );
     scenes.forEach((s) => io.observe(s));
     if (scenes[0]) scenes[0].classList.add("in");
-    const objs = Array.from(root.querySelectorAll<HTMLElement>(".le-obj"));
     const onScroll = () => {
       const h = document.body.scrollHeight - window.innerHeight;
       const p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
       root.style.setProperty("--p", p.toFixed(3));
-      objs.forEach((o) => {
-        const dep = parseFloat(o.style.getPropertyValue("--depth")) || 0.3;
-        o.style.transform = `translateY(${-window.scrollY * dep}px)`;
-      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -134,23 +127,9 @@ export function LivingExperience({ text, spec, title, eyebrow, dek }: LivingExpe
       <div className="le-layer le-sky" />
       <div className="le-layer le-sky2" />
       <div className="le-layer le-glow" />
-      {sil && sil !== "none" ? (
-        <div className="le-silhouette" dangerouslySetInnerHTML={{ __html: sil }} />
-      ) : null}
       <div className="le-layer le-vignette" />
       <div className="le-layer le-grain" />
       {spec.medium === "film" ? (<><div className="le-bar le-top" /><div className="le-bar le-bot" /></>) : null}
-
-      {(spec.objects ?? []).map((o, i) => (
-        <div
-          key={i}
-          className="le-obj"
-          data-drift={o.drift}
-          style={{ left: `${o.x}vw`, top: `${o.y}vh`, fontSize: `${o.size}px`, opacity: o.opacity, ["--depth" as string]: o.depth } as CSSProperties}
-        >
-          {o.emoji}
-        </div>
-      ))}
 
       <article className="le-reader">
         {eyebrow ? <p className="le-eyebrow">{eyebrow}</p> : null}
