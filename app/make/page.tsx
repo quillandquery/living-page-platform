@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState, useTransition } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { createStoryAction, publishBespokeFromMake, type StoryMode } from "@/app/write/actions";
+import { publishBespokeFromMake, type StoryMode } from "@/app/write/actions";
 import { MEDIUM_LABELS } from "@/lib/living/cast";
 import { LivingEmbed } from "@/components/living/LivingEmbed";
 import type { ExperienceSpec } from "@/lib/living/experience";
@@ -100,7 +100,6 @@ const STASH = "lp-make";
 function MakeInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [pending, startCreate] = useTransition();
   const [stage, setStage] = useState<"write" | "reveal">("write");
   const [mode, setMode] = useState<StoryMode>("story");
   const [title, setTitle] = useState("");
@@ -259,9 +258,10 @@ function MakeInner() {
     const m = searchParams.get("mode");
     if (m && ["story", "moment", "thought", "freeform"].includes(m)) {
       autoFired.current = true;
-      let d: { mode?: StoryMode; title?: string; text?: string } = {};
-      try { d = JSON.parse(sessionStorage.getItem(STASH) ?? "{}"); } catch {}
-      startCreate(() => { createStoryAction((d.mode ?? (m as StoryMode)), { source: d.text ?? "", title: d.title ?? "", world: null }); });
+      // Returning from auth: just set the mode and let the mount effect rehydrate
+      // the stashed draft into the WRITE stage. Do NOT create a draft / bounce to
+      // the editor — the writer finishes and publishes right here in /make.
+      setMode(m as StoryMode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -282,7 +282,7 @@ function MakeInner() {
         ) : (
           <span className="mk-navr">
             <button className="mk-ghost" onClick={() => setStage("write")} type="button">← Edit</button>
-            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy || pending} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : "Publish →"}</button>
+            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : "Publish →"}</button>
           </span>
         )}
       </nav>
