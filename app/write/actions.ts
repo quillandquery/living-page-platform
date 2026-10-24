@@ -69,6 +69,44 @@ export async function createStoryAction(mode: StoryMode = "story", seed: MakeSee
   redirect(`/write/${data.id}`);
 }
 
+/** Publish a bespoke living page STRAIGHT from /make — no editor detour. Creates a
+ *  published story carrying the Opus-generated page the writer just saw
+ *  (art_direction.bespokeHtml), plus the spec-kit experience as a reader fallback.
+ *  Returns the published URL so the client can navigate to it. */
+export async function publishBespokeFromMake(seed: {
+  mode: StoryMode; source: string; title?: string; world?: string | null; bespokeHtml?: string;
+}): Promise<{ ok: true; url: string } | { ok: false; message: string; needsAuth?: boolean }> {
+  const profile = await myProfile();
+  if (!profile) return { ok: false, message: "Please sign in to publish.", needsAuth: true };
+  const source = (seed.source ?? "").trim();
+  if (!source) return { ok: false, message: "Nothing to publish yet." };
+  const title = (seed.title ?? "").trim();
+  const supabase = await supabaseServer();
+
+  // the spec-kit experience is a cheap reader fallback if the bespoke is absent
+  let experience: unknown;
+  try { const r = await castWithAI(source, title || undefined); if (r.ok) experience = r.cast.experience; } catch {}
+
+  let slug = slugify(deriveSlugBase({ fragment: title, place: "" })) || `untitled-${Date.now().toString(36)}`;
+  const { data: clash } = await supabase.from("stories").select("id").eq("author_id", profile.id).eq("slug", slug).maybeSingle();
+  if (clash) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+
+  const art_direction: Record<string, unknown> = {};
+  if (seed.bespokeHtml) art_direction.bespokeHtml = seed.bespokeHtml;
+  if (experience) art_direction.experience = experience;
+
+  const { error } = await supabase.from("stories").insert({
+    author_id: profile.id, slug, place: "", date: "", status: "published",
+    published_at: new Date().toISOString(), type: seed.mode, fragment: title, source,
+    world: seed.world ?? null, art_direction,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/"); revalidatePath(`/@${profile.handle}`); revalidatePath(`/@${profile.handle}/${slug}`);
+  await captureServer("story_published", profile.id, { via: "make_bespoke", has_bespoke: !!seed.bespokeHtml }).catch(() => {});
+  return { ok: true, url: `/@${profile.handle}/${slug}` };
+}
+
 export type SaveInput = {
   id: string;
   place: string;

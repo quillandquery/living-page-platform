@@ -23,7 +23,7 @@ export type Tier = "haiku" | "sonnet" | "opus";
 const MODELS: Record<Tier, string> = {
   haiku: process.env.BRAIN_MODEL_HAIKU || "claude-haiku-5-5",
   sonnet: process.env.BRAIN_MODEL_SONNET || process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
-  opus: process.env.BRAIN_MODEL_OPUS || "claude-opus-5-5",
+  opus: process.env.BRAIN_MODEL_OPUS || "claude-opus-4-8",
 };
 
 export type CallResult =

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
-import { createStoryAction, type StoryMode } from "@/app/write/actions";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createStoryAction, publishBespokeFromMake, type StoryMode } from "@/app/write/actions";
 import { MEDIUM_LABELS } from "@/lib/living/cast";
 import { LivingEmbed } from "@/components/living/LivingEmbed";
 import type { ExperienceSpec } from "@/lib/living/experience";
@@ -99,6 +99,7 @@ const STASH = "lp-make";
 
 function MakeInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [pending, startCreate] = useTransition();
   const [stage, setStage] = useState<"write" | "reveal">("write");
   const [mode, setMode] = useState<StoryMode>("story");
@@ -126,6 +127,7 @@ function MakeInner() {
   const [castBusy, setCastBusy] = useState(false);
   const [genBusy, setGenBusy] = useState(false); // bespoke Opus page generating
   const [note, setNote] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
   const castSeq = useRef(0); // supersede in-flight casts so a newer story always wins
@@ -235,10 +237,20 @@ function MakeInner() {
     if (genForRef.current !== text) generateBespoke(); // the real bespoke world, swapped in when ready
   };
 
-  const cont = () => {
+  // Publish the bespoke page the writer just saw, straight to a live story — no
+  // editor detour. Disabled while the bespoke is still composing, so we publish
+  // the finished world (genHtml), with the spec-kit experience as a fallback.
+  const publishBespoke = async () => {
+    if (!text.trim() || publishing) return;
+    setPublishing(true);
     try { sessionStorage.setItem(STASH, JSON.stringify({ mode, title, text })); } catch {}
-    track("make_continue", { mode, world: worldSel, words });
-    startCreate(() => { createStoryAction(mode, { source: text, title, world: worldSel in WORLDS ? worldSel : null }); });
+    track("make_publish", { mode, words, bespoke: !!genHtml });
+    try {
+      const r = await publishBespokeFromMake({ mode, source: text, title, world: worldSel in WORLDS ? worldSel : null, bespokeHtml: genHtml ?? undefined });
+      if (r.ok) { router.push(r.url); return; } // live on your page
+      if (r.needsAuth) { router.push(`/onboarding?next=${encodeURIComponent(`/make?mode=${mode}`)}`); return; }
+      setNote(r.message || "Couldn't publish."); setPublishing(false);
+    } catch { setNote("Couldn't publish right now."); setPublishing(false); }
   };
 
   // resume after auth
@@ -270,7 +282,7 @@ function MakeInner() {
         ) : (
           <span className="mk-navr">
             <button className="mk-ghost" onClick={() => setStage("write")} type="button">← Edit</button>
-            <button className="mk-cta" onClick={cont} disabled={!text.trim() || pending} type="button">{pending ? "opening…" : "Continue →"}</button>
+            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy || pending} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : "Publish →"}</button>
           </span>
         )}
       </nav>
