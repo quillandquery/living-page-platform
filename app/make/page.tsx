@@ -124,10 +124,13 @@ function MakeInner() {
   const [aiExp, setAiExp] = useState<ExperienceSpec | null>(null);
   const [genHtml, setGenHtml] = useState<string | null>(null);
   const [castBusy, setCastBusy] = useState(false);
+  const [genBusy, setGenBusy] = useState(false); // bespoke Opus page generating
   const [note, setNote] = useState<string | null>(null);
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
   const castSeq = useRef(0); // supersede in-flight casts so a newer story always wins
+  const genSeq = useRef(0);   // supersede in-flight bespoke generations
+  const genForRef = useRef(""); // which story text the current genHtml belongs to
   const autoFired = useRef(false);
 
   const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -207,9 +210,29 @@ function MakeInner() {
     } catch { if (seq === castSeq.current) setNote("The brain is unreachable right now."); } finally { if (seq === castSeq.current) setCastBusy(false); }
   };
 
+  // ── Reveal: the BESPOKE page (Opus, ~70-100s) — a hand-built world that draws
+  // THIS story's own elements (not the generic spec-kit). It's the real output;
+  // the Auto spec-kit above renders instantly as a placeholder while this cooks,
+  // then we swap it in. Sequence-guarded so switching stories supersedes.
+  const generateBespoke = async () => {
+    const myText = text, myTitle = title;
+    if (!myText.trim()) return;
+    const seq = ++genSeq.current;
+    setGenBusy(true); setGenHtml(null); setNote("composing your world… (~1–2 min)");
+    try {
+      const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle, mode: "single", tier: "opus" }) });
+      const data = await res.json();
+      if (seq !== genSeq.current) return; // a newer story superseded this generation
+      if (data.ok && data.html) { genForRef.current = myText; setGenHtml(data.html); setNote(null); }
+      else setNote(null); // generation failed — keep the Auto placeholder world
+    } catch { if (seq === genSeq.current) setNote(null); }
+    finally { if (seq === genSeq.current) setGenBusy(false); }
+  };
+
   const bringToLife = () => {
     setStage("reveal");
-    if (castedFor.current !== text && !genHtml) castAI(); // land on Auto
+    if (castedFor.current !== text) castAI();          // instant spec-kit placeholder
+    if (genForRef.current !== text) generateBespoke(); // the real bespoke world, swapped in when ready
   };
 
   const cont = () => {
@@ -338,12 +361,15 @@ function MakeInner() {
             </button>
             {restyleOpen ? (
               <div className="mk-restyle-menu">
-                <button onClick={() => { setRestyleOpen(false); setGenHtml(null); castAI(); }} type="button">
-                  <b>Auto</b><span>read it and cast the right world — instant</span>
+                <button onClick={() => { setRestyleOpen(false); generateBespoke(); }} type="button">
+                  <b>Bespoke</b><span>a hand-built world for this story — ~1–2 min</span>
+                </button>
+                <button onClick={() => { setRestyleOpen(false); genForRef.current = ""; setGenHtml(null); castAI(); }} type="button">
+                  <b>Auto</b><span>the quick version — instant</span>
                 </button>
                 <div className="mk-restyle-yours">
                   <b>Yours</b>
-                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setGenHtml(null); setRestyleOpen(false); }}>
+                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setGenHtml(null); genForRef.current = ""; setRestyleOpen(false); }}>
                     <option value="auto">auto</option>
                     <optgroup label="worlds">{Object.values(WORLDS).map((w) => <option key={w.key} value={w.key}>{w.label}</option>)}</optgroup>
                     <optgroup label="mediums">{Object.entries(MEDIUM_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</optgroup>
