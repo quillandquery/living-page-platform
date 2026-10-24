@@ -95,15 +95,15 @@ export async function publishBespokeFromMake(seed: {
   if (seed.bespokeHtml) art_direction.bespokeHtml = seed.bespokeHtml;
   if (experience) art_direction.experience = experience;
 
-  const { error } = await supabase.from("stories").insert({
+  const { data: inserted, error } = await supabase.from("stories").insert({
     author_id: profile.id, slug, place: "", date: "", status: "published",
     published_at: new Date().toISOString(), type: seed.mode, fragment: title, source,
     world: seed.world ?? null, art_direction,
-  });
-  if (error) return { ok: false, message: error.message };
+  }).select("id").single();
+  if (error || !inserted) return { ok: false, message: error?.message ?? "Could not publish." };
 
   revalidatePath("/"); revalidatePath(`/@${profile.handle}`); revalidatePath(`/@${profile.handle}/${slug}`);
-  await captureServer("story_published", profile.id, { via: "make_bespoke", has_bespoke: !!seed.bespokeHtml }).catch(() => {});
+  await captureServer("story_published", profile.id, { story_id: inserted.id, format: "standard", mood: "auto", has_imagery: false, is_first_publish: true }).catch(() => {});
   return { ok: true, url: `/@${profile.handle}/${slug}` };
 }
 

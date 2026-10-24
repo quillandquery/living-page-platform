@@ -22,6 +22,7 @@ export type AnalyticsEvent =
   // --- core loop -----------------------------------------------------
   | { name: "make_mode_selected"; props: { mode: "story" | "moment" | "thought" | "freeform"; label: string } }
   | { name: "make_continue"; props: { mode: string; world: string; words: number } }
+  | { name: "make_publish"; props: { mode: string; words: number; bespoke: boolean } }
   | { name: "draft_created"; props: { story_id: string; mode: string } }
   | { name: "story_published"; props: { story_id: string; format: string; mood: string; has_imagery: boolean; is_first_publish: boolean } }
   | { name: "story_unpublished"; props: { story_id: string } }
