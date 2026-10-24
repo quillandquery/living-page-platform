@@ -1,33 +1,41 @@
 import "server-only";
 
 /**
- * STAGE 1 (Sonnet) — read · cast · palette · art-gate.  (docs/BRAIN-API.md, D11)
+ * STAGE 1 (Sonnet) — read the story · compose a LIVING EXPERIENCE.  (D11)
  *
- * One cheap Sonnet call reads the story's tone/mood/vibe, casts it to the style
- * that best expresses it, proposes a bespoke PALETTE (so even a preset world is
- * re-tinted to this story — custom for pennies, no Opus), and gates whether the
- * piece actually warrants Opus-generated artwork (Stage 4). Server-only; falls
- * back cleanly with no key.
+ * The composer reads the whole piece and designs a complete, renderable *living
+ * reading experience* per `docs/EXPERIENCE-BRIEF.md`: a composed environment (sky
+ * + glow + silhouette), an ambient that breathes, drifting objects, a material
+ * medium, and a per-paragraph typographic direction. It returns a STRUCTURED SPEC
+ * (never HTML/CSS), which `components/living/LivingExperience.tsx` executes — so
+ * every story becomes its own world, not the same coast re-tinted.
+ *
+ * The author's prose is never returned or rewritten: `scenes[i]` directs the i-th
+ * paragraph (how it performs + which of its words to emphasise). Local models /
+ * one cheap Sonnet call, server-only, falls back cleanly with no key.
  */
 
 import { WORLDS } from "@/lib/living/worlds";
 import { MEDIUMS } from "@/lib/living/cast";
 import { callClaude, extractJson } from "@/lib/brain/router";
+import {
+  sanitizeExperience, safeColor, safeGradient,
+  type ExperienceSpec,
+} from "@/lib/living/experience";
 
 export type StoryRead = {
   tone: string[]; mood: string; vibe: string; form: string;
   intensity: number; one_line_read: string;
 };
+/** Back-compat tint derived from the experience, for the heuristic fallback path. */
 export type Palette = {
   scheme: "light" | "dark"; ground?: string; accent?: string; warm?: string;
-  // the LLM also composes these from a CURATED kit, so the crafted engine renders
-  // a bespoke world per story (not a fixed skin): which atmosphere layer breathes,
-  // and which elegant silhouette anchors the horizon.
   ambient?: "stars" | "rain" | "fog" | "motes" | "none";
   silhouette?: "palms" | "city" | "pines" | "mountains" | "hills" | "dunes" | "none";
 };
 export type BrainCast = {
   read: StoryRead; style: string; rationale: string;
+  experience?: ExperienceSpec;
   palette?: Palette; artNeeded: boolean; artNote?: string;
 };
 export type BrainResult =
@@ -36,48 +44,32 @@ export type BrainResult =
 
 const SURFACES = [...Object.keys(WORLDS), ...MEDIUMS];
 
-const SYSTEM = `You are the art director for Living Page. Read a short piece of personal writing for its TONE, MOOD and VIBE, cast it to the one visual style that best expresses THIS piece, propose a palette drawn from the story's own imagery, and judge whether it deserves bespoke generated artwork.
+const SYSTEM = `You are the creative director, motion designer and reading-experience designer for Living Page. You turn a piece of prose into an IMMERSIVE, ANIMATED reading experience — a moving environment, objects with presence, expressive typography and a sense of entering a world — returned as a STRUCTURED SPEC the engine renders. You never return HTML, CSS or the prose itself.
 
-Hold the design language: restraint (mostly quiet, a few earned surprises, one grammar per page); MOTIVATED, never default (every choice traceable to the read — no black-by-default, no neon-by-default); readable always; premium, never clip-art.
+THE PRINCIPLE: read the whole story first; discover the world it calls for second; design the experience third. Never start from a theme. Don't pick a beach because water is mentioned or Paris because love is — interpret the ACTUAL story (its events, place, emotional arc, what changes, what the reader should feel) and invent the most fitting world. Two different stories must produce two different worlds. Ask yourself: "could this same design have been generated for almost any other story?" — if yes, it has failed.
 
-STYLES (pick exactly one "style" key):
-WORLDS (story set inside an evolving atmosphere; immersive, place/mood-driven):
- daylight(warm neutral reflective) · meadow(calm hopeful pastoral) · dawn-coast(sea/coast/dawn; hope, arrival) · ember-interior(cozy domestic tender) · paper(essayistic plain cerebral) · storm(turmoil, release) · twilight-street(city at night; solitude, lost-then-found) · noir-room(dread, fear, thriller) · dream(surreal weightless) · nocturne(night, stars, grief, awe)
-MEDIUMS (the text BECOMES an artifact):
- postcard(one remembered place/person; wistful nostalgic longing) · evidence(investigation, obsession, unease) · maximalist(a loud reckoning/declaration; one word screams) · manuscript(the mundane made epic/sacred; dry wit)
+Compose from this curated kit (closed vocab — use only these values):
+- medium: "world" (an immersive place/atmosphere) · "water" (underwater: depth, caustics, bubbles, drifting text) · "paper" (a handwritten letter/diary on a desk — ink appears as if written) · "film" (letterboxed, projected, grainy). Most stories are "world". Choose the material the story is MADE of.
+- scheme: "dark" reads cinematic and is usually right; "light" only for a genuinely bright/airy/hopeful piece (still give it a glow + silhouette so it stays immersive).
+- sky: a rich tonal CSS gradient with real range, motivated by the story (indigo→plum→amber dusk; teal→navy depths; storm greys→slate; dawn rose→gold). linear-gradient()/radial-gradient() only. Never flat black, never one muddy tone.
+- sky2 (optional): a second gradient the world cross-fades TO as the reader scrolls — use it when the story moves through time or mood (night→dawn, calm→storm). Same gradient rules.
+- glow: a GENEROUS CSS radial-gradient bloom — the signature light, the emotional centre. Place it where the light would be (a low horizon bloom, a shaft from above underwater).
+- accent: a hex for emphasised words, drawn from the glow.
+- ink (optional): hex reading colour; must be comfortably readable on the sky.
+- silhouette: ONE of palms | city | pines | mountains | hills | dunes that fits the setting, or "none" for a placeless/interior/underwater piece.
+- ambient: ONE of stars | rain | fog | motes | snow | bubbles | petals | embers | none — the thing in the air that breathes with the mood (stars for night/awe, rain for grief/storm, fog for memory, motes for warm quiet, bubbles for water, snow/petals/embers when the story literally calls for them). Avoid "none" unless stillness is the point.
+- caustic: true only for underwater light. lightning: true only for a storm with a strike.
+- objects: 0–4 small symbolic emoji that have a NARRATIVE reason to be there (a moon 🌙, a drifting fish 🐟, a pressed flower 🌼, a pen ✒️). Each: {emoji, x(0–100 vw), y(0–100 vh), size(12–80 px), drift:"floaty"|"sway"|"rise", depth(0–1 parallax), opacity(0.1–1)}. Emoji ONLY (no letters). Use sparingly; empty is fine.
+- scenes: an array of per-paragraph directions, ONE per paragraph of the story IN ORDER (the story's paragraphs are separated by blank lines; a count is given below). Each: {behavior, emphasis:[words]}. behavior ∈ unveil (default: words rise in on arrival) · float (gently bob — dreamy/weightless) · fade (blur in slowly — memory) · drift (italic, slide in — an aside/reflection) · tremor (shaking — fear/shock/a shout) · write (appears word-by-word with an ink caret — ONLY for medium "paper"). emphasis = 0–3 of THAT paragraph's own words to tint with the accent (emotionally loaded words; never function words). Most paragraphs are "unveil" — reserve the expressive behaviours for the moments that earn them (contrast matters). NEVER include the paragraph's text, only its direction.
 
-COMPOSE THE WORLD — the heart of it. The BAR is the reference piece "rained out": a deep indigo night melting into a warm amber GLOW-BLOOM on the horizon, elegant palm silhouettes, a breathing atmosphere, fine grain — immersive and cinematic. Every story must reach that level of RICHNESS. Design THIS story's own world from the curated kit:
-- Make it IMMERSIVE and ATMOSPHERIC, not a flat page of text on a plain wash. It needs DEPTH: a rich gradient + a strong glow-bloom + a silhouette + an ambient. A bare gradient with text is a FAILURE.
-- palette.scheme: lean "dark" — deep, moody, cinematic reads best and is the bar. Use "light" only for a genuinely bright, airy, hopeful piece, and even then give it a strong glow and a silhouette so it's still immersive.
-- palette.ground: a rich, tonal CSS gradient with real range, motivated by the story (deep indigo→plum→amber dusk; storm greys→slate; dawn rose→gold). Never flat black, never a single muddy tone, never garish.
-- palette.warm: a GENEROUS CSS radial-gradient for the horizon glow-bloom — the signature light. Make it present and luminous, the emotional centre.
-- palette.accent: a hex for the tinted key words, drawn from the glow.
-- palette.ambient: ONE of stars | rain | fog | motes — pick the one that breathes with the mood (stars for night/awe, rain for storm/grief, fog for memory/mystery, motes for warm/quiet). Avoid "none".
-- palette.silhouette: almost ALWAYS pick one that fits the setting — palms (coast/tropics), city (streets/urban), pines (forest/cold), mountains (heights/journey), hills (open country), dunes (desert/heat). Use "none" only for a truly placeless, abstract interior piece.
-Every choice traceable to the read. Only linear-gradient()/radial-gradient() and hex/rgb/rgba — no url(), no external anything.
+Preserve the writing: the engine renders the author's prose verbatim; you only direct it. Keep reading comfortable — don't make every paragraph shout.
 
-Keep every read value SHORT — a word or short phrase, never a sentence (except one_line_read and rationale, each one sentence). Respond with ONLY this JSON, no prose, no markdown:
-{"read":{"tone":["..."],"mood":"...","vibe":"...","form":"...","intensity":0.0,"one_line_read":"..."},"style":"<one key above>","rationale":"one sentence","palette":{"scheme":"light|dark","ground":"linear-gradient(180deg,#..,#..)","accent":"#..","warm":"radial-gradient(...)","ambient":"stars|rain|fog|motes|none","silhouette":"palms|city|pines|mountains|hills|dunes|none"},"art":{"needed":true|false,"note":"..."}}`;
-
-/* ── sanitisers — a palette goes into an inline style, so keep it to safe CSS ── */
-const SAFE_COLOR = /^#[0-9a-fA-F]{3,8}$|^rgba?\([\d.,\s%]+\)$/;
-function safeColor(s: unknown): string | undefined {
-  return typeof s === "string" && SAFE_COLOR.test(s.trim()) ? s.trim() : undefined;
-}
-function safeGradient(s: unknown): string | undefined {
-  if (typeof s !== "string") return undefined;
-  const v = s.trim();
-  if (!/^(linear-gradient|radial-gradient)\(/.test(v)) return undefined;
-  if (/url\(|;|@|\{|\}|<|>|expression|javascript:/i.test(v)) return undefined;   // no network / no break-out
-  if (!/^[a-zA-Z0-9#%.,()\s-]+$/.test(v)) return undefined;
-  return v.length <= 400 ? v : undefined;
-}
+Respond with ONLY this JSON, no prose, no markdown:
+{"read":{"tone":["..."],"mood":"...","vibe":"...","form":"...","intensity":0.0,"one_line_read":"..."},"style":"<world or medium key>","rationale":"one sentence on the world you chose and why","experience":{"concept":"one sentence thesis","medium":"...","scheme":"dark|light","sky":"linear-gradient(...)","sky2":"linear-gradient(...)","glow":"radial-gradient(...)","accent":"#..","ink":"#..","silhouette":"...","ambient":"...","caustic":false,"lightning":false,"objects":[{"emoji":"🌙","x":78,"y":14,"size":40,"drift":"floaty","depth":0.12,"opacity":0.9}],"scenes":[{"behavior":"unveil","emphasis":["word"]}]},"art":{"needed":false,"note":""}}`;
 
 function validate(o: unknown): BrainCast | null {
   if (!o || typeof o !== "object") return null;
   const x = o as Record<string, unknown>;
-  // style degrades gracefully: an exact catalog key, else a fuzzy match, else
-  // "auto" (the heuristic picks). Never reject the whole cast over the style.
   const raw = (typeof x.style === "string" ? x.style : "").trim();
   const low = raw.toLowerCase().replace(/^(world|medium):/, "");
   const style = SURFACES.includes(raw) ? raw
@@ -91,30 +83,35 @@ function validate(o: unknown): BrainCast | null {
     intensity: typeof r.intensity === "number" ? Math.max(0, Math.min(1, r.intensity)) : 0.5,
     one_line_read: typeof r.one_line_read === "string" ? r.one_line_read : "",
   };
-  const p = (x.palette ?? {}) as Record<string, unknown>;
-  const AMB = ["stars", "rain", "fog", "motes", "none"];
-  const SIL = ["palms", "city", "pines", "mountains", "hills", "dunes", "none"];
-  const palette: Palette | undefined = p
+  const experience = sanitizeExperience(x.experience) ?? undefined;
+  // derive the back-compat palette (so the heuristic fallback path stays tinted)
+  const palette: Palette | undefined = experience
     ? {
-        scheme: p.scheme === "dark" ? "dark" : "light",
-        ground: safeGradient(p.ground), accent: safeColor(p.accent), warm: safeGradient(p.warm),
-        ambient: AMB.includes(p.ambient as string) ? (p.ambient as Palette["ambient"]) : undefined,
-        silhouette: SIL.includes(p.silhouette as string) ? (p.silhouette as Palette["silhouette"]) : undefined,
+        scheme: experience.scheme,
+        ground: safeGradient(experience.sky),
+        accent: safeColor(experience.accent),
+        warm: safeGradient(experience.glow),
+        ambient: (["stars", "rain", "fog", "motes"] as const).includes(experience.ambient as never)
+          ? (experience.ambient as Palette["ambient"]) : undefined,
+        silhouette: experience.silhouette as Palette["silhouette"],
       }
     : undefined;
   const art = (x.art ?? {}) as Record<string, unknown>;
   return {
-    read, style,
+    read, style, experience, palette,
     rationale: typeof x.rationale === "string" ? x.rationale : "",
-    palette: palette && (palette.ground || palette.accent) ? palette : undefined,
     artNeeded: art.needed === true,
     artNote: typeof art.note === "string" ? art.note : undefined,
   };
 }
 
 export async function castWithAI(text: string, title?: string): Promise<BrainResult> {
-  const user = `${title ? `Title: ${title}\n\n` : ""}Story:\n${text.slice(0, 6000)}`;
-  const res = await callClaude("sonnet", SYSTEM, user, 2048);
+  const body = text.slice(0, 6000);
+  const nParas = body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean).length;
+  const user =
+    `${title ? `Title: ${title}\n\n` : ""}The story has ${nParas} paragraph(s) (separated by blank lines). ` +
+    `Return exactly ${nParas} scene direction(s), in order.\n\nStory:\n${body}`;
+  const res = await callClaude("sonnet", SYSTEM, user, 3000);
   if (!res.ok) return res;
   if (!res.text.trim()) return { ok: false, reason: "invalid", detail: "empty response" };
   try {

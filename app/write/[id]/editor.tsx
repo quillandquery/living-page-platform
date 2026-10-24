@@ -6,6 +6,7 @@ import { annotate, toBlocks } from "@/lib/annotate";
 import { FormatSelect } from "@/components/living/FormatSelect";
 import { LivingEmbed } from "@/components/living/LivingEmbed";
 import { castLivingScene } from "@/lib/living/cast";
+import type { ExperienceSpec } from "@/lib/living/experience";
 import { WORLDS as LIVING_WORLDS, type WorldKey } from "@/lib/living/worlds";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
@@ -449,6 +450,7 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
                 title={fragment || place || undefined}
                 eyebrow={[place, date].filter(Boolean).join(" · ") || undefined}
                 world={livingWorld === "auto" ? undefined : livingWorld}
+                experience={(artDirection as { experience?: ExperienceSpec } | undefined)?.experience ?? null}
               />
             </div>
           ) : (

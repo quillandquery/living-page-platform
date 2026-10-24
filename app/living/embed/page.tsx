@@ -22,14 +22,18 @@ import { Manuscript } from "@/components/living/mediums/Manuscript";
 import { castLivingScene, coastStormInput, noirRoomInput, maximalistInput, postcardInput, evidenceInput, manuscriptInput, MEDIUMS, type LivingScene } from "@/lib/living/cast";
 import { WORLDS, type WorldKey } from "@/lib/living/worlds";
 import { resolveSilhouette } from "@/lib/living/silhouettes";
+import { LivingExperience } from "@/components/living/LivingExperience";
+import type { ExperienceSpec } from "@/lib/living/experience";
 
 type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string; ambient?: "stars" | "rain" | "fog" | "motes" | "none"; silhouette?: string };
-type Msg = { type: "lp-embed"; text?: string; title?: string; eyebrow?: string; world?: string; palette?: PaletteMsg };
+type Msg = { type: "lp-embed"; text?: string; title?: string; eyebrow?: string; world?: string; palette?: PaletteMsg; experience?: ExperienceSpec };
 
 export default function LivingEmbed() {
   const [scene, setScene] = useState<LivingScene | null>(null);
   const [surface, setSurface] = useState<string | undefined>();
   const [palette, setPalette] = useState<PaletteMsg | undefined>();
+  const [experience, setExperience] = useState<ExperienceSpec | undefined>();
+  const [raw, setRaw] = useState<{ text: string; title?: string; eyebrow?: string } | null>(null);
 
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
@@ -42,6 +46,8 @@ export default function LivingEmbed() {
       const world = d.world && d.world in WORLDS ? (d.world as WorldKey) : undefined;
       setSurface(medium);
       setPalette(d.palette);
+      setExperience(d.experience);
+      setRaw(d.text && d.text.trim() ? { text: d.text, title: d.title || undefined, eyebrow: d.eyebrow || undefined } : null);
       setScene(
         d.text && d.text.trim()
           ? castLivingScene(d.text, { title: d.title || undefined, eyebrow: d.eyebrow || undefined, world })
@@ -55,6 +61,10 @@ export default function LivingEmbed() {
   }, []);
 
   const render = () => {
+    // The brain composed a full living experience — render it (the primary path).
+    if (experience && raw) {
+      return <LivingExperience text={raw.text} spec={experience} title={raw.title} eyebrow={raw.eyebrow} dek={scene?.dek} />;
+    }
     if (!scene) return (
       <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
         color: "rgba(255,255,255,.4)", fontFamily: "var(--font-mono), ui-monospace, monospace",

@@ -11,6 +11,7 @@ import { buildStoryMetadata } from "@/lib/metadata";
 import { articleJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from "@/lib/structured-data";
 import { absoluteUrl } from "@/lib/site";
 import { buildShareProps } from "@/lib/share";
+import { sanitizeExperience } from "@/lib/living/experience";
 import { ReaderTracking } from "@/components/analytics/ReaderTracking";
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
@@ -167,6 +168,7 @@ export default async function StoryReaderPage(
       world={story.world}
       title={seo.title}
       eyebrow={[story.place, story.date].filter(Boolean).join(" · ") || undefined}
+      experience={sanitizeExperience((story.art_direction as { experience?: unknown } | null)?.experience)}
       share={buildShareProps(story)}
       more={{
         same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, fragment: same.fragment } : null,

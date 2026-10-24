@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { createStoryAction, type StoryMode } from "@/app/write/actions";
 import { MEDIUM_LABELS } from "@/lib/living/cast";
 import { LivingEmbed } from "@/components/living/LivingEmbed";
+import type { ExperienceSpec } from "@/lib/living/experience";
 import { WORLDS } from "@/lib/living/worlds";
 import { track } from "@/lib/analytics/client";
 
@@ -120,6 +121,7 @@ function MakeInner() {
   // ── Reveal stage: the look ──
   const [worldSel, setWorldSel] = useState<string>("auto");
   const [aiPalette, setAiPalette] = useState<Palette | null>(null);
+  const [aiExp, setAiExp] = useState<ExperienceSpec | null>(null);
   const [genHtml, setGenHtml] = useState<string | null>(null);
   const [castBusy, setCastBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -190,7 +192,7 @@ function MakeInner() {
       const res = await fetch("/api/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
       const data = await res.json();
       castedFor.current = text;
-      if (data.ok) { setWorldSel(data.cast.style); setAiPalette(data.cast.palette ?? null); setNote(`✨ ${data.cast.style} — ${data.cast.rationale}`); }
+      if (data.ok) { setWorldSel(data.cast.style); setAiPalette(data.cast.palette ?? null); setAiExp(data.cast.experience ?? null); setNote(`✨ ${data.cast.style} — ${data.cast.rationale}`); }
       else if (data.reason === "no-key") setNote("Add ANTHROPIC_API_KEY to .env.local and restart.");
       else setNote(`Couldn't read it (${data.reason}) — showing the live engine.`);
     } catch { setNote("The brain is unreachable right now."); } finally { setCastBusy(false); }
@@ -317,7 +319,7 @@ function MakeInner() {
       ) : (
         <section className="mk-reveal">
           <div className="mk-stage-embed">
-            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} html={genHtml} />
+            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} experience={aiExp} html={genHtml} />
           </div>
 
           {/* the one RESTYLE control — Auto / Bespoke / Yours */}
@@ -332,7 +334,7 @@ function MakeInner() {
                 </button>
                 <div className="mk-restyle-yours">
                   <b>Yours</b>
-                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setGenHtml(null); setRestyleOpen(false); }}>
+                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setGenHtml(null); setRestyleOpen(false); }}>
                     <option value="auto">auto</option>
                     <optgroup label="worlds">{Object.values(WORLDS).map((w) => <option key={w.key} value={w.key}>{w.label}</option>)}</optgroup>
                     <optgroup label="mediums">{Object.entries(MEDIUM_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</optgroup>

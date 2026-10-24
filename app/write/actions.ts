@@ -7,6 +7,7 @@ import { myProfile } from "@/lib/db";
 import type { Block } from "@/lib/story-blocks.mjs";
 import { resolveImagery } from "@/lib/media";
 import { deriveSlugBase } from "@/lib/slug";
+import { castWithAI } from "@/lib/brain/castWithAI";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
 import { captureServer } from "@/lib/analytics/server";
 import { createClaimLink, revokeClaimLink, type CreateClaimResult } from "@/lib/claim";
@@ -162,6 +163,19 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     blocks,
   };
   if (input.art_direction) patch.art_direction = input.art_direction;
+  // THE LIVING EXPERIENCE (docs/EXPERIENCE-BRIEF.md). On publish, the brain reads
+  // the story and composes its bespoke world (sky/glow/silhouette/ambient/objects
+  // + per-paragraph behaviour). Persisted into art_direction (additive, D4) so the
+  // reader renders it with no LLM call per request. Best-effort: a hiccup or a
+  // missing key never blocks publishing — the reader falls back to the heuristic.
+  if (publish === true && input.source?.trim()) {
+    try {
+      const r = await castWithAI(input.source, input.fragment || undefined);
+      if (r.ok && r.cast.experience) {
+        patch.art_direction = { ...(input.art_direction ?? {}), experience: r.cast.experience };
+      }
+    } catch {}
+  }
   if (input.world !== undefined) patch.world = input.world;
   if (input.seo_title !== undefined) patch.seo_title = input.seo_title;
   if (input.seo_description !== undefined) patch.seo_description = input.seo_description;

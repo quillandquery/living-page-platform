@@ -16,8 +16,10 @@ import Link from "next/link";
 import { LivingStory } from "@/components/living/LivingStory";
 import { NoirRoom } from "@/components/living/scenes/NoirRoom";
 import { CoastStorm } from "@/components/living/scenes/CoastStorm";
+import { LivingExperience } from "@/components/living/LivingExperience";
 import { castLivingScene, coastStormInput, noirRoomInput, RICH_WORLDS } from "@/lib/living/cast";
 import { WORLDS, type WorldKey } from "@/lib/living/worlds";
+import type { ExperienceSpec } from "@/lib/living/experience";
 import { ShareControls, type ShareControlsProps } from "@/components/living/ShareControls";
 
 export type ReadNextLink = { handle: string; slug: string; place: string; fragment: string } | null;
@@ -26,11 +28,12 @@ export type LivingReaderProps = {
   world: string | null;
   title?: string;
   eyebrow?: string;
+  experience?: ExperienceSpec | null;
   share: ShareControlsProps;
   more: { same: ReadNextLink; surprise: ReadNextLink };
 };
 
-export function LivingReader({ source, world, title, eyebrow, share, more }: LivingReaderProps) {
+export function LivingReader({ source, world, title, eyebrow, experience, share, more }: LivingReaderProps) {
   const scene = useMemo(
     () => castLivingScene(source, {
       title: title || undefined,
@@ -40,8 +43,12 @@ export function LivingReader({ source, world, title, eyebrow, share, more }: Liv
     [source, title, eyebrow, world],
   );
 
-  const page =
-    scene.world.key === "noir-room" ? <NoirRoom {...noirRoomInput(scene)} />
+  // The brain composed this story's bespoke living experience at publish time —
+  // render it (the primary path). Older stories with no saved spec fall back to
+  // the heuristic worlds (never a blank page — D4 preserve-data).
+  const page = experience
+    ? <LivingExperience text={source} spec={experience} title={title || undefined} eyebrow={eyebrow || undefined} dek={scene.dek} />
+    : scene.world.key === "noir-room" ? <NoirRoom {...noirRoomInput(scene)} />
     : RICH_WORLDS.has(scene.world.key) ? <CoastStorm {...coastStormInput(scene)} />
     : <LivingStory scene={scene} />;
 
@@ -50,7 +57,7 @@ export function LivingReader({ source, world, title, eyebrow, share, more }: Liv
   return (
     <>
       {page}
-      <footer className="lr-foot" data-scheme={scene.world.scheme}>
+      <footer className="lr-foot" data-scheme={experience ? experience.scheme : scene.world.scheme}>
         <div className="lr-foot-in">
           <ShareControls {...share} />
           {links.length ? (

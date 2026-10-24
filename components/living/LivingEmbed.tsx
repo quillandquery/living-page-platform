@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import type { ExperienceSpec } from "@/lib/living/experience";
 
 export type PaletteMsg = { scheme?: "light" | "dark"; ground?: string; accent?: string; warm?: string; ambient?: "stars" | "rain" | "fog" | "motes" | "none"; silhouette?: string };
 export type LivingEmbedProps = {
@@ -16,12 +17,13 @@ export type LivingEmbedProps = {
   title?: string;
   eyebrow?: string;
   world?: string; // a WorldKey to pin, a medium key, or undefined for auto
-  palette?: PaletteMsg | null; // the brain's per-story tint (Stage 1)
+  palette?: PaletteMsg | null; // the brain's per-story tint (Stage 1, back-compat)
+  experience?: ExperienceSpec | null; // the brain's full living-experience spec (Stage 1)
   html?: string | null;        // a bespoke Opus-generated page (Stage 4) — rendered sandboxed
   className?: string;
 };
 
-export function LivingEmbed({ text, title, eyebrow, world, palette, html, className }: LivingEmbedProps) {
+export function LivingEmbed({ text, title, eyebrow, world, palette, experience, html, className }: LivingEmbedProps) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
 
@@ -38,12 +40,12 @@ export function LivingEmbed({ text, title, eyebrow, world, palette, html, classN
     if (!ready || html) return;
     const t = setTimeout(() => {
       ref.current?.contentWindow?.postMessage(
-        { type: "lp-embed", text, title, eyebrow, world, palette: palette ?? undefined },
+        { type: "lp-embed", text, title, eyebrow, world, palette: palette ?? undefined, experience: experience ?? undefined },
         window.location.origin,
       );
     }, 160);
     return () => clearTimeout(t);
-  }, [ready, text, title, eyebrow, world, palette, html]);
+  }, [ready, text, title, eyebrow, world, palette, experience, html]);
 
   // Stage-4 bespoke page: render the generated HTML in a sandboxed iframe —
   // allow-scripts but NOT allow-same-origin, so it can't reach the app or the
