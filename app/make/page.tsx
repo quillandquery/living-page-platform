@@ -129,13 +129,17 @@ function MakeInner() {
   const [worldSel, setWorldSel] = useState<string>("auto");
   const [aiPalette, setAiPalette] = useState<Palette | null>(null);
   const [aiExp, setAiExp] = useState<ExperienceSpec | null>(null);
+  const [genHtml, setGenHtml] = useState<string | null>(null); // the bespoke Opus-generated page
   const [castBusy, setCastBusy] = useState(false);
+  const [genBusy, setGenBusy] = useState(false); // bespoke Opus page composing
   const [note, setNote] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [visibility, setVisibility] = useState<StoryVisibility>("public");
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
   const castSeq = useRef(0); // supersede in-flight casts so a newer story always wins
+  const genSeq = useRef(0);   // supersede in-flight bespoke generations
+  const genForRef = useRef(""); // which story text the current genHtml belongs to
   const autoFired = useRef(false);
 
   const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -208,7 +212,7 @@ function MakeInner() {
     const myText = text, myTitle = title;
     if (!myText.trim()) return;
     const seq = ++castSeq.current;
-    setCastBusy(true); setNote("reading your story…");
+    setCastBusy(true); setNote("reading your story…"); setGenHtml(null); genForRef.current = "";
     try {
       const res = await fetch("/api/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle }) });
       const data = await res.json();
@@ -220,25 +224,40 @@ function MakeInner() {
     } catch { if (seq === castSeq.current) setNote("The brain is unreachable right now."); } finally { if (seq === castSeq.current) setCastBusy(false); }
   };
 
+  // ── Reveal: the BESPOKE page (Opus) — a hand-built world for THIS story. The
+  // Auto spec-kit renders instantly as a placeholder while this composes (~1–2
+  // min), then swaps in. Sequence-guarded so switching stories supersedes.
+  const generateBespoke = async () => {
+    const myText = text, myTitle = title;
+    if (!myText.trim()) return;
+    const seq = ++genSeq.current;
+    setGenBusy(true); setGenHtml(null); setNote("composing your world… (~1–2 min)");
+    try {
+      const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle, mode: "single", tier: "opus" }) });
+      const data = await res.json();
+      if (seq !== genSeq.current) return; // a newer story superseded this generation
+      if (data.ok && data.html) { genForRef.current = myText; setGenHtml(data.html); setNote(null); }
+      else setNote(null); // generation failed — keep the Auto placeholder world
+    } catch { if (seq === genSeq.current) setNote(null); }
+    finally { if (seq === genSeq.current) setGenBusy(false); }
+  };
+
   const bringToLife = () => {
     setStage("reveal");
-    // The brain reads the story and composes its bespoke LIVING EXPERIENCE (a
-    // world that VARIES per story — environment, objects, text behaviour). The old
-    // Opus free-form HTML path is retired: it was slow (~1–2 min) and produced the
-    // same generic page for every story.
-    if (castedFor.current !== text) castAI();
+    if (castedFor.current !== text) castAI();          // instant Auto placeholder
+    if (genForRef.current !== text) generateBespoke(); // the real bespoke world, swapped in when ready
   };
 
   // Publish the bespoke page the writer just saw, straight to a live story — no
-  // editor detour. Disabled while the bespoke is still composing, so we publish
-  // the finished world (genHtml), with the spec-kit experience as a fallback.
+  // editor detour. Publishes the finished Opus world (genHtml) when ready, with
+  // the spec-kit experience persisted as a reader fallback.
   const publishBespoke = async () => {
     if (!text.trim() || publishing) return;
     setPublishing(true);
     try { sessionStorage.setItem(STASH, JSON.stringify({ mode, title, text })); } catch {}
-    track("make_publish", { mode, words, bespoke: false });
+    track("make_publish", { mode, words, bespoke: !!genHtml });
     try {
-      const r = await publishBespokeFromMake({ mode, source: text, title, world: worldSel in WORLDS ? worldSel : null, visibility });
+      const r = await publishBespokeFromMake({ mode, source: text, title, world: worldSel in WORLDS ? worldSel : null, bespokeHtml: genHtml ?? undefined, visibility });
       if (r.ok) { router.push(r.url); return; } // live on your page
       if (r.needsAuth) { router.push(`/onboarding?next=${encodeURIComponent(`/make?mode=${mode}`)}`); return; }
       setNote(r.message || "Couldn't publish."); setPublishing(false);
@@ -286,7 +305,7 @@ function MakeInner() {
               </span>
               <span className="mk-vis-hint" id="mk-vis-hint">{VISIBILITY_COPY[visibility].blurb}</span>
             </span>
-            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing} type="button">{publishing ? "publishing…" : visibility === "private" ? "Publish privately →" : "Publish →"}</button>
+            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : visibility === "private" ? "Publish privately →" : "Publish →"}</button>
           </span>
         )}
       </nav>
@@ -367,22 +386,25 @@ function MakeInner() {
       ) : (
         <section className="mk-reveal">
           <div className="mk-stage-embed">
-            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} experience={aiExp} />
+            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} experience={aiExp} html={genHtml} />
           </div>
 
-          {/* the RESTYLE control — Re-read (recompose the world) / Yours (pin one) */}
+          {/* the RESTYLE control — Bespoke (Opus page) / Auto (fast) / Yours (pin one) */}
           <div className="mk-restyle">
             <button className="mk-restyle-btn" onClick={() => setRestyleOpen((v) => !v)} type="button">
-              {castBusy ? "reading…" : "✧ Restyle"}
+              {genBusy ? "composing…" : castBusy ? "reading…" : "✧ Restyle"}
             </button>
             {restyleOpen ? (
               <div className="mk-restyle-menu">
-                <button onClick={() => { setRestyleOpen(false); castedFor.current = ""; castAI(); }} type="button">
-                  <b>Re-read</b><span>compose this story's world again</span>
+                <button onClick={() => { setRestyleOpen(false); genForRef.current = ""; generateBespoke(); }} type="button">
+                  <b>Bespoke</b><span>a hand-built world for this story — ~1–2 min</span>
+                </button>
+                <button onClick={() => { setRestyleOpen(false); setGenHtml(null); genForRef.current = ""; castedFor.current = ""; castAI(); }} type="button">
+                  <b>Auto</b><span>the quick version — instant</span>
                 </button>
                 <div className="mk-restyle-yours">
                   <b>Yours</b>
-                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setRestyleOpen(false); }}>
+                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setGenHtml(null); genForRef.current = ""; setRestyleOpen(false); }}>
                     <option value="auto">auto</option>
                     <optgroup label="worlds">{Object.values(WORLDS).map((w) => <option key={w.key} value={w.key}>{w.label}</option>)}</optgroup>
                     <optgroup label="mediums">{Object.entries(MEDIUM_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</optgroup>
