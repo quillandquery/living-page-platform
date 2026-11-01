@@ -83,6 +83,7 @@ async function main() {
     .from("stories")
     .select("*, author:profiles(handle, display_name, bio, avatar_url)")
     .eq("status", "published")
+    .eq("visibility", "public") // private stories aren't indexable, so they aren't audited
     .order("published_at", { ascending: false });
 
   if (error) {

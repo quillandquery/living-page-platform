@@ -10,6 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "check": "node scripts/check-stories.mjs",
+    "test": "node --conditions react-server --experimental-test-module-mocks --import tsx --test tests/*.test.ts",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
     "gen:loops": "TSX_TSCONFIG_PATH=scripts/tsconfig.gen.json node --env-file=.env.local --import tsx scripts/gen-share-loops.ts",
     "seo:audit": "node --env-file=.env.local --import tsx scripts/seo-audit.ts"

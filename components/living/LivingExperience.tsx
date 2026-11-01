@@ -33,6 +33,16 @@ const AMB_N: Record<string, number> = {
   stars: 60, rain: 90, snow: 50, bubbles: 26, motes: 40, embers: 28, petals: 18, fog: 4,
 };
 
+// The typographic voice, chosen per story. Uses the app's loaded faces where it
+// has them and system faces otherwise, so variety needs no extra web fonts.
+const FONT_STACK: Record<string, string> = {
+  serif: 'var(--f-disp, "Instrument Serif", Georgia, "Times New Roman", serif)',
+  sans: '"Helvetica Neue", Inter, "Segoe UI", system-ui, Arial, sans-serif',
+  slab: '"Rockwell", "Roboto Slab", "Courier New", Georgia, serif',
+  mono: 'var(--f-mono, "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace)',
+  hand: 'var(--f-hand, "Snell Roundhand", "Segoe Script", "Bradley Hand", cursive)',
+};
+
 function paragraphs(text: string): string[] {
   return text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 }
@@ -52,6 +62,9 @@ export function LivingExperience({ text, spec, title, eyebrow, dek }: LivingExpe
     "--vig": spec.vignette ?? (dark ? "rgba(0,0,0,.55)" : "rgba(60,40,20,.18)"),
     "--grain": dark ? 0.08 : 0.05,
     "--grainimg": GRAIN,
+    "--exp-font": FONT_STACK[spec.type?.font ?? "serif"] ?? FONT_STACK.serif,
+    "--exp-scale": spec.type?.scale ?? 1,
+    "--exp-align": spec.type?.align ?? "left",
   } as CSSProperties;
 
   // ambient particles + caustic/flash: random → client only (no SSR mismatch)
@@ -174,7 +187,7 @@ export default LivingExperience;
 
 const CSS = `
 .living-exp{position:relative;min-height:100vh;color:var(--ink);
-  font-family:var(--f-disp,"Instrument Serif",Georgia,"Times New Roman",serif);
+  font-family:var(--exp-font,var(--f-disp,"Instrument Serif",Georgia,"Times New Roman",serif));
   -webkit-font-smoothing:antialiased}
 .living-exp *{box-sizing:border-box}
 .le-layer{position:fixed;inset:0;pointer-events:none}
@@ -188,12 +201,12 @@ const CSS = `
 .le-vignette{z-index:5;box-shadow:inset 0 0 38vh 6vh var(--vig)}
 .le-grain{z-index:6;opacity:var(--grain);mix-blend-mode:overlay;background-image:var(--grainimg)}
 .le-ambient{z-index:2}
-.le-reader{position:relative;z-index:4;max-width:42rem;margin:0 auto;padding:46vh 1.5rem 40vh}
+.le-reader{position:relative;z-index:4;max-width:42rem;margin:0 auto;padding:46vh 1.5rem 40vh;text-align:var(--exp-align,left)}
 .le-eyebrow{font-family:var(--f-mono,"Space Mono",ui-monospace,monospace);font-size:.68rem;letter-spacing:.34em;
   text-transform:uppercase;opacity:.62;margin:0 0 1.4rem}
 .le-title{font-size:clamp(2.6rem,7vw,4.4rem);line-height:1.04;letter-spacing:-.01em;margin:0 0 1rem;font-weight:400}
 .le-dek{font-size:1.12rem;line-height:1.6;opacity:.7;font-style:italic;margin:0 0 2rem;max-width:30rem}
-.le-scene{margin:14vh 0;font-size:clamp(1.18rem,2.5vw,1.42rem);line-height:1.74}
+.le-scene{margin:14vh 0;font-size:calc(clamp(1.18rem,2.5vw,1.42rem) * var(--exp-scale,1));line-height:1.74}
 .le-scene p{margin:0 0 1.2rem}
 .le-scene:first-of-type{margin-top:8vh}
 .le-w{display:inline-block;will-change:opacity,transform}

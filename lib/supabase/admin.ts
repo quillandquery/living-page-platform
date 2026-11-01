@@ -13,8 +13,12 @@ import { createClient } from "@supabase/supabase-js";
  *
  * Used only from lib/claim.ts, and only for the two calls that genuinely
  * need it (reading one row by an unguessable token before any session
- * exists, and moving `author_id` to the claimant). Never import this to
- * take a shortcut around RLS anywhere else.
+ * exists, and moving `author_id` to the claimant) — plus
+ * lib/share-loops-purge.server.ts, which deletes a story's pre-rendered share
+ * files from the public Storage bucket when it goes private (Storage objects
+ * aren't governed by the stories RLS, and the author's session has no
+ * delete rights on that bucket). Never import this to take a shortcut around
+ * RLS anywhere else.
  */
 export function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

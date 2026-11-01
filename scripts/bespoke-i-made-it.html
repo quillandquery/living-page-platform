@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>I Made It</title>
+<style>
+:root{--p:0}*{margin:0;box-sizing:border-box}
+body{background:#0d1324;color:#f4ece0;font-family:Georgia,serif;overflow-x:hidden}
+.world{position:fixed;inset:0;z-index:0;overflow:hidden}
+.sky{position:absolute;inset:0;background:linear-gradient(180deg,#0d1324 0%,#232a4a 38%,#4a3a52 68%,#8a5a3e 100%);transition:filter .3s;filter:brightness(calc(.6+.7*var(--p))) saturate(calc(.6+.9*var(--p)))}
+.warm{position:absolute;inset:0;background:radial-gradient(60% 50% at 62% 78%,rgba(255,180,90,calc(.1+.75*var(--p))),transparent 70%);mix-blend-mode:screen}
+.sun{position:absolute;left:58%;width:min(46vw,360px);aspect-ratio:1;border-radius:50%;top:calc(96% - 72%*var(--p));background:radial-gradient(circle at 46% 44%,#ffe8bf,#ff9a4d 60%,transparent 72%);filter:blur(2px);opacity:calc(.3+.7*var(--p))}
+.far{position:absolute;left:0;right:0;bottom:0;height:52vh;background:linear-gradient(180deg,#2b2546,#1a1830);clip-path:polygon(0 60%,12% 44%,24% 56%,40% 38%,55% 54%,70% 36%,86% 52%,100% 40%,100% 100%,0 100%);opacity:.9}
+.mid{position:absolute;left:0;right:0;bottom:0;height:34vh;background:linear-gradient(180deg,#3a2c2e,#201618)}
+.lamps{position:absolute;left:0;right:0;bottom:22vh;height:14vh}
+.lamp{position:absolute;bottom:0;width:10px;height:10px;border-radius:50%;background:#ffce7a;box-shadow:0 0 14px 6px rgba(255,190,110,.7);opacity:calc(.25+.7*var(--p))}
+.ground{position:absolute;left:0;right:0;bottom:0;height:22vh;background:linear-gradient(180deg,#241416,#140c0d)}
+.grain{position:absolute;inset:0;opacity:.05;pointer-events:none;mix-blend-mode:overlay;background-image:repeating-linear-gradient(0deg,#fff,#000 2px)}
+.vig{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 28vw rgba(0,0,0,.6)}
+.story{position:relative;z-index:2;max-width:54rem;margin:0 auto;padding:30vh 7vw 70vh}
+.beat{font-size:clamp(1.25rem,3vw,1.95rem);line-height:1.5;margin:0 0 20vh;max-width:30ch;text-shadow:0 2px 18px rgba(0,0,0,.55)}
+.beat:nth-child(even){margin-left:auto;text-align:right}
+.beat.lead{font-size:clamp(2.3rem,7vw,4.6rem);font-weight:700;line-height:1.04;letter-spacing:-.02em;max-width:17ch;font-style:italic}
+.beat.big{font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.1;max-width:20ch}
+.mono{font-family:"Courier New",monospace;font-size:clamp(1.05rem,2.4vw,1.5rem);letter-spacing:.02em}
+.key{color:#ffd79a;font-style:italic}
+.w{display:inline-block;opacity:0;transform:translateY(16px);filter:blur(7px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+.seen .w{opacity:1;transform:none;filter:none}
+.art{position:relative;z-index:2;margin:6vh auto;display:block;max-width:420px;width:72vw}
+@media(prefers-reduced-motion:reduce){.w{opacity:1;transform:none;filter:none}}
+</style>
+</head>
+<body>
+<div class="world">
+ <div class="sky"></div>
+ <div class="far"></div>
+ <div class="sun"></div>
+ <div class="warm"></div>
+ <div class="mid"></div>
+ <div class="lamps" id="lamps"></div>
+ <div class="ground"></div>
+ <div class="grain"></div>
+ <div class="vig"></div>
+</div>
+<article class="story">
+ <p class="beat lead">A lot of solo travel is a bad day with a good view.</p>
+ <p class="beat">There are more bad days than good ones, and they're all happening somewhere that's never heard of you. If you're crying, you're crying alone in your room. Or muffled in a dorm with five other people.</p>
+ <p class="beat">Or on the truly bad days, in public, on full display to a thousand strangers who don't speak your language.</p>
+ <p class="beat mono">So why burn annual leave on this. Why pay money to be lost and sick and crying in a train station.</p>
+ <p class="beat big">Here's my version of why.</p>
+ <p class="beat">You know exactly who you are at home. It's your bed, the stain on the sheet, the teddy the ex gave you, two books in tow. Your parents' dining table with more food than you need. Your friend's cocktail made the exact way you like it.</p>
+ <p class="beat">Solo travel plucks you off that bed and drops you somewhere the money is funny and the alphabet isn't yours.</p>
+ <p class="beat">It's alienating. The first day is mostly fear dressed up as sightseeing.</p>
+ <p class="beat big">And then something turns.</p>
+ <p class="beat">You survive the shock, put on a dress, walk out into streets you can't pronounce.</p>
+ <svg class="art" viewBox="0 0 200 150" aria-hidden="true">
+  <ellipse cx="100" cy="128" rx="78" ry="13" fill="#000" opacity=".3"/>
+  <ellipse cx="100" cy="120" rx="70" ry="30" fill="#e9eef2"/>
+  <ellipse cx="100" cy="116" rx="70" ry="30" fill="#f6f8fa"/>
+  <path d="M40 112 C55 90 145 90 160 112 C150 124 50 124 40 112Z" fill="#d9a24a"/>
+  <path d="M48 108 Q70 92 100 94 Q140 96 152 108" stroke="#e8c07c" stroke-width="3" fill="none" opacity=".8"/>
+  <path d="M62 104 Q100 90 138 104" stroke="#f0d49a" stroke-width="2.5" fill="none" opacity=".7"/>
+  <path d="M56 110 Q100 98 144 110" stroke="#e8c07c" stroke-width="2" fill="none"/>
+  <ellipse cx="80" cy="100" rx="6" ry="3" fill="#8fc24b"/>
+  <ellipse cx="118" cy="101" rx="7" ry="3" fill="#a7d55c"/>
+  <circle cx="132" cy="99" r="4" fill="#e06b4e"/>
+  <path d="M70 97 l6 -10 l5 10" fill="#f5e6b0"/>
+  <circle cx="155" cy="78" r="18" fill="#b6c7a0"/>
+  <path d="M150 62 q5 -8 10 0" stroke="#8a6d3a" stroke-width="2" fill="none"/>
+  <rect x="152" y="60" width="6" height="4" fill="#d9c08a"/>
+ </svg>
+ <p class="beat">Phad thai at a ramshackle shop beside a <span class="nowrap">7-Eleven</span> - soft noodles, firm sprouts, the <span class="key">tang</span> of fresh lemon, and a coconut on the side you have to close your eyes to drink. There's no other way to do it.</p>
+ <p class="beat big">Eyes shut, a little swoon, a land of your own making.</p>
+ <p class="beat">You go back the next day, and the day after. By the third the owner and his family know you, and they give you the table under the fan. You put on your big ugly headphones and walk like no one's watching, because no one is.</p>
+ <p class="beat">You smile at people, because some involuntary force keeps tugging the corner of your mouth up.</p>
+ <p class="beat">Somewhere in between disappearing and freedom, you meet the girls you don't get to be at home. The one who makes conversation with waiters and gets hugged goodbye.</p>
+ <p class="beat">The one with the resting bitch-face who somehow becomes the person her dorm-mate confesses his whole life to at 1am. The one who climbs a hill twice because there's time for the sunset, sees a sketchy cave, and goes in.</p>
+ <p class="beat big">Can you bring them home? Can the girl who walked into the cave survive a Monday standup?</p>
+ <p class="beat lead">She does - like a hidden tattoo. Nobody in the room needs to know it's there.</p>
+</article>
+<script>
+const r=document.documentElement;
+const set=()=>{const h=document.body.scrollHeight-innerHeight;r.style.setProperty('--p',(h>0?Math.min(1,scrollY/h):0).toFixed(3))};
+addEventListener('scroll',set,{passive:true});set();
+const L=document.getElementById('lamps');
+for(let i=0;i<9;i++){const d=document.createElement('div');d.className='lamp';d.style.left=(6+i*11+Math.random()*4)+'%';d.style.bottom=(Math.random()*60)+'%';L.appendChild(d)}
+document.querySelectorAll('.beat').forEach(b=>{b.innerHTML=b.innerHTML.replace(/(<[^>]+>)|([^<]+)/g,(m,tag,txt)=>tag?tag:txt.split(/(\s+)/).map(t=>/^\s+$/.test(t)||!t?t:'<span class="w">'+t+'</span>').join(''))});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.w').forEach((w,i)=>w.style.transitionDelay=i*20+'ms');e.target.classList.add('seen');io.unobserve(e.target)}}),{threshold:.15,rootMargin:'0px 0px -10% 0px'});
+document.querySelectorAll('.beat').forEach(b=>io.observe(b));
+addEventListener('load',()=>document.querySelectorAll('.beat').forEach(b=>{if(b.getBoundingClientRect().top<innerHeight*.95)b.classList.add('seen')}));
+</script>
+<script>/*__lpFailsafe*/(function(){function check(){try{var b=document.body;if(!b)return;var total=((b.innerText||'').replace(/\s+/g,'')).length;if(total<120)return;var els=b.querySelectorAll('p,span,h1,h2,h3,h4,li,blockquote,em,strong,div,a');var shown=0;for(var i=0;i<els.length;i++){var e=els[i];var t=(e.textContent||'').trim();if(!t)continue;var cs=getComputedStyle(e);if(cs.visibility!=='hidden'&&cs.display!=='none'&&parseFloat(cs.opacity)>0.05)shown+=t.length;}if(shown<total*0.15){var s=document.createElement('style');s.textContent='*{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important}';document.head.appendChild(s);}}catch(e){}}setTimeout(check,3800);})();</script></body>
+</html>

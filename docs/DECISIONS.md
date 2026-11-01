@@ -198,3 +198,26 @@ fixed list.
 schema-validated spec (incl. **sanitised SVG** for bespoke art), never raw
 HTML/CSS/JS. Invalid output → fall back. This preserves safety, caching,
 versioning and the "one medium" coherence while making every story different.
+
+---
+
+## D12 — Private vs public publishing is per-story `visibility` (2026-11-01)
+
+**Decision.** `stories.visibility` (`public` | `private`, migration `0006`) is
+independent of `status` (`draft` | `published`). **Private is published**: same
+row, slug and URL, readable only by its author. Existing rows backfill to
+`public`. A story is on a public surface (writer page, Wander, sitemap,
+llms-full, read-next, share assets) only when `status = 'published' AND
+visibility = 'public'` — `lib/visibility.ts` is the one statement of the rule.
+
+**Enforcement is the database's job (D4's privacy principle).** RLS policy
+`read public or own` hides private rows from everyone but the author. Because
+an author's *own* private rows pass RLS, every public-surface query in
+`lib/db.ts` ALSO filters `visibility = 'public'` explicitly. New code that
+lists stories publicly must do the same — `tests/db-visibility.test.ts` runs
+each query with RLS switched off to catch a missing filter.
+
+**Changes after publishing** go through `setVisibilityAction` (no republish, no
+new URL). `visibility` is committed only by publishing or that action — never
+by a plain save or unpublish. A private story gets no share assets, structured
+data, canonical/OG tags or reader analytics, and 404s for everyone else.

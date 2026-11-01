@@ -67,6 +67,10 @@ export type StorySeed = {
   themes: string[];
   form: SeedForm;
   tier: SeedTier;
+  /** 'private' only ever appears on the author's OWN page (migration 0006) —
+   *  every public surface is fed by queries that exclude private rows, so a
+   *  seed for someone else's private story is never built. */
+  visibility: "public" | "private";
 };
 
 function hash(str: string): number {
@@ -246,6 +250,7 @@ export function buildSeed(story: StoryWithAuthor): StorySeed {
     themes,
     form,
     tier: tierOf(form, energy),
+    visibility: story.visibility === "private" ? "private" : "public",
   };
 }
 

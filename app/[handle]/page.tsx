@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { writerStories, currentUser } from "@/lib/db";
+import { writerStories, writerPage } from "@/lib/db";
+import { visibilityCounts } from "@/lib/visibility";
 import { buildSeeds } from "@/lib/discover";
 import { diversifyArchetypes } from "@/lib/archive-composition";
 import { AuthorArchive } from "@/components/profile/AuthorArchive";
@@ -16,6 +17,8 @@ const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const { handle } = await params;
+  // PUBLIC stories only — the title/description/count in <head> must read the
+  // same whoever (or whatever crawler) asks, and never mention a private story.
   const data = await writerStories(clean(handle));
   if (!data) return {};
   const { author, stories } = data;
@@ -50,12 +53,13 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
 
 export default async function WriterPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  const data = await writerStories(clean(handle));
+  // Strangers get public stories only. The writer, viewing their own page,
+  // also gets their private ones (flagged) — resolved from the session inside
+  // writerPage, never from anything the request can claim.
+  const data = await writerPage(clean(handle));
   if (!data) notFound();
-  const { author, stories } = data;
-
-  const user = await currentUser();
-  const isOwner = user?.id === author.id;
+  const { author, stories, isOwner } = data;
+  const counts = visibilityCounts(stories);
 
   const hasDisplayName = !!author.display_name?.trim() && author.display_name.trim() !== author.handle;
   const name = hasDisplayName ? author.display_name.trim() : `@${author.handle}`;
@@ -115,7 +119,10 @@ export default async function WriterPage({ params }: { params: Promise<{ handle:
       ) : (
         <>
           <p className="archive-label">Stories</p>
-          <AuthorArchive seeds={seeds} />
+          {isOwner && counts.private > 0 ? (
+            <p className="archive-sub">{counts.public} public · {counts.private} private · private ones only show to you</p>
+          ) : null}
+          <AuthorArchive seeds={seeds} isOwner={isOwner} />
         </>
       )}
     </main>

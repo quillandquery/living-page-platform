@@ -30,6 +30,15 @@ export type ExpObject = {
 };
 export type SceneDirective = { behavior: ExpBehavior; emphasis: string[] };
 
+/** Typography is part of the composition (brief §3C): the voice of the type is
+ *  chosen for THIS story, so two stories don't read in the same typeface. */
+export type ExpFont = "serif" | "sans" | "slab" | "mono" | "hand";
+export type ExpType = {
+  font: ExpFont;
+  scale: number;              // body size multiplier (0.9–1.35)
+  align: "left" | "center";   // reading column alignment
+};
+
 export type ExperienceSpec = {
   concept?: string;
   medium: ExpMedium;
@@ -45,6 +54,7 @@ export type ExperienceSpec = {
   caustic?: boolean;      // underwater light shafts
   lightning?: boolean;    // periodic flash
   vignette?: string;      // inner shadow colour
+  type?: ExpType;         // the story's typographic voice
   objects?: ExpObject[];
   scenes?: SceneDirective[];
 };
@@ -77,6 +87,7 @@ const AMBIENTS = ["stars", "rain", "fog", "motes", "snow", "bubbles", "petals", 
 const SILS = ["palms", "city", "pines", "mountains", "hills", "dunes", "none"] as const;
 const BEHAVIORS = ["unveil", "float", "fade", "drift", "tremor", "write"] as const;
 const DRIFTS = ["floaty", "sway", "rise"] as const;
+const FONTS = ["serif", "sans", "slab", "mono", "hand"] as const;
 
 /** Keep an "emoji" to a short run of symbol/pictograph characters — no markup. */
 function safeEmoji(s: unknown): string | undefined {
@@ -127,6 +138,13 @@ export function sanitizeExperience(raw: unknown): ExperienceSpec | null {
         .slice(0, 60)
     : undefined;
 
+  const t = (x.type ?? {}) as Record<string, unknown>;
+  const type: ExpType = {
+    font: inSet(t.font, FONTS, "serif"),
+    scale: num(t.scale, 0.9, 1.35, 1),
+    align: t.align === "center" ? "center" : "left",
+  };
+
   return {
     concept: typeof x.concept === "string" ? x.concept.slice(0, 240) : undefined,
     medium: inSet(x.medium, MEDIUMS, "world"),
@@ -142,6 +160,7 @@ export function sanitizeExperience(raw: unknown): ExperienceSpec | null {
     caustic: x.caustic === true,
     lightning: x.lightning === true,
     vignette: safeColor(x.vignette),
+    type,
     objects,
     scenes,
   };

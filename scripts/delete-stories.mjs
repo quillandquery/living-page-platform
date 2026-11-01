@@ -8,6 +8,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const TITLES = [
+  "back to thailand",
   "i'm always the last one to leave", "somewhere", "parked car", "highway",
   "thought i wanted to leave", "640 train", "pretrip anxiety", "roadside dhaba",
   "andaman", "sabbatical", "hostek dorm", "hostel dorm", "3 cities later",

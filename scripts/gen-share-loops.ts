@@ -120,10 +120,14 @@ async function main() {
 
   if (has("--id")) {
     const id = args[args.indexOf("--id") + 1];
-    const { data } = await sb.from("stories").select(SEL).eq("id", id).maybeSingle();
+    // service role bypasses RLS, so the privacy rule is stated here: never
+    // render (or upload to the public bucket) anything but a published,
+    // PUBLIC story.
+    const { data } = await sb.from("stories").select(SEL).eq("id", id).eq("status", "published").eq("visibility", "public").maybeSingle();
     if (data) stories = [data as StoryRow];
+    else console.log(`  · ${id} is not a published public story — skipping`);
   } else if (has("--all") || has("--missing")) {
-    const { data } = await sb.from("stories").select(SEL).eq("status", "published").order("published_at", { ascending: false }).limit(1000);
+    const { data } = await sb.from("stories").select(SEL).eq("status", "published").eq("visibility", "public").order("published_at", { ascending: false }).limit(1000);
     stories = (data ?? []) as StoryRow[];
     if (has("--missing")) stories = stories.filter((s) => {
       const sh = (s.art_direction as { share?: { rev?: string; loopMp4?: string } } | null)?.share;
@@ -135,7 +139,7 @@ async function main() {
     const h = positional[0].replace(/^@/, "").toLowerCase();
     const { data: author } = await sb.from("profiles").select("id").eq("handle", h).maybeSingle();
     if (!author) throw new Error(`no profile @${h}`);
-    const { data } = await sb.from("stories").select(SEL).eq("author_id", (author as { id: string }).id).eq("slug", positional[1]).eq("status", "published").maybeSingle();
+    const { data } = await sb.from("stories").select(SEL).eq("author_id", (author as { id: string }).id).eq("slug", positional[1]).eq("status", "published").eq("visibility", "public").maybeSingle();
     if (data) stories = [data as StoryRow];
   }
 

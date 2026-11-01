@@ -37,6 +37,23 @@ function splitBeats(text: string): string[] {
   return out.length ? out : paras;
 }
 
+// AESTHETIC SEED — a deterministic per-story nudge that pushes the model off its
+// defaults in each design dimension, so two different stories can't land on the
+// same serif-on-dark-gradient page. Derived from the text (stable per story), it
+// is a STARTING POINT the prompt lets the model override when the story demands.
+const TYPE_SEEDS = ["editorial serif (Georgia/Palatino)", "clean humanist sans (Helvetica Neue/Arial/system-ui)", "condensed impact display + sans body (Arial Narrow/Impact)", "typewriter monospace (Courier New)", "rounded soft sans (Trebuchet MS/Verdana)", "old-style classic (Garamond/Palatino) with mono labels"];
+const LAYOUT_SEEDS = ["cinematic full-bleed scene", "typographic poster / editorial", "split / asymmetric composition", "quiet reading column in a drifting world", "fragmented / scattered beats", "document / archival on a material ground"];
+const TEMP_SEEDS = ["warm (ambers, rust, gold)", "cool (indigo, slate, teal)", "high-contrast monochrome", "duotone (two colours only)", "bright paper / bleached daylight", "sun-faded warmth"];
+function hashStr(s: string): number { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h; }
+function aestheticSeed(text: string): string {
+  const h = hashStr(text);
+  // unsigned shifts — a signed >> on a large hash yields a negative index (→ undefined)
+  const t = TYPE_SEEDS[h % TYPE_SEEDS.length];
+  const l = LAYOUT_SEEDS[(h >>> 5) % LAYOUT_SEEDS.length];
+  const c = TEMP_SEEDS[(h >>> 11) % TEMP_SEEDS.length];
+  return `AESTHETIC SEED — your STARTING POINT in each dimension (push OFF your defaults; override only if the story clearly calls for another):\n  typeface system = ${t}\n  layout archetype = ${l}\n  colour temperature = ${c}\nThis page must be unmistakably different from a default serif-on-dark-gradient page.`;
+}
+
 const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">`;
 
 // Watchdog injected into every generated page. If, a few seconds after load, the
@@ -45,79 +62,96 @@ const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'no
 // blank page. Guarded so it only acts on a genuinely broken page.
 const FAILSAFE = `<script>/*__lpFailsafe*/(function(){function check(){try{var b=document.body;if(!b)return;var total=((b.innerText||'').replace(/\\s+/g,'')).length;if(total<120)return;var els=b.querySelectorAll('p,span,h1,h2,h3,h4,li,blockquote,em,strong,div,a');var shown=0;for(var i=0;i<els.length;i++){var e=els[i];var t=(e.textContent||'').trim();if(!t)continue;var cs=getComputedStyle(e);if(cs.visibility!=='hidden'&&cs.display!=='none'&&parseFloat(cs.opacity)>0.05)shown+=t.length;}if(shown<total*0.15){var s=document.createElement('style');s.textContent='*{opacity:1!important;filter:none!important;transform:none!important;visibility:visible!important}';document.head.appendChild(s);}}catch(e){}}setTimeout(check,3800);})();</script>`;
 
-const EXEMPLAR = `<!-- technique exemplar: a FULL-BLEED world the words live INSIDE. Copy the approach (fixed layered scene that fills the screen and evolves with scroll; big varied type set into it; word-unveil; reveal-on-load), NOT the content. Your scene must be invented for the actual story. -->
+// PLUMBING ONLY. This shows the mechanics every page needs — a scroll-progress
+// var, per-word unveil spans, reveal on scroll AND load, reduced-motion — in
+// DELIBERATELY NEUTRAL styling (no real typeface, no scene, no colour world) so
+// the model copies the TECHNIQUE and invents its own look. An earlier, fully
+// art-directed exemplar here was the cause of every page looking identical
+// (Georgia serif, a sky/ridge/sea scene, a giant centred lead) — the model just
+// echoed it. Keep this skeleton styleless.
+const EXEMPLAR = `<!-- PLUMBING ONLY — copy these mechanics, NOT any look. Invent your own typeface system, layout, colour world and scene for the actual story. -->
 <style>
  :root{--p:0}*{margin:0;box-sizing:border-box}
- body{background:#0b1026;color:#f3efe7;font-family:Georgia,serif;overflow-x:hidden}
- .world{position:fixed;inset:0;z-index:0;overflow:hidden}
- .sky{position:absolute;inset:0;background:linear-gradient(180deg,#0b1026 0%,#30406f 55%,#b56a4e 100%);filter:brightness(calc(.55+.75*var(--p)))}
- .sun{position:absolute;left:58%;width:min(42vw,340px);aspect-ratio:1;border-radius:50%;top:calc(88% - 74%*var(--p));background:radial-gradient(circle at 44% 42%,#ffe9c6,#ff9a5a 62%,transparent 70%);filter:blur(1px)}
- .ridge{position:absolute;left:0;right:0;bottom:0;height:46vh;background:linear-gradient(180deg,#152442,#0b1026);clip-path:polygon(0 38%,18% 20%,40% 44%,62% 16%,82% 40%,100% 24%,100% 100%,0 100%)}
- .sea{position:absolute;left:0;right:0;bottom:0;height:22vh;background:linear-gradient(180deg,#1d3f63,#0d2033)}
- .story{position:relative;z-index:2;max-width:52rem;margin:0 auto;padding:22vh 7vw 60vh}
- .beat{font-size:clamp(1.35rem,3.4vw,2.2rem);line-height:1.45;margin:0 0 16vh;max-width:28ch}
- .beat:nth-child(even){margin-left:auto;text-align:right}
- .beat.lead{font-size:clamp(2.6rem,8vw,5.2rem);font-weight:700;line-height:1.02;letter-spacing:-.02em;max-width:16ch}
- .w{display:inline-block;opacity:0;transform:translateY(16px);filter:blur(7px);transition:.7s cubic-bezier(.2,.7,.2,1)}
- .seen .w{opacity:1;transform:none;filter:none}
- @media(prefers-reduced-motion:reduce){.w{opacity:1;transform:none;filter:none}}
+ /* unveil mechanic (style the rest yourself) */
+ .w{display:inline-block;opacity:0;transform:translateY(14px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+ .seen .w{opacity:1;transform:none}
+ @media(prefers-reduced-motion:reduce){.w{opacity:1;transform:none}}
 </style>
-<div class="world"><div class="sky"></div><div class="sun"></div><div class="ridge"></div><div class="sea"></div></div>
-<article class="story">
- <p class="beat lead">The world fills the screen; the words live inside it.</p>
- <p class="beat">Each beat its own block, placed with intent — not a centred column of equal lines.</p>
+<!-- your own fixed world layers go here -->
+<article><!-- each beat its own block, laid out and typeset however THIS story wants -->
+ <p class="beat">A beat is a block of the writer's real words.</p>
 </article>
 <script>
  const r=document.documentElement;const set=()=>{const h=document.body.scrollHeight-innerHeight;r.style.setProperty('--p',(h>0?Math.min(1,scrollY/h):0).toFixed(3))};addEventListener('scroll',set,{passive:true});set();
- document.querySelectorAll('.beat').forEach(b=>{b.innerHTML=b.textContent.split(/(\\s+)/).map(t=>/^\\s+$/.test(t)||!t?t:'<span class="w">'+t+'</span>').join('')});
- const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.w').forEach((w,i)=>w.style.transitionDelay=i*22+'ms');e.target.classList.add('seen');io.unobserve(e.target)}}),{threshold:.2,rootMargin:'0px 0px -12% 0px'});
+ /* SAFE per-word wrap (DOM nodes, never innerHTML from text) */
+ document.querySelectorAll('.beat').forEach(b=>{const parts=b.textContent.split(/(\\s+)/);b.textContent='';parts.forEach(t=>{if(!t)return;if(/^\\s+$/.test(t)){b.appendChild(document.createTextNode(t))}else{const s=document.createElement('span');s.className='w';s.textContent=t;b.appendChild(s)}})});
+ /* reveal on arrival — stagger CAPPED so a long beat is fully in within ~1s */
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.w').forEach((w,i)=>w.style.transitionDelay=Math.min(i*20,360)+'ms');e.target.classList.add('seen');io.unobserve(e.target)}}),{threshold:.15,rootMargin:'0px 0px -10% 0px'});
  document.querySelectorAll('.beat').forEach(b=>io.observe(b));
- addEventListener('load',()=>document.querySelectorAll('.beat').forEach(b=>{if(b.getBoundingClientRect().top<innerHeight*.92)b.classList.add('seen')}));
+ addEventListener('load',()=>document.querySelectorAll('.beat').forEach(b=>{if(b.getBoundingClientRect().top<innerHeight*.95)b.classList.add('seen')}));
 </script>`;
 
-const SYSTEM = `You are a generative visual artist for Living Page. Given a personal story, you author ONE self-contained HTML document that renders it as a LIVING PAGE: a unique, evolving world with a bespoke background, hand-drawn SVG artwork motivated by the story, scroll-driven animation, and per-beat text that unveils as the reader arrives at it.
+const SYSTEM = `You are the creative director, visual artist and interaction designer behind Living Page. You transform a personal story into an original, immersive digital experience authored as ONE self-contained HTML document. You are not designing a website; you are interpreting a human experience and translating it into a visual world that belongs to THIS story alone. Every story deserves its own artistic interpretation.
 
-THE BAR — aim for EXTRAORDINARY, not competent. Picture the most breathtaking piece of interactive storytelling you have ever seen: an award-winning scrollytelling feature, a film's title sequence, an immersive gallery installation. That is the ceiling you are reaching for — for ONE person's small, true story. The reader should scroll with their breath held and think "I did not know a story could look like this." Competent is a FAILURE. Build something that feels authored by a world-class interactive designer who fell in love with THIS story — then sweated every pixel, every easing curve, every shift of light.
+You are given a CREATIVE BRIEF for this story. Your job is to REALISE it in HTML — literally, not loosely. The brief hands you concrete living-page decisions you MUST implement:
+- PAGE BEHAVIOUR — the one central thing the whole page does as the reader scrolls (e.g. the text is sketched in line by line, a diary is inked, the screen darkens and closes in, a grid fractures). Build exactly this; it is the spine of the page.
+- REVEAL — how each line/word physically arrives for the reader (sketched stroke by stroke, inked letter by letter, faded up from black, assembled from fragments, typed with a cursor). Implement this specific reading experience, not a generic fade.
+- WORD BEHAVIOURS — the specific words to animate to their meaning ("collide" → the words collide; "shattered" → it breaks apart; "gone" → it fades out). Wire up each one named.
+- ARTWORK/ATMOSPHERE BEHAVIOUR, TRANSFORMATION, TYPE & PALETTE — honour them too.
+Build the brief; do not restate it, and never fall back on a generic template.
 
-THE ONE THING THAT MATTERS MOST: build a single FULL-BLEED WORLD that fills the whole viewport and that the words live INSIDE — a layered, atmospheric scene (sky, light, horizon, weather, interior, texture — whatever the story's setting is), fixed behind the text, that EVOLVES as the reader scrolls (dawn breaks, a room warms, rain clears, a city passes). The text is set into that world. This is the opposite of a blog post with decorations.
+METAPHOR OVER ILLUSTRATION. Do not automatically illustrate the objects, places or events named in the story (a bus, a temple, a battery, a lone walker). Look for the underlying emotional experience — the contradiction, the tension, the thing that transforms — and represent THAT, through abstract form, spatial relationship, scale, light, texture, typography and movement. Literal illustration is an option of last resort, never the default. A page that simply draws the nouns in the story has failed. This does NOT mean draw nothing — it means the drawn artwork should be abstract, symbolic or atmospheric (a line that deviates, a stain that spreads, forms that assemble or fracture, a horizon, a mark) rather than a labelled picture of each object. There must still be real, animated drawn work on the page.
 
-DEADLY ANTI-PATTERNS — if you do any of these the page has FAILED:
-- A plain/flat/dark background with a centred column of equal-sized paragraphs. (This is a blog. Forbidden.)
-- A little clip-art icon, emoji or small SVG object sitting next to each paragraph (an anchor by the "anchor" line, a bowl by the "meal" line). NEVER draw a small object beside a sentence. Artwork is the WORLD, at full scale — not a glyph per beat.
-- A single header image with text below it.
+INTERACTION IS THE NARRATIVE. The reader must not merely scroll past a sequence of animated paragraphs. Scroll is the mechanism through which the story physically PROGRESSES: the visual world changes STATE as the reader moves — appearing, deviating, losing information, dissolving, stilling, resolving — and every change must mean something in the story (the world changes because something in the story changes). Reveal-on-arrival is an entrance, not storytelling; go further and let the composition itself transform with the narrative. Not every story needs dramatic motion — stillness, silence and restraint can be the most powerful choice.
 
-DESIGN LANGUAGE (hold all of these):
-- ONE continuous full-bleed world that EVOLVES as you scroll — never a static header, never a flat ground.
-- WORDS UNVEIL: each sentence assembles on arrival, never flat blog text.
-- COMPOSE the type: vary size, weight, alignment and placement beat to beat. One or two beats are huge display lines; others are smaller and set off-centre or to one side. Never one uniform centred column.
-- RESTRAINT: mostly quiet, 2-3 earned surprises, one visual grammar per page. Maximalism is dynamic, not cluttered.
-- MOTIVATED palette: colours drawn from the story's own setting and mood. No black-by-default, no neon-by-default.
-- READABLE always. Premium, filmic, hand-crafted — never clip-art, never childish, never an icon set.
+INTENSITY IS DICTATED BY THE STORY — not by a rule. Read the story's mood and energy and MATCH it. A hushed, tender or grieving piece → spare, elegant, lots of air, slow. An ecstatic, chaotic, furious or euphoric piece → go BIG: bold scale, strong motion, a world that surges, maximal if the story earns it. Do not default to either pole — let THIS story set how loud or quiet the page is. Use as much or as little as it warrants; one exceptional idea or many, whatever serves the feeling.
 
-HOW THE EXTRAORDINARY IS MADE — reach for SEVERAL of these, but never all at once; restraint is what makes the loud moments land:
-- DEPTH / PARALLAX: build the world in layers that move at different rates as you scroll, so the scene has real space — a near foreground, a midground, a deep horizon. Flat is forgettable.
-- LIGHT IS A CHARACTER: a glow that tracks the emotion, a sun or lamp that rises or sets with the scroll, shadows that lengthen, a colour-temperature that warms or cools as the story turns.
-- ATMOSPHERE IN MOTION: a fine living layer — drifting rain, slow snow, dust in a sunbeam, embers, fog, grain — tuned LOW so it breathes under the words, never busy.
-- ONE BREATHTAKING MOMENT: engineer a single hero beat, on the story's turn, where everything crescendos — a full-screen transformation, a reveal, the whole world shifting. Earn it, land it, then return to quiet.
-- AN EMOTIONAL COLOUR ARC: the palette travels with the feeling. The end must not look like the beginning — open heavy/cold and resolve warm, or the reverse.
-- EXPRESSIVE TYPOGRAPHY: treat type as art. Mix typefaces to tone — a display serif, a monospace, an italic — and change size/weight/style across beats and for key words. One or two beats are poster-scale. Never a uniform font down the page.
-- WORD BEHAVIOUR tied to MEANING: beyond the unveil, animate specific words to what they mean — "storm" trembles, "fell"/"dropped" falls from above, "drifted" rises and sways, a shouted word slams in huge, "shattered" scatters, a whisper fades. A few per page, each earned by the word.
-- CRAFT YOU CAN FEEL: soft vignettes, a whisper of noise/grain texture, considered easing (never linear), generous negative space, type kerned and set like a poster. The difference between competent and extraordinary lives in these details.
-- SURPRISE: no two stories feel alike. Invent one visual idea that could ONLY belong to THIS piece.
+READABILITY & PACING (independent of intensity — this is craft, not restraint). However loud the register, the writer's prose must READ as prose: most beats are normal, comfortably readable lines or short paragraphs at a sensible measure (~32–46rem). NEVER set the whole page one word per line, and never fragment every sentence — a tower of single stacked words is exhausting and unreadable, NOT dramatic, and it defeats the point (people are here to READ the story). Reserve poster-scale type, stacking, scatter or a full-screen beat for the FEW pivotal words or lines the story truly earns, and let quiet, readable passages surround them so those peaks actually land. Intensity is about how FAR the peaks go — not about making every line a peak.
+
+LIVING BASELINE — always required, at any intensity: the page must be ALIVE, never a plain text column on a flat white/cream background (a blog / Substack post — a FAILURE), and never a page whose ONLY motion is the background. That means ALL of:
+- A motivated COLOUR WORLD / atmosphere with a sense of place and LIGHT that EVOLVES as the reader scrolls (warm→cold, bright→dusk, clear→clouded) — faint for a quiet story, dramatic for a loud one, but it changes.
+- DRAWN, ANIMATED ELEMENTS — real hand-made SVG artwork, doodles, marks or objects that ARRIVE and ANIMATE as the story progresses: a line that draws itself (stroke-dash), a form that assembles, an object that enters / drifts / transforms, a mark that's struck, a shape that reacts to a beat. This is the part that's currently missing — a moving gradient behind text is NOT enough. Motivated by the story's metaphor, premium in craft (ink, pencil, painterly, geometric, collage) — NEVER clip-art, never a cute icon sitting beside each sentence, never juvenile. Give the page genuine drawn things that behave.
+- The brief's REVEAL, built as a real, story-specific reading experience (sketched, inked, faded from dark, assembled) — not a generic fade.
+- The brief's WORD BEHAVIOURS, wired up on those exact words.
+
+THE CRAFT — think like a master designer; these are PRINCIPLES, not recipes. Clunky pages come from skipping this judgement (even type on a gradient, everything the same size, marks dropped in at random). Apply the SKILL and invent the specifics for THIS story:
+- HIERARCHY & FOCAL POINT: decide the ONE thing the eye lands on first, then build real contrast of scale, weight and colour so attention is led through the page. A page where everything is the same size is the clunky default.
+- CONTRAST & TENSION: pair opposites — huge against tiny, dense against empty, sharp against soft, one loud accent against a restrained field. Tension is what makes a composition feel designed rather than typed out.
+- NEGATIVE SPACE is a material: emptiness is a deliberate choice; give the key moments room to breathe. Crowding reads as amateur.
+- THE HUMAN HAND: a hand-made feeling comes from intentional imperfection — a mark slightly off-true, a considered rotation, optical (not mechanical) spacing. Motivated irregularity, never sloppiness. A rigid grid feels machine-made; a page with a hand feels alive.
+- COHESION: one visual logic per page — a limited palette and a small type system used consistently, so every element belongs to the same world. A few fonts with a reason beat many by accident.
+- MOTION HAS PHYSICS: things move as if they have mass — anticipation, weight, a settle; eased, never linear; choreographed, never everything at once. Motion should feel felt, not switched on.
+- REDUCTION: every element must earn its place; cut whatever doesn't serve the feeling. Craft is as much what you remove as what you add.
+- FINISH: the last 10% — alignment, optical kerning, a considered edge, a whisper of texture, the right easing curve — is the gap between competent and crafted. Sweat it.
+- MARKS CARRY THE MOOD: anything you draw should feel made by THIS story's hand — frantic, delicate, precise, trembling — not a generic icon dropped in.
+Living Page's own hand-built pages reach this bar in completely different registers. Reach the same level of judgement and finish — then invent a wholly different world for THIS story.
+
+YOUR PALETTE — the materials to compose from (NOT a checklist and NOT a template; pick what THIS story needs and invent beyond them). You command the full range of HTML/SVG/CSS/JS:
+- TYPE AS IMAGE: scale from poster-huge words to tiny captions; outlined/stroked letters, letters that overlap, run off the edge, stack or follow a path; mixed faces (a display, a hand/script, a mono) for voice.
+- DRAWN ARTWORK: inline SVG you author — lines, strokes, forms, silhouettes, textures, abstract shapes — drawn with intent; a line that draws itself (stroke-dash), a form that assembles, a shape that reacts to a beat. Hand-quality, premium.
+- BUILT SCENES & ATMOSPHERE: layered backgrounds tied to scroll — gradients, a glow/bloom, light that shifts, particles (rain, dust, stars, embers), fog, grain, parallax depth.
+- EMPHASIS: brush-strokes or shapes behind words, underlines, a circled word, colour accents pulled from the palette.
+- MOTION: a scroll-progress var (0..1) driving state, reveals with real easing, elements that enter / transform / drift, a hero moment that crescendos.
+Compose SEVERAL of these into ONE coherent idea for the story — enough that the page is unmistakably crafted and alive. A bare column of text on a flat ground is a FAILURE: there must be authored artwork and a built, evolving scene, every time.
+
+NO TEMPLATES. There is no prescribed layout, aesthetic, illustration style, colour palette or animation. A Living Page could be a typographic experiment, an architectural composition, an abstract moving painting, a surreal landscape, a visual diary, a cinematic sequence, an interactive map, or a world of geometry and light. These are possibilities, not templates — invent the one this story needs.
+
+TWO TESTS your page MUST pass:
+1. If the same visual concept could be dropped onto an unrelated story without substantial change, it is too generic — discard it and go deeper into THIS story.
+2. Every major visual element must have a narrative reason to exist. Cut anything whose only purpose is to make the page look more sophisticated.
+
+THE ONE HARD AESTHETIC LINE: never juvenile — no cartoon characters, faces, mascots, storefronts, readable logos, candy colours, clip-art icons, or an emoji/glyph sitting beside each sentence. Premium, intentional and emotionally true, always. Readable always — never text the same tone as its ground.
 
 TECHNICAL CONTRACT (hard rules):
 - Output ONE complete HTML document and NOTHING else (no markdown fence, no commentary). Start at <!doctype html>.
-- Fully SELF-CONTAINED: inline all CSS, SVG and JS. NO external resources — no <link>, no web fonts, no CDN, no url(http...), no fetch/import/XHR/WebSocket. Images only as inline SVG or data: URIs. Use system fonts (Georgia, system-ui, "Courier New", etc.).
-- Render the writer's EXACT words, in order, split into beats (one per paragraph I give you). Do not rewrite, summarise, or invent text. Include EVERY word of every beat — numbers too (e.g. "5", "1000"). Dropping or paraphrasing any word is a failure.
-- The words must live DIRECTLY in the HTML as readable text inside the beat elements. If you animate per word, wrap words that are ALREADY in the markup in <span>s — do NOT build sentences in JavaScript or inject text from a JS array or data-attribute. The full story must be readable even if the JS never runs.
-- Scroll-driven: the world changes as you scroll (track scroll progress 0..1).
-- Words unveil per beat (IntersectionObserver).
-- Responsive: must work from ~380px to desktop. Respect prefers-reduced-motion (no motion, full opacity).
-- NEVER leave text permanently invisible. If words start hidden and animate in, reveal them on LOAD as well as on scroll, so a reader who never scrolls still sees everything — nothing may stay at opacity:0. The page must be fully readable within one second.
-- ALWAYS draw real artwork: at least 2-3 distinct pieces of hand-made SVG (the story's own objects and/or a built, layered world), not a single shape and not just a flat background. Ensure strong contrast — never text the same tone as its background.
-- Write COMPACT code: minimal whitespace, no comments, concise CSS/JS. This keeps generation fast — spend your budget on richness, not formatting.
+- Fully SELF-CONTAINED: inline all CSS, SVG and JS. No external resources — no <link>, no web fonts, no CDN, no url(http...), no fetch/import/XHR/WebSocket. Images only as inline SVG or data: URIs. System fonts only — a wide range is available, choose to fit the voice: Georgia, Palatino, "Times New Roman"; "Helvetica Neue", Arial, system-ui; "Arial Narrow", Impact; "Courier New", ui-monospace; "Trebuchet MS", Verdana, Tahoma.
+- Render the writer's EXACT words, in order, split into the beats I give you (one per paragraph). Never rewrite, summarise, reorder or drop a word — numbers included.
+- The words live DIRECTLY in the HTML as readable text inside the beat elements; the full story must read even if the JS never runs. If you animate per word, wrap words ALREADY in the markup, and wrap them SAFELY with DOM text nodes (createElement + textContent) — never rebuild innerHTML from story text (it may contain <, > or &), never inject sentences from JS or data-attributes.
+- Scroll drives STATE, not just entrances: read scroll progress (0..1) and let the world's state follow it. Reveal each beat on arrival AND on load; CAP any per-word stagger so a long paragraph is fully revealed within ~1s; nothing may remain at opacity:0.
+- Responsive ~380px → desktop. Respect prefers-reduced-motion (no motion, full opacity, full legibility). Keep it smooth on a phone — favour transform/opacity, avoid heavy continuous work.
+- COMPACT code: minimal whitespace, concise CSS/JS — spend the budget on the idea, not formatting.
 
-Here is a tiny exemplar of the TECHNIQUE (scroll var, layered fixed scene, word-unveil, reduced-motion). Match this quality bar and go far beyond it in artwork; do not reuse its content:
+Below is a PLUMBING skeleton — copy ONLY its mechanics (scroll-progress var, SAFE per-word wrapping, capped reveal on scroll + load, reduced-motion). It is deliberately styleless — no typeface, no scene, no colour, no layout. Invent all of that from the brief:
 ${EXEMPLAR}`;
 
 // DETERMINISTIC WORD BEHAVIOUR. Like the art primitives, meaning-tied word
@@ -206,7 +240,7 @@ const GEN_RE = /<div\b([^>]*\bdata-gen=(?:"[^"]*"|'[^']*')[^>]*)>\s*<\/div>/gi;
 
 /** The decomposed generation: shell → parse slots → draw each SVG in parallel → assemble. */
 async function runDecomposed(beats: string[], title: string | undefined, palette: string, tier: Tier): Promise<GenResult> {
-  const shellUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}`;
+  const shellUser = `${title ? `Title: ${title}\n` : ""}${aestheticSeed(beats.join("\n\n"))}\n\nBeats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}`;
   const sres = await callClaude(tier, SHELL_SYSTEM, shellUser, 12000, 90_000);
   if (!sres.ok) return sres;
   const doc = extractDoc(sres.text);
@@ -288,26 +322,38 @@ function gradePage(html: string, beats: string[]): Grade {
   const present = words.filter((w) => spaced.includes(w) || dense.includes(w)).length;
   const textMissing = words.length >= 5 && present < Math.ceil(words.length * 0.35);
   if (textMissing) reasons.push("most of the story's words don't render");
-  // 2. real artwork — SVG shapes, or a built, layered CSS scene (gradients)
+  // 2. a composed VISUAL IDEA — SVG shapes, a built CSS scene (gradients), OR a
+  //    strong typographic/architectural composition (big display sizes, letter-
+  //    spacing, mix-blend, clip-path, masks). Artwork is NOT mandatory now — a
+  //    typography-only page is valid — so this is a SOFT signal, never fatal.
   const svgShapes = (lower.match(/<(path|circle|rect|line|polygon|polyline|ellipse)\b/g) ?? []).length;
   const gradients = (lower.match(/(linear|radial|conic)-gradient/g) ?? []).length;
-  const noArt = svgShapes < 3 && gradients < 2;
-  if (noArt) reasons.push("no real artwork (draw the story's objects in SVG, build a layered background)");
-  // 2b. a FULL-BLEED world, fixed behind the text and filling the viewport — the
-  // single thing that separates a living page from a dark blog with icons.
-  const fullBleed = /position\s*:\s*fixed/.test(lower) && (/inset\s*:\s*0/.test(lower) || /100vh/.test(lower) || /100vw/.test(lower) || (/top\s*:\s*0/.test(lower) && /bottom\s*:\s*0/.test(lower)));
-  if (!fullBleed) reasons.push("no full-bleed world — the scene must fill the viewport, fixed behind the words, not a flat background under a text column");
-  // 3. it must MOVE — unveil / scroll-reactive world / animation
+  const bigType = (lower.match(/font-size\s*:\s*(clamp\([^)]*\)|[6-9]\d*vw|[4-9]rem|\d{3,}px)/g) ?? []).length;
+  const compositional = /clip-path|mix-blend-mode|-webkit-background-clip|mask\s*:|letter-spacing/.test(lower);
+  const thinVisual = svgShapes < 3 && gradients < 2 && bigType < 2 && !compositional;
+  if (thinVisual) reasons.push("thin visual idea — no artwork, built scene, or strong typographic composition");
+  // a LIVING BASELINE: a motivated atmosphere/colour world, not a plain page under
+  // a text column (the Substack failure). A gradient OR a fixed full-bleed layer.
+  const atmosphere = gradients >= 1 || (/position\s*:\s*fixed/.test(lower) && (/inset\s*:\s*0/.test(lower) || /100v[hw]/.test(lower) || (/top\s*:\s*0/.test(lower) && /bottom\s*:\s*0/.test(lower))));
+  if (!atmosphere) reasons.push("flat ground — needs a motivated, evolving colour world/atmosphere with light, not a plain page under text");
+  // DRAWN, ANIMATED ELEMENTS (not just a moving background) — the thing most
+  // often missing: real SVG artwork/doodles that arrive and move.
+  if (svgShapes < 2) reasons.push("no drawn artwork/doodles — needs crafted SVG elements that arrive and animate, not only a background");
+  const foregroundMotion = /@keyframes/.test(lower) || /animation\s*:/.test(lower) || /stroke-dash/.test(lower) || /requestanimationframe/.test(lower);
+  if (!foregroundMotion) reasons.push("nothing in the foreground animates — only the background moves; add drawn elements that draw in / enter / transform");
+  // 3. it must EVOLVE — unveil / scroll-reactive world / animation (soft)
   const motion = /intersectionobserver/.test(lower) || /addeventlistener\(['"]scroll/.test(lower) || /@keyframes/.test(lower) || /transition\s*:/.test(lower) || /requestanimationframe/.test(lower);
-  if (!motion) reasons.push("nothing moves (no unveil, no scroll reaction, no animation)");
-  // 4. the beats are broken into their own blocks, not one wall (div counts —
-  // many pages wrap each beat in a styled div rather than a <p>)
+  if (!motion) reasons.push("nothing changes as you read (no reveal, no scroll-driven state, no transition)");
+  // 4. the beats are broken into their own blocks, not one wall
   const blocks = (lower.match(/<(p|h1|h2|h3|h4|section|article|blockquote|li|div)\b/g) ?? []).length;
   if (blocks < Math.max(3, Math.ceil(beats.length * 0.6))) reasons.push("the beats aren't broken into their own blocks");
   if (html.length < 1800) reasons.push("far too sparse");
-  // fatal = the page isn't a living page at all: no words, or no art. Those get a
-  // second shot. Thin-on-one-axis is a soft flaw; the page still ships.
-  const fatal = textMissing || noArt || html.length < 1800;
+  // fatal = not a living page AT ALL: the words don't render; it's basically
+  // empty; OR it's BARE — no drawn artwork AND no built scene (a plain column of
+  // text on a flat ground), which is the clunky regression we must reject. A bare
+  // page earns a regeneration with feedback rather than shipping.
+  const bare = svgShapes < 2 && !atmosphere;
+  const fatal = textMissing || html.length < 1800 || bare;
   return { pass: reasons.length === 0, fatal, reasons };
 }
 
@@ -318,6 +364,84 @@ function finalize(html: string): string {
   else h = h.replace(/<html[^>]*>/i, (m) => `${m}<head>${CSP}</head>`);
   h = /<\/body>/i.test(h) ? h.replace(/<\/body>/i, `${FAILSAFE}</body>`) : h + FAILSAFE;
   return h;
+}
+
+// ── CREATIVE BRIEF STAGE (interpretation BEFORE design) ──────────────────────
+// Raw story → HTML is too big a leap and makes the model decorate paragraphs. A
+// fast call first INTERPRETS the story and commits to a singular artistic
+// direction (metaphor, transformation, interaction) — then the Opus build
+// realises that concept. The direction's "signature" is remembered so the next
+// few pages are actively pushed to differ: the real mechanism behind "no two
+// alike" (a model can't self-compare pages it never sees).
+const recentDirections: string[] = [];
+function rememberDirection(sig: string) {
+  if (!sig) return;
+  recentDirections.unshift(sig);
+  while (recentDirections.length > 6) recentDirections.pop();
+}
+
+const BRIEF_SYSTEM = `You are the creative director for Living Page. A Living Page is NOT a styled article — it is an ANIMATED READING EXPERIENCE where the words behave, the artwork behaves, the whole page behaves, and text ARRIVES in a way that means something. Before any code exists, you interpret ONE personal story and commit to a concrete, executable living-page direction: not abstract art-speak, but specific behaviours a developer can build.
+
+First, read the whole story and find: its emotional centre (the real feeling under the events); its mood/tone (tender, creepy, ecstatic, grieving, anxious, wry, numb…); its central tension or contradiction; what CHANGES from first line to last; the feeling the reader should carry away. Reach for a visual metaphor that is NOT a literal picture of the story's objects (a bus, a temple, a battery) — a bus story might be a transit map that deviates and loses its logic; a draining phone might be the page itself losing information.
+
+Then commit to these CONCRETE living-page decisions:
+
+1. PAGE BEHAVIOUR — the ONE central thing the whole page DOES as the reader moves through it. Make it specific and buildable. For example (invent your own, don't pick from this list): the story is sketched in pencil, line by line, as you scroll · a diary handwritten in ink, each entry appearing as if written · the screen slowly darkens and closes in as dread builds · a bright room whose light dies to dusk by the end · a clean grid that fractures and drifts apart · a photograph developing from blank paper · everything bleached whiter and emptier until almost nothing is left.
+
+2. REVEAL — HOW the lines and words physically ARRIVE (the actual reading UX; be specific). e.g. each line is sketched stroke by stroke · ink handwriting appears letter by letter with a nib · words fade up out of black · letters assemble from scattered fragments · typed with a blinking cursor · lines rise and settle like breath. Say what the reader literally sees as each beat comes in.
+
+3. WORD BEHAVIOURS — choose 2–5 SPECIFIC words or short phrases FROM THE STORY and say exactly how each behaves, tied to its meaning. e.g. "collide" → the two words slam together and jolt · "shattered" → the word breaks into falling shards · "drifted" → it floats loose and sways · "gone" → it fades to nothing · "louder" → it grows with each repetition · a shouted line → slams in huge. These are the small surprises; pick ones the story earns.
+
+4. ARTWORK / ATMOSPHERE BEHAVIOUR — propose at least ONE real DRAWN element that ANIMATES as the reader scrolls (not just a moving background): a line that draws itself, a form that assembles or fractures, an object that enters/drifts/transforms, marks or doodles that are struck. Say what it is and what it DOES. e.g. a single ink line draws itself across the page · a stain spreads · a route deviates stroke by stroke · stars come out as it darkens. Abstract/symbolic and premium (ink, pencil, painterly, geometric) — never clip-art or a cute icon per line. A quiet story can have one spare drawn gesture; a loud one more.
+
+5. REGISTER — how loud or quiet the page should be, dictated by the story's own energy (hushed · restrained · lively · bold · maximal). A tender/grieving story is spare and slow; an ecstatic/chaotic/furious one goes big and surging. Do not default — let the story decide.
+
+6. TRANSFORMATION, TYPE & PALETTE — the world's state at the start vs the end and why it changes; the typographic voice (serif/sans/condensed/mono/handwritten — motivated by mood); the colour/material world (need not be dark).
+
+TWO TESTS: (1) if this direction could be dropped on an unrelated story unchanged, it's too generic — go deeper; (2) every behaviour must have a narrative reason — cut anything that's only decoration.
+
+AVOID REPEATING these recent directions — yours must be meaningfully different in page behaviour, reveal AND metaphor:
+{avoid}
+
+Respond with ONLY compact JSON, no prose:
+{"mood":"...","register":"hushed|restrained|lively|bold|maximal — from the story","emotional_centre":"...","contradiction":"...","metaphor":"...","page_behaviour":"the one central mechanic, specific","reveal":"how lines/words arrive","word_behaviours":[{"word":"...","behaviour":"..."}],"artwork_behaviour":"the drawn element(s) and exactly what they DO as you read (must animate, not static)","transformation":"start state → end state, and why","type_palette":"typographic voice + colour/material world","signature":"6-10 words naming this direction"}`;
+
+type Brief = { brief: string; signature: string };
+async function creativeBrief(text: string, title: string | undefined, tier: Tier): Promise<Brief | null> {
+  const avoid = recentDirections.length
+    ? recentDirections.map((d, i) => `${i + 1}. ${d}`).join("\n")
+    : "(none yet — you are free, but still make a bold, specific choice)";
+  const sys = BRIEF_SYSTEM.replace("{avoid}", avoid);
+  const user = `${title ? `Title: ${title}\n` : ""}Story:\n${text.slice(0, 6000)}`;
+  const res = await callClaude(tier, sys, user, 1400, 45_000, "medium");
+  if (!res.ok || !res.text.trim()) return null;
+  try {
+    const a = res.text.indexOf("{"), b = res.text.lastIndexOf("}");
+    if (a < 0 || b <= a) return null;
+    const j = JSON.parse(res.text.slice(a, b + 1)) as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    // word behaviours arrive as [{word, behaviour}] — render as a concrete list
+    let wb = "";
+    if (Array.isArray(j.word_behaviours)) {
+      wb = j.word_behaviours
+        .map((w) => { const o = (w ?? {}) as Record<string, unknown>; const word = str(o.word); const beh = str(o.behaviour); return word && beh ? `   • "${word}" → ${beh}` : ""; })
+        .filter(Boolean).join("\n");
+    }
+    const brief = [
+      str(j.mood) && `Mood: ${str(j.mood)}`,
+      str(j.register) && `Register (how loud/quiet — dictated by the story, match it): ${str(j.register)}`,
+      str(j.emotional_centre) && `Emotional centre: ${str(j.emotional_centre)}`,
+      str(j.contradiction) && `Central tension: ${str(j.contradiction)}`,
+      str(j.metaphor) && `Visual metaphor — BUILD THIS, do not illustrate the nouns: ${str(j.metaphor)}`,
+      str(j.page_behaviour) && `PAGE BEHAVIOUR — the central thing the whole page does as you scroll (build this): ${str(j.page_behaviour)}`,
+      str(j.reveal) && `REVEAL — how each line/word must physically arrive for the reader: ${str(j.reveal)}`,
+      wb && `WORD BEHAVIOURS — animate these specific words to their meaning:\n${wb}`,
+      str(j.artwork_behaviour) && `Artwork/atmosphere behaviour (what it does as you read): ${str(j.artwork_behaviour)}`,
+      str(j.transformation) && `Transformation (start → end, and why): ${str(j.transformation)}`,
+      str(j.type_palette) && `Type & palette: ${str(j.type_palette)}`,
+    ].filter(Boolean).join("\n");
+    return brief ? { brief, signature: str(j.signature) } : null;
+  } catch { return null; }
 }
 
 export async function generatePage(
@@ -334,10 +458,16 @@ export async function generatePage(
     const palette = cast?.palette ? JSON.stringify(cast.palette) : "drawn from the story's own setting and mood; no black-by-default, no neon-by-default";
     return runDecomposed(beats, title, palette, dTier);
   }
-  const guide = cast
-    ? `\n\nART DIRECTION (from the read — honour it):\nstyle: ${cast.style}\nread: ${JSON.stringify(cast.read)}\npalette: ${JSON.stringify(cast.palette ?? {})}\nnote: ${cast.artNote ?? ""}`
+  // STAGE A — interpret the story and commit to a direction (fast, cheap).
+  const brief = await creativeBrief(text, title, "sonnet");
+  if (brief) rememberDirection(brief.signature);
+  const briefBlock = brief
+    ? `\n\nCREATIVE BRIEF for this story — REALISE it (build it; do not restate it, do not fall back on a template):\n${brief.brief}`
+    : `\n\n${aestheticSeed(text)}`; // brief unavailable → fall back to the deterministic anti-default nudge
+  const avoidBlock = recentDirections.length > 1
+    ? `\n\nRecent pages went in these directions — make THIS one meaningfully different: ${recentDirections.slice(1).join(" · ")}.`
     : "";
-  const baseUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}${guide}`;
+  const baseUser = `${title ? `Title: ${title}\n` : ""}Beats (render each verbatim, in order):\n${beats.map((b, i) => `[${i + 1}] ${b}`).join("\n\n")}${briefBlock}${avoidBlock}`;
 
   // ART IS OPUS. The page is the one place quality must not bend, and the cheaper
   // models drop words and draw generic clip-art — so the artwork pass is Opus.
@@ -365,7 +495,7 @@ export async function generatePage(
     if (shot > 0 && Date.now() - started > REGEN_BUDGET_MS) break; // no time for another pass — ship best / fall back
     const fix = shot === 0 || !best
       ? ""
-      : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these. Draw real SVG artwork of the story's own objects, give the page a built, evolving background, animate the words in, and break each beat into its own block. Return the full corrected HTML document only.`;
+      : `\n\nYour previous attempt was rejected for: ${best.grade.reasons.join("; ")}. Fix every one of these while staying true to the creative brief — realise the metaphor and the transformation, make the words render as real text, let the world change as the reader scrolls, and break each beat into its own block. Return the full corrected HTML document only.`;
     // 90s idle window: a big page can take a while to START emitting; the default
     // 45s was firing on that first-token latency and aborting good generations.
     const res = await callClaude(ladder[shot], SYSTEM, baseUser + fix, maxTokens, 90_000);

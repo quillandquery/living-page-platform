@@ -30,7 +30,8 @@ export type LivingReaderProps = {
   eyebrow?: string;
   experience?: ExperienceSpec | null;
   bespokeHtml?: string | null;
-  share: ShareControlsProps;
+  /** null for a private story — there is nothing to share yet */
+  share: ShareControlsProps | null;
   more: { same: ReadNextLink; surprise: ReadNextLink };
 };
 
@@ -45,12 +46,16 @@ export function LivingReader({ source, world, title, eyebrow, experience, bespok
   );
 
   // The brain composed this story's bespoke living experience at publish time —
-  // render it (the primary path). Older stories with no saved spec fall back to
-  // the heuristic worlds (never a blank page — D4 preserve-data).
-  const page = bespokeHtml
-    ? <iframe title="living page" sandbox="allow-scripts" srcDoc={bespokeHtml} style={{ width: "100%", height: "100vh", border: 0, display: "block", background: "#0a0912" }} />
-    : experience
+  // render it (the primary path). It VARIES per story (that's the point), so it
+  // wins over everything. Older stories with no saved spec fall back to the
+  // heuristic worlds (never a blank page — D4 preserve-data). The old Opus
+  // free-form HTML ("bespokeHtml") is retired — it produced the same generic
+  // page for every story; `experience` replaces it. `bespokeHtml` is accepted
+  // only as a last resort for a legacy story that has one and no experience.
+  const page = experience
     ? <LivingExperience text={source} spec={experience} title={title || undefined} eyebrow={eyebrow || undefined} dek={scene.dek} />
+    : bespokeHtml
+    ? <iframe title="living page" sandbox="allow-scripts" srcDoc={bespokeHtml} style={{ width: "100%", height: "100vh", border: 0, display: "block", background: "#0a0912" }} />
     : scene.world.key === "noir-room" ? <NoirRoom {...noirRoomInput(scene)} />
     : RICH_WORLDS.has(scene.world.key) ? <CoastStorm {...coastStormInput(scene)} />
     : <LivingStory scene={scene} />;
@@ -62,7 +67,7 @@ export function LivingReader({ source, world, title, eyebrow, experience, bespok
       {page}
       <footer className="lr-foot" data-scheme={experience ? experience.scheme : scene.world.scheme}>
         <div className="lr-foot-in">
-          <ShareControls {...share} />
+          {share ? <ShareControls {...share} /> : null}
           {links.length ? (
             <div className="lr-next">
               <p className="lr-next-h">Read next</p>

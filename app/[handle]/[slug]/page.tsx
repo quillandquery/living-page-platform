@@ -13,6 +13,8 @@ import { absoluteUrl } from "@/lib/site";
 import { buildShareProps } from "@/lib/share";
 import { sanitizeExperience } from "@/lib/living/experience";
 import { ReaderTracking } from "@/components/analytics/ReaderTracking";
+import { VisibilityControl } from "@/components/living/VisibilityControl";
+import { isPrivate } from "@/lib/visibility";
 
 const clean = (h: string) => decodeURIComponent(h).replace(/^@/, "").toLowerCase();
 
@@ -32,6 +34,16 @@ export async function generateMetadata(
   const { handle, slug } = await params;
   const story = await publishedStory(clean(handle), slug);
   if (!story) return {};
+
+  // A PRIVATE story only ever resolves for its own author. Even so: no
+  // canonical, no Open Graph/Twitter card, no byline, and told to every
+  // crawler not to index it or follow anything from it.
+  if (isPrivate(story)) {
+    return {
+      title: story.fragment?.trim() || "Private story",
+      robots: { index: false, follow: false, nocache: true, noarchive: true, nosnippet: true, noimageindex: true },
+    };
+  }
 
   const context = deriveStoryContext({
     fragment: story.fragment,
@@ -66,6 +78,9 @@ export default async function StoryReaderPage(
   const { as, render } = await searchParams;
   const story = await publishedStory(clean(handle), slug);
   if (!story) notFound();
+  // Reaching here with a private story means the viewer IS its author
+  // (publishedStory returns null for everyone else → the 404 above).
+  const priv = isPrivate(story);
 
   // The rabbit hole at the end of the piece (PART 3 / "after the story"):
   // a real thematic pick where the words support one — themesOf() is a
@@ -132,9 +147,18 @@ export default async function StoryReaderPage(
 
   return (
     <>
-    <script type="application/ld+json" {...jsonLdScriptProps(articleLd)} />
-    <script type="application/ld+json" {...jsonLdScriptProps(breadcrumbLd)} />
-    <ReaderTracking storyId={story.id} authorHandle={story.author.handle} slug={slug} format={format} />
+    {priv ? (
+      // Private: no structured data (nothing for a crawler to read), no
+      // reader analytics (the story's id/slug don't go to a third party),
+      // and a quiet owner-only pill to flip it back to public.
+      <VisibilityControl variant="pill" storyId={story.id} value="private" />
+    ) : (
+      <>
+        <script type="application/ld+json" {...jsonLdScriptProps(articleLd)} />
+        <script type="application/ld+json" {...jsonLdScriptProps(breadcrumbLd)} />
+        <ReaderTracking storyId={story.id} authorHandle={story.author.handle} slug={slug} format={format} />
+      </>
+    )}
     {render === "classic" ? (
     <StoryStage
       format={format}
@@ -150,7 +174,7 @@ export default async function StoryReaderPage(
       author={{ handle: story.author.handle, display_name: story.author.display_name }}
       seed={story.id}
       artDirection={story.art_direction}
-      share={buildShareProps(story)}
+      share={priv ? null : buildShareProps(story)}
       more={{
         // READ NEXT EXPERIMENT 1 — "this reminded me of…" needs enough of
         // the destination's own treatment (its fragment and its accent) to
@@ -170,7 +194,7 @@ export default async function StoryReaderPage(
       eyebrow={[story.place, story.date].filter(Boolean).join(" · ") || undefined}
       experience={sanitizeExperience((story.art_direction as { experience?: unknown } | null)?.experience)}
       bespokeHtml={(story.art_direction as { bespokeHtml?: string } | null)?.bespokeHtml ?? null}
-      share={buildShareProps(story)}
+      share={priv ? null : buildShareProps(story)}
       more={{
         same: same ? { handle: same.author.handle, slug: same.slug, place: same.place, fragment: same.fragment } : null,
         surprise: surprise ? { handle: surprise.author.handle, slug: surprise.slug, place: surprise.place, fragment: surprise.fragment } : null,

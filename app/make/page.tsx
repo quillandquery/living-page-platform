@@ -9,6 +9,8 @@ import { LivingEmbed } from "@/components/living/LivingEmbed";
 import type { ExperienceSpec } from "@/lib/living/experience";
 import { WORLDS } from "@/lib/living/worlds";
 import { track } from "@/lib/analytics/client";
+import type { StoryVisibility } from "@/lib/types";
+import { VISIBILITIES, VISIBILITY_COPY } from "@/lib/visibility";
 
 /**
  * WRITER ENTRY — the two-stage journey (D9/D11).
@@ -113,7 +115,12 @@ function MakeInner() {
   const [customText, setCustomText] = useState("");
   const [prevText, setPrevText] = useState<string | null>(null);
   const [justApplied, setJustApplied] = useState<string | null>(null); // transient "✓ applied" confirmation
+  // once the current suggestion has been consumed (reshape applied, or a sharpen
+  // applied — which changes the text so `sug.cleaned` no longer matches), the
+  // "tidy & reshape" chip must NOT resurface until a FRESH suggestion arrives.
+  const [sugUsed, setSugUsed] = useState(false);
   const suggestedFor = useRef("");
+  const titleEdited = useRef(false); // the writer took over the title → stop auto-deriving it
 
   // clear the applied-confirmation after a moment
   useEffect(() => { if (!justApplied) return; const t = setTimeout(() => setJustApplied(null), 2600); return () => clearTimeout(t); }, [justApplied]);
@@ -122,16 +129,13 @@ function MakeInner() {
   const [worldSel, setWorldSel] = useState<string>("auto");
   const [aiPalette, setAiPalette] = useState<Palette | null>(null);
   const [aiExp, setAiExp] = useState<ExperienceSpec | null>(null);
-  const [genHtml, setGenHtml] = useState<string | null>(null);
   const [castBusy, setCastBusy] = useState(false);
-  const [genBusy, setGenBusy] = useState(false); // bespoke Opus page generating
   const [note, setNote] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [visibility, setVisibility] = useState<StoryVisibility>("public");
   const [restyleOpen, setRestyleOpen] = useState(false);
   const castedFor = useRef("");
   const castSeq = useRef(0); // supersede in-flight casts so a newer story always wins
-  const genSeq = useRef(0);   // supersede in-flight bespoke generations
-  const genForRef = useRef(""); // which story text the current genHtml belongs to
   const autoFired = useRef(false);
 
   const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -151,7 +155,12 @@ function MakeInner() {
         const res = await fetch("/api/brain/suggest", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, title }) });
         const data = await res.json();
         suggestedFor.current = text;
-        if (data.ok) setSug({ title: data.title, cleaned: data.cleaned, notes: data.notes, sharpen: data.sharpen });
+        if (data.ok) {
+          setSug({ title: data.title, cleaned: data.cleaned, notes: data.notes, sharpen: data.sharpen });
+          setSugUsed(false); // a fresh suggestion for the current text — reshape may offer again
+          // auto-derive the title (editable): fill it in if the writer hasn't taken it over
+          if (!titleEdited.current && data.title) setTitle(data.title);
+        }
       } catch {} finally { setSuggesting(false); }
     }, 1500);
     return () => clearTimeout(t);
@@ -164,7 +173,7 @@ function MakeInner() {
     // NOT immediately re-run and resurface the same chip/cards — that re-ask was
     // what made a landed reshape feel like it "reverted". The sharpen cards we
     // already have still anchor fine to the reshaped text.
-    setPrevText(text); suggestedFor.current = sug.cleaned; setText(sug.cleaned); setJustApplied("tidied & reshaped into paragraphs");
+    setPrevText(text); suggestedFor.current = sug.cleaned; setText(sug.cleaned); setSugUsed(true); setJustApplied("tidied & reshaped into paragraphs");
   };
   // forceOnMiss: when even the normalised matcher can't find a "replace"
   // anchor, append the line rather than no-op, so the click always does
@@ -179,7 +188,7 @@ function MakeInner() {
       // They confirmed anyway: append it so the thought isn't lost.
       next = text.replace(/\s*$/, "") + "\n\n" + replacement.trim();
     }
-    setPrevText(text); suggestedFor.current = next; setText(next);
+    setPrevText(text); suggestedFor.current = next; setText(next); setSugUsed(true);
     setEditingSharpen(null); setSug({ ...sug, sharpen: sug.sharpen.filter((_, j) => j !== i) });
     setJustApplied("added to your story — see it in the preview");
   };
@@ -199,7 +208,7 @@ function MakeInner() {
     const myText = text, myTitle = title;
     if (!myText.trim()) return;
     const seq = ++castSeq.current;
-    setCastBusy(true); setNote("reading your story…"); setGenHtml(null);
+    setCastBusy(true); setNote("reading your story…");
     try {
       const res = await fetch("/api/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle }) });
       const data = await res.json();
@@ -211,29 +220,13 @@ function MakeInner() {
     } catch { if (seq === castSeq.current) setNote("The brain is unreachable right now."); } finally { if (seq === castSeq.current) setCastBusy(false); }
   };
 
-  // ── Reveal: the BESPOKE page (Opus, ~70-100s) — a hand-built world that draws
-  // THIS story's own elements (not the generic spec-kit). It's the real output;
-  // the Auto spec-kit above renders instantly as a placeholder while this cooks,
-  // then we swap it in. Sequence-guarded so switching stories supersedes.
-  const generateBespoke = async () => {
-    const myText = text, myTitle = title;
-    if (!myText.trim()) return;
-    const seq = ++genSeq.current;
-    setGenBusy(true); setGenHtml(null); setNote("composing your world… (~1–2 min)");
-    try {
-      const res = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: myText, title: myTitle, mode: "single", tier: "opus" }) });
-      const data = await res.json();
-      if (seq !== genSeq.current) return; // a newer story superseded this generation
-      if (data.ok && data.html) { genForRef.current = myText; setGenHtml(data.html); setNote(null); }
-      else setNote(null); // generation failed — keep the Auto placeholder world
-    } catch { if (seq === genSeq.current) setNote(null); }
-    finally { if (seq === genSeq.current) setGenBusy(false); }
-  };
-
   const bringToLife = () => {
     setStage("reveal");
-    if (castedFor.current !== text) castAI();          // instant spec-kit placeholder
-    if (genForRef.current !== text) generateBespoke(); // the real bespoke world, swapped in when ready
+    // The brain reads the story and composes its bespoke LIVING EXPERIENCE (a
+    // world that VARIES per story — environment, objects, text behaviour). The old
+    // Opus free-form HTML path is retired: it was slow (~1–2 min) and produced the
+    // same generic page for every story.
+    if (castedFor.current !== text) castAI();
   };
 
   // Publish the bespoke page the writer just saw, straight to a live story — no
@@ -243,9 +236,9 @@ function MakeInner() {
     if (!text.trim() || publishing) return;
     setPublishing(true);
     try { sessionStorage.setItem(STASH, JSON.stringify({ mode, title, text })); } catch {}
-    track("make_publish", { mode, words, bespoke: !!genHtml });
+    track("make_publish", { mode, words, bespoke: false });
     try {
-      const r = await publishBespokeFromMake({ mode, source: text, title, world: worldSel in WORLDS ? worldSel : null, bespokeHtml: genHtml ?? undefined });
+      const r = await publishBespokeFromMake({ mode, source: text, title, world: worldSel in WORLDS ? worldSel : null, visibility });
       if (r.ok) { router.push(r.url); return; } // live on your page
       if (r.needsAuth) { router.push(`/onboarding?next=${encodeURIComponent(`/make?mode=${mode}`)}`); return; }
       setNote(r.message || "Couldn't publish."); setPublishing(false);
@@ -266,7 +259,7 @@ function MakeInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const canReshape = !!(sug && sug.cleaned.trim() !== text.trim());
+  const canReshape = !!(sug && !sugUsed && sug.cleaned.trim() !== text.trim());
   const nSharp = sug?.sharpen.length ?? 0;
 
   return (
@@ -282,7 +275,18 @@ function MakeInner() {
         ) : (
           <span className="mk-navr">
             <button className="mk-ghost" onClick={() => setStage("write")} type="button">← Edit</button>
-            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : "Publish →"}</button>
+            {/* who can read it — one plain choice, defaulting to public (what every publish was before) */}
+            <span className="mk-vis-wrap">
+              <span className="mk-vis" role="radiogroup" aria-label="Who can read this?" aria-describedby="mk-vis-hint">
+                {VISIBILITIES.map((v) => (
+                  <button key={v} type="button" role="radio" aria-checked={visibility === v} className={visibility === v ? "on" : ""} disabled={publishing} onClick={() => setVisibility(v)}>
+                    {VISIBILITY_COPY[v].label}
+                  </button>
+                ))}
+              </span>
+              <span className="mk-vis-hint" id="mk-vis-hint">{VISIBILITY_COPY[visibility].blurb}</span>
+            </span>
+            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing} type="button">{publishing ? "publishing…" : visibility === "private" ? "Publish privately →" : "Publish →"}</button>
           </span>
         )}
       </nav>
@@ -347,7 +351,7 @@ function MakeInner() {
           ) : null}
 
           <p className="mk-field">Title</p>
-          <input className="mk-title-in" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" />
+          <input className="mk-title-in" value={title} onChange={(e) => { titleEdited.current = true; setTitle(e.target.value); }} placeholder="Untitled" />
           <p className="mk-field">Your story</p>
           <textarea className="mk-text" value={text} onChange={(e) => setText(e.target.value)} placeholder={DEFAULT_PLACEHOLDER} />
           <div className="mk-foot"><span>{words} {words === 1 ? "word" : "words"}</span></div>
@@ -363,25 +367,22 @@ function MakeInner() {
       ) : (
         <section className="mk-reveal">
           <div className="mk-stage-embed">
-            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} experience={aiExp} html={genHtml} />
+            <LivingEmbed text={text} title={title || undefined} eyebrow="A living page" world={worldSel === "auto" ? undefined : worldSel} palette={aiPalette} experience={aiExp} />
           </div>
 
-          {/* the one RESTYLE control — Auto / Bespoke / Yours */}
+          {/* the RESTYLE control — Re-read (recompose the world) / Yours (pin one) */}
           <div className="mk-restyle">
             <button className="mk-restyle-btn" onClick={() => setRestyleOpen((v) => !v)} type="button">
               {castBusy ? "reading…" : "✧ Restyle"}
             </button>
             {restyleOpen ? (
               <div className="mk-restyle-menu">
-                <button onClick={() => { setRestyleOpen(false); generateBespoke(); }} type="button">
-                  <b>Bespoke</b><span>a hand-built world for this story — ~1–2 min</span>
-                </button>
-                <button onClick={() => { setRestyleOpen(false); genForRef.current = ""; setGenHtml(null); castAI(); }} type="button">
-                  <b>Auto</b><span>the quick version — instant</span>
+                <button onClick={() => { setRestyleOpen(false); castedFor.current = ""; castAI(); }} type="button">
+                  <b>Re-read</b><span>compose this story's world again</span>
                 </button>
                 <div className="mk-restyle-yours">
                   <b>Yours</b>
-                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setGenHtml(null); genForRef.current = ""; setRestyleOpen(false); }}>
+                  <select value={worldSel} onChange={(e) => { setWorldSel(e.target.value); setAiPalette(null); setAiExp(null); setRestyleOpen(false); }}>
                     <option value="auto">auto</option>
                     <optgroup label="worlds">{Object.values(WORLDS).map((w) => <option key={w.key} value={w.key}>{w.label}</option>)}</optgroup>
                     <optgroup label="mediums">{Object.entries(MEDIUM_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</optgroup>
@@ -411,6 +412,13 @@ const CSS = `
 .mk-steps{ font-family:var(--f-mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); display:flex; gap:.5rem; align-items:center; }
 .mk-steps b{ font-weight:400; } .mk-steps b.on{ color:var(--electric); } .mk-steps i{ opacity:.5; font-style:normal; }
 .mk-navr{ display:flex; gap:.6rem; align-items:center; }
+.mk-vis-wrap{ display:flex; flex-direction:column; align-items:flex-end; gap:.2rem; }
+.mk-vis{ display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+.mk-vis button{ font-family:var(--f-mono); font-size:.64rem; letter-spacing:.06em; text-transform:uppercase; background:transparent; border:0; color:var(--ink-soft); padding:.4rem .8rem; cursor:pointer; }
+.mk-vis button.on{ background:var(--ink); color:var(--paper); }
+.mk-vis button:disabled{ cursor:default; opacity:.6; }
+.mk-vis-hint{ font-family:var(--f-mono); font-size:.58rem; letter-spacing:.03em; color:var(--mute); max-width:19rem; text-align:right; line-height:1.3; }
+@media (max-width:760px){ .mk-navr{ flex-wrap:wrap; justify-content:flex-end; } .mk-vis-hint{ display:none; } }
 .mk-cta{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; background:var(--ink); color:var(--paper); border:none; border-radius:999px; padding:.65rem 1.2rem; cursor:pointer; }
 .mk-cta:disabled{ opacity:.4; cursor:default; }
 .mk-ghost{ font-family:var(--f-mono); font-size:.7rem; letter-spacing:.04em; background:transparent; border:1px solid var(--line); color:var(--ink-soft); border-radius:999px; padding:.55rem 1rem; cursor:pointer; }

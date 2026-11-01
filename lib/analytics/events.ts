@@ -24,8 +24,11 @@ export type AnalyticsEvent =
   | { name: "make_continue"; props: { mode: string; world: string; words: number } }
   | { name: "make_publish"; props: { mode: string; words: number; bespoke: boolean } }
   | { name: "draft_created"; props: { story_id: string; mode: string } }
-  | { name: "story_published"; props: { story_id: string; format: string; mood: string; has_imagery: boolean; is_first_publish: boolean } }
+  | { name: "story_published"; props: { story_id: string; format: string; mood: string; has_imagery: boolean; is_first_publish: boolean; visibility?: "public" | "private" } }
   | { name: "story_unpublished"; props: { story_id: string } }
+  // public <-> private on an already-published story (migration 0006). Ids
+  // only — never the title/slug of a private story.
+  | { name: "story_visibility_changed"; props: { story_id: string; from: "public" | "private"; to: "public" | "private" } }
   // --- engine trust ----------------------------------------------------
   | { name: "engine_control_changed"; props: { control: "format" | "mood" | "visuals" | "world"; value: string; story_id: string } }
   // --- reader engagement ------------------------------------------------

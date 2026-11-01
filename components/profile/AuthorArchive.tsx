@@ -6,6 +6,7 @@ import { Beat } from "@/components/living/Beat";
 import { Doodle } from "@/components/doodles/Doodle";
 import { Backdrop } from "@/components/living/Backdrop";
 import type { StorySeed as Seed } from "@/lib/discover";
+import { VisibilityControl } from "@/components/living/VisibilityControl";
 
 /**
  * THE DECK — an author's stories as a fanned deck of POLAROIDS you flip
@@ -67,13 +68,14 @@ function Polaroid({ seed, index, scene }: { seed: Seed; index: number; scene: bo
       </div>
       <div className="polaroid-caption">
         <span className="polaroid-cap">{caption || "a page"}</span>
+        {seed.visibility === "private" ? <span className="polaroid-priv">Private</span> : null}
         <span className="polaroid-read">read →</span>
       </div>
     </div>
   );
 }
 
-export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
+export function AuthorArchive({ seeds, isOwner = false }: { seeds: Seed[]; isOwner?: boolean }) {
   const n = seeds.length;
   const [current, setCurrent] = useState(0);
   const touchX = useRef<number | null>(null);
@@ -132,6 +134,16 @@ export function AuthorArchive({ seeds }: { seeds: Seed[] }) {
           );
         })}
       </ul>
+
+      {/* the owner's quiet line: whether the focused story is public or
+          private, and the one action to flip it — no republish, same URL.
+          Never rendered for a visitor (the page passes isOwner only to the
+          writer; the server action re-checks ownership regardless). */}
+      {isOwner && seeds[current] && !seeds[current].isSample ? (
+        <div className="deck-vis">
+          <VisibilityControl key={seeds[current].id} storyId={seeds[current].id} value={seeds[current].visibility} />
+        </div>
+      ) : null}
 
       {n > 1 ? (
         <div className="deck-controls">

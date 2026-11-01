@@ -3,6 +3,7 @@ import { publishedStory } from "@/lib/db";
 import { ShareFrame, FallbackFrame, OG_SIZE } from "@/lib/og-render";
 import { buildComposition, shareHost } from "@/lib/share-render";
 import { loadShareFonts, availableFamilies } from "@/lib/og-fonts";
+import { isPrivate } from "@/lib/visibility";
 
 export const runtime = "nodejs";
 export const alt = "A story on Living Page";
@@ -18,7 +19,10 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
   const { handle, slug } = await params;
   const story = await publishedStory(clean(handle), slug);
   const fonts = await loadShareFonts();
-  if (!story) return new ImageResponse(<FallbackFrame canvas="og" />, { ...size, fonts });
+  // A private story never gets a card — and never renders its words into an
+  // image response that a CDN or crawler could cache. Same generic frame as a
+  // story that doesn't exist.
+  if (!story || isPrivate(story)) return new ImageResponse(<FallbackFrame canvas="og" />, { ...size, fonts });
 
   const families = availableFamilies(fonts);
   const { composition, environmentKey, mood } = buildComposition(story);

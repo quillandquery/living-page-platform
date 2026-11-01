@@ -26,6 +26,12 @@ export async function POST(req: Request) {
   if (record.status !== "published" || !record.id) {
     return NextResponse.json({ ok: true, skipped: true });
   }
+  // A private story gets no share asset: the worker would upload it to a
+  // PUBLIC bucket, and there is nothing to share yet. Flipping it public later
+  // is an UPDATE on this same table, which fires this webhook again.
+  if (record.visibility === "private") {
+    return NextResponse.json({ ok: true, skipped: true, reason: "private" });
+  }
   const repo = process.env.GH_REPO;
   const token = process.env.GH_DISPATCH_TOKEN;
   if (!repo || !token) {

@@ -10,7 +10,8 @@ import type { ExperienceSpec } from "@/lib/living/experience";
 import { WORLDS as LIVING_WORLDS, type WorldKey } from "@/lib/living/worlds";
 import { BACKDROP_NAMES, BACKDROPS } from "@/lib/backdrops";
 import type { Block } from "@/lib/story-blocks.mjs";
-import type { StoryRow } from "@/lib/types";
+import type { StoryRow, StoryVisibility } from "@/lib/types";
+import { VisibilityControl } from "@/components/living/VisibilityControl";
 import { extractStoryProfile } from "@/lib/semantic-profile";
 import { generateArtDirection, describeArtDirection, detectRegister } from "@/lib/art-direction/generate";
 import { FORMATS, FORMAT_KEYS, fittingFormats, resolveFormat, inferFormat, curatedFormats, type FormatKey } from "@/lib/formats";
@@ -82,6 +83,9 @@ function dramatize(blocks: Block[]): Block[] {
 
 type Msg = { tone: "ok" | "bad"; text: string } | null;
 
+const publishedText = (v: StoryVisibility) =>
+  v === "private" ? "Published privately. Only you can read it." : "Published — live on your page.";
+
 export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [raw, setRaw] = useState(story.source);
   const [fmtSel, setFmt] = useState<FmtSel>("auto");
@@ -107,8 +111,13 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
   const [seoDescription, setSeoDescription] = useState(story.seo_description ?? "");
   const [tagsText, setTagsText] = useState((story.tags ?? []).join(", "));
 
+  // Public / Private (migration 0006). `visibility` is what the publish
+  // overlay's picker currently says; `liveVisibility` is what the story IS
+  // right now (they differ only while the writer is mid-choice).
+  const [visibility, setVisibility] = useState<StoryVisibility>(story.visibility ?? "public");
+  const [liveVisibility, setLiveVisibility] = useState<StoryVisibility>(story.visibility ?? "public");
   const [status, setStatus] = useState<Msg>(
-    story.status === "published" ? { tone: "ok", text: "Published — live on your page." } : null,
+    story.status === "published" ? { tone: "ok", text: publishedText(story.visibility ?? "public") } : null,
   );
   const [published, setPublished] = useState(story.status === "published");
   const [tab, setTab] = useState<"page" | "words">("page");
@@ -238,6 +247,8 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
     seo_title: seoTitle.trim() || null,
     seo_description: seoDescription.trim() || null,
     tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
+    // only `publishAction` commits this (see SaveInput.visibility)
+    visibility,
   });
 
   const run = (fn: (i: SaveInput) => Promise<{ ok: boolean; message?: string }>, verb: string, live?: boolean) =>
@@ -249,25 +260,18 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       } else setStatus({ tone: "bad", text: res.message ?? `Could not ${verb}.` });
     });
 
-  // Publish = generate the BESPOKE living page (Opus, ~1–2 min) on the client —
-  // NOT inside the server action, which would time out — then store the HTML so
-  // readers get the rich per-story world with no per-view cost. Any failure falls
-  // back to a normal publish (the spec-kit experience stays as the placeholder).
+  // Publish composes this story's bespoke LIVING EXPERIENCE server-side (the brain
+  // reads the story → a world that varies per story) and persists it, inside the
+  // publish action (`saveStory`). The old Opus free-form HTML generation is retired
+  // — it was slow (~1–2 min) and produced the same generic page for every story.
   const publishNow = () =>
     start(async () => {
-      let bespokeHtml: string | undefined;
-      try {
-        const r = await fetch("/api/brain/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: raw, title: fragment || place || undefined, mode: "single", tier: "opus" }) });
-        const d = await r.json();
-        if (d.ok && d.html) bespokeHtml = d.html as string;
-      } catch { /* fall through to a normal publish */ }
-      const base = input();
-      const inp: SaveInput = bespokeHtml && base.art_direction
-        ? { ...base, art_direction: { ...base.art_direction, bespokeHtml } }
-        : base;
-      const res = await publishAction(inp);
-      if (res.ok) { setStatus({ tone: "ok", text: "Published — live on your page." }); setPublished(true); }
-      else setStatus({ tone: "bad", text: res.message ?? "Could not publish." });
+      const res = await publishAction(input());
+      if (res.ok) {
+        setStatus({ tone: "ok", text: publishedText(visibility) });
+        setPublished(true);
+        setLiveVisibility(visibility);
+      } else setStatus({ tone: "bad", text: res.message ?? "Could not publish." });
     });
 
   return (
@@ -277,6 +281,16 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
       <header className="ed-bar">
         <Link href={`/@${handle}`} className="ed-logo">Living Page</Link>
         <span className="ed-save">{pending ? "saving…" : status ? status.text : "draft"}</span>
+        {published ? (
+          // flip public/private on a LIVE story without republishing it; the
+          // overlay picker above is for choosing at publish time.
+          <VisibilityControl
+            variant="bar"
+            storyId={story.id}
+            value={liveVisibility}
+            onChange={(v) => { setLiveVisibility(v); setVisibility(v); setStatus({ tone: "ok", text: publishedText(v) }); }}
+          />
+        ) : null}
         <span className="ed-bar-r">
           {published ? <Link href={`/@${handle}/${story.slug}`} className="ed-link" target="_blank">view →</Link> : null}
           <button className="ed-see" disabled={!raw.trim() || pending} onClick={() => { run(saveDraftAction, "save"); try { sessionStorage.setItem("lp-preview", JSON.stringify({ place, date, fragment, accent, backdrop: world, veil, blocks, seed: story.id, artDirection })); } catch {} setReveal(true); }}>See it come alive →</button>
@@ -491,6 +505,10 @@ export function Editor({ story, handle }: { story: StoryRow; handle: string }) {
             onPublish={publishNow}
             publishing={pending}
             published={published}
+            visibility={visibility}
+            liveVisibility={liveVisibility}
+            onVisibilityChange={setVisibility}
+            notice={status}
           />
         </div>
       ) : null}

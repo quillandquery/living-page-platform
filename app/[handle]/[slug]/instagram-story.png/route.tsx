@@ -3,6 +3,7 @@ import { publishedStory } from "@/lib/db";
 import { ShareFrame, FallbackFrame, IG_STORY_SIZE } from "@/lib/og-render";
 import { buildComposition, shareHost } from "@/lib/share-render";
 import { loadShareFonts, availableFamilies } from "@/lib/og-fonts";
+import { isPrivate } from "@/lib/visibility";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;
@@ -13,7 +14,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ handle: 
   const { handle, slug } = await params;
   const story = await publishedStory(clean(handle), slug);
   const fonts = await loadShareFonts();
-  if (!story) return new ImageResponse(<FallbackFrame canvas="story" />, { ...IG_STORY_SIZE, fonts });
+  // private stories get the generic frame, never their own words (see opengraph-image.tsx)
+  if (!story || isPrivate(story)) return new ImageResponse(<FallbackFrame canvas="story" />, { ...IG_STORY_SIZE, fonts });
 
   const reaction = new URL(req.url).searchParams.get("r");
   const families = availableFamilies(fonts);

@@ -59,6 +59,7 @@ function build(input: SampleInput): StoryWithAuthor {
     type: "story",
     world: null,
     status: "published",
+    visibility: "public",
     published_at: "2026-01-01T00:00:00Z",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",

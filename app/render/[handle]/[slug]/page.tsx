@@ -3,6 +3,7 @@ import { publishedStory } from "@/lib/db";
 import { lifeLabel, pageMark } from "@/lib/share-layout";
 import { seedFromId } from "@/lib/og-render";
 import { BRAND_HOST } from "@/lib/site";
+import { isPrivate } from "@/lib/visibility";
 import { CANVASES, isCanvasKey, type CanvasKey } from "@/lib/share-canvas";
 import { getBackdrop, worldVars } from "@/lib/backdrops";
 import { isCompleteArtDirection } from "@/lib/art-direction/types";
@@ -64,7 +65,9 @@ export default async function ShareRenderPage({
   const { handle, slug } = await params;
   const sp = await searchParams;
   const story = await publishedStory(clean(handle), slug);
-  if (!story) notFound();
+  // private stories are never rendered here — this is a capture target for
+  // shareable assets, and a private story has nothing to share
+  if (!story || isPrivate(story)) notFound();
 
   const canvasKey: CanvasKey = isCanvasKey(sp.canvas) ? sp.canvas : "og";
   const c = CANVASES[canvasKey];

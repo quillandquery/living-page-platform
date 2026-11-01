@@ -11,6 +11,23 @@ import { castWithAI } from "@/lib/brain/castWithAI";
 import type { StoryArtDirection } from "@/lib/art-direction/types";
 import { captureServer } from "@/lib/analytics/server";
 import { createClaimLink, revokeClaimLink, type CreateClaimResult } from "@/lib/claim";
+import type { StoryVisibility } from "@/lib/types";
+import { parseVisibility } from "@/lib/visibility";
+import { purgeShareLoops } from "@/lib/share-loops-purge.server";
+import { withoutShare } from "@/lib/share-loops-purge";
+
+/** Everything that lists, indexes or links a story. A status OR visibility
+ *  change must refresh all of it — the sitemap and llms-full are time-cached
+ *  (revalidate = 3600), so without this a story made private would linger in
+ *  them for up to an hour. */
+function revalidatePublicSurfaces(handle: string, slug: string) {
+  revalidatePath("/");
+  revalidatePath("/wander");
+  revalidatePath(`/@${handle}`);
+  revalidatePath(`/@${handle}/${slug}`);
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/llms-full.txt");
+}
 
 /**
  * THE STUDIO'S HANDS, on a platform.
@@ -75,9 +92,13 @@ export async function createStoryAction(mode: StoryMode = "story", seed: MakeSee
  *  Returns the published URL so the client can navigate to it. */
 export async function publishBespokeFromMake(seed: {
   mode: StoryMode; source: string; title?: string; world?: string | null; bespokeHtml?: string;
+  /** Defaults to public — what every publish was before 0006. */
+  visibility?: StoryVisibility;
 }): Promise<{ ok: true; url: string } | { ok: false; message: string; needsAuth?: boolean }> {
   const profile = await myProfile();
   if (!profile) return { ok: false, message: "Please sign in to publish.", needsAuth: true };
+  const visibility = seed.visibility === undefined ? "public" : parseVisibility(seed.visibility);
+  if (!visibility) return { ok: false, message: "Visibility must be public or private." };
   const source = (seed.source ?? "").trim();
   if (!source) return { ok: false, message: "Nothing to publish yet." };
   const title = (seed.title ?? "").trim();
@@ -96,14 +117,14 @@ export async function publishBespokeFromMake(seed: {
   if (experience) art_direction.experience = experience;
 
   const { data: inserted, error } = await supabase.from("stories").insert({
-    author_id: profile.id, slug, place: "", date: "", status: "published",
+    author_id: profile.id, slug, place: "", date: "", status: "published", visibility,
     published_at: new Date().toISOString(), type: seed.mode, fragment: title, source,
     world: seed.world ?? null, art_direction,
   }).select("id").single();
   if (error || !inserted) return { ok: false, message: error?.message ?? "Could not publish." };
 
-  revalidatePath("/"); revalidatePath(`/@${profile.handle}`); revalidatePath(`/@${profile.handle}/${slug}`);
-  await captureServer("story_published", profile.id, { story_id: inserted.id, format: "standard", mood: "auto", has_imagery: false, is_first_publish: true }).catch(() => {});
+  revalidatePublicSurfaces(profile.handle, slug);
+  await captureServer("story_published", profile.id, { story_id: inserted.id, format: "standard", mood: "auto", has_imagery: false, is_first_publish: true, visibility }).catch(() => {});
   return { ok: true, url: `/@${profile.handle}/${slug}` };
 }
 
@@ -134,6 +155,13 @@ export type SaveInput = {
   seo_title?: string | null;
   seo_description?: string | null;
   tags?: string[];
+  /** Who can read the story once published (migration 0006). Applied ONLY by
+   *  `publishAction` — a plain save or unpublish never changes it, so tweaking
+   *  the picker in the publish overlay can't silently flip a live story.
+   *  Omitted = leave as is (a never-published story stays at its default,
+   *  'public'). Changing a live story's visibility on its own, without a
+   *  republish, is `setVisibilityAction`. */
+  visibility?: StoryVisibility;
 };
 
 export type SaveResult =
@@ -164,6 +192,15 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     return { ok: false, message: `A published piece needs: ${missing.join(", ")}.` };
   }
 
+  // Untrusted at this boundary (it's a server-action argument): anything but
+  // exactly "public"/"private" is rejected rather than coerced.
+  let visibility: StoryVisibility | undefined;
+  if (input.visibility !== undefined) {
+    const v = parseVisibility(input.visibility);
+    if (!v) return { ok: false, message: "Visibility must be public or private." };
+    visibility = v;
+  }
+
   const supabase = await supabaseServer();
 
   // PUBLISHED URLS ARE PERMANENT (module PART 3): a story that has gone
@@ -174,7 +211,7 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   // published gets a freshly-derived slug.
   const { data: existing } = await supabase
     .from("stories")
-    .select("slug, published_at")
+    .select("slug, published_at, status, visibility, art_direction")
     .eq("id", input.id)
     .eq("author_id", profile.id)
     .maybeSingle();
@@ -220,6 +257,15 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
   if (input.tags !== undefined) patch.tags = input.tags;
   if (publish === true) { patch.status = "published"; patch.published_at = new Date().toISOString(); }
   if (publish === false) { patch.status = "draft"; }
+  // Visibility is committed only by a publish (see SaveInput.visibility).
+  if (publish === true && visibility) {
+    patch.visibility = visibility;
+    // Going private: the pre-rendered share loops live in a public bucket;
+    // drop the pointer here and the files below.
+    if (visibility === "private") {
+      patch.art_direction = withoutShare((patch.art_direction ?? existing?.art_direction) as Record<string, unknown> | null);
+    }
+  }
 
   const { error } = await supabase
     .from("stories")
@@ -228,10 +274,12 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
     .eq("author_id", profile.id);
   if (error) return { ok: false, message: error.message };
 
+  if (publish === true && visibility === "private") {
+    await purgeShareLoops(input.id, (existing?.art_direction as { share?: unknown } | null)?.share);
+  }
+
   revalidatePath(`/write/${input.id}`);
-  revalidatePath("/");
-  revalidatePath(`/@${profile.handle}`);
-  revalidatePath(`/@${profile.handle}/${slug}`);
+  revalidatePublicSurfaces(profile.handle, slug);
 
   if (publish === true) {
     await captureServer("story_published", profile.id, {
@@ -240,7 +288,12 @@ async function persist(input: SaveInput, publish: boolean | null): Promise<SaveR
       mood: input.art_direction?.atmosphere?.mood ?? "auto",
       has_imagery: Boolean(input.imagery),
       is_first_publish: !existing?.published_at,
+      visibility: visibility ?? (existing?.visibility as StoryVisibility | undefined) ?? "public",
     }).catch(() => {});
+    const before = ((existing?.visibility as StoryVisibility | undefined) ?? "public");
+    if (visibility && existing?.status === "published" && visibility !== before) {
+      await captureServer("story_visibility_changed", profile.id, { story_id: input.id, from: before, to: visibility }).catch(() => {});
+    }
   } else if (publish === false) {
     await captureServer("story_unpublished", profile.id, { story_id: input.id }).catch(() => {});
   }
@@ -252,12 +305,69 @@ export async function saveDraftAction(input: SaveInput) { return persist(input, 
 export async function publishAction(input: SaveInput) { return persist(input, true); }
 export async function unpublishAction(input: SaveInput) { return persist(input, false); }
 
+export type SetVisibilityResult =
+  | { ok: true; visibility: StoryVisibility; changed: boolean }
+  | { ok: false; message: string };
+
+/**
+ * Flip ONE story between public and private — without republishing it.
+ *
+ * Touches only `visibility` (plus the share-loop pointer when going private):
+ * the row, its content, slug, published_at and URL are untouched, so nothing
+ * is duplicated or lost, and a private story keeps its link for the day it
+ * goes public again. Runs as the signed-in writer, so the `update own stories`
+ * RLS policy — not this code — is what stops anyone flipping someone else's.
+ */
+export async function setVisibilityAction(id: string, next: StoryVisibility): Promise<SetVisibilityResult> {
+  const visibility = parseVisibility(next);
+  if (!visibility) return { ok: false, message: "Visibility must be public or private." };
+  const profile = await myProfile();
+  if (!profile) return { ok: false, message: "Sign in to change this." };
+
+  const supabase = await supabaseServer();
+  const { data: row } = await supabase
+    .from("stories")
+    .select("id, slug, status, visibility, art_direction")
+    .eq("id", id)
+    .eq("author_id", profile.id)
+    .maybeSingle();
+  if (!row) return { ok: false, message: "Couldn't find that piece." };
+
+  const before = (row.visibility as StoryVisibility) ?? "public";
+  if (before === visibility) return { ok: true, visibility, changed: false };
+
+  const patch: Record<string, unknown> = { visibility };
+  if (visibility === "private") patch.art_direction = withoutShare(row.art_direction as Record<string, unknown> | null);
+
+  const { data: updated, error } = await supabase
+    .from("stories")
+    .update(patch)
+    .eq("id", id)
+    .eq("author_id", profile.id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, message: error.message };
+  if (!updated) return { ok: false, message: "Couldn't update that piece." };
+
+  if (visibility === "private") {
+    await purgeShareLoops(id, (row.art_direction as { share?: unknown } | null)?.share);
+  }
+
+  revalidatePath(`/write/${id}`);
+  revalidatePublicSurfaces(profile.handle, row.slug as string);
+  await captureServer("story_visibility_changed", profile.id, { story_id: id, from: before, to: visibility }).catch(() => {});
+  return { ok: true, visibility, changed: true };
+}
+
 export async function deleteStoryAction(id: string) {
   const profile = await myProfile();
   if (!profile) redirect("/login");
   const supabase = await supabaseServer();
   await supabase.from("stories").delete().eq("id", id).eq("author_id", profile.id);
   revalidatePath(`/@${profile.handle}`);
+  revalidatePath("/wander");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/llms-full.txt");
   redirect(`/@${profile.handle}`);
 }
 

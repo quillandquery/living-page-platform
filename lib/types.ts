@@ -24,6 +24,11 @@ export type Profile = {
 
 export type StoryStatus = "draft" | "published";
 
+/** Who can read a PUBLISHED story (migration 0006). Orthogonal to `status`:
+ *  `private` is still published — same row, same URL — it is just readable
+ *  only by its author. Existing rows are all `public`. See lib/visibility.ts. */
+export type StoryVisibility = "public" | "private";
+
 /** A link generated so someone who didn't write this row can claim it —
  *  see docs/CLAIMING.md and lib/claim.ts. `none` covers every ordinary
  *  story that was never handed off. */
@@ -43,6 +48,7 @@ export type StoryRow = {
   source: string;
   blocks: Block[];
   status: StoryStatus;
+  visibility: StoryVisibility;
   published_at: string | null;
   created_at: string;
   updated_at: string;
