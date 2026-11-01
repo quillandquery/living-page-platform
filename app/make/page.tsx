@@ -294,18 +294,8 @@ function MakeInner() {
         ) : (
           <span className="mk-navr">
             <button className="mk-ghost" onClick={() => setStage("write")} type="button">← Edit</button>
-            {/* who can read it — one plain choice, defaulting to public (what every publish was before) */}
-            <span className="mk-vis-wrap">
-              <span className="mk-vis" role="radiogroup" aria-label="Who can read this?" aria-describedby="mk-vis-hint">
-                {VISIBILITIES.map((v) => (
-                  <button key={v} type="button" role="radio" aria-checked={visibility === v} className={visibility === v ? "on" : ""} disabled={publishing} onClick={() => setVisibility(v)}>
-                    {VISIBILITY_COPY[v].label}
-                  </button>
-                ))}
-              </span>
-              <span className="mk-vis-hint" id="mk-vis-hint">{VISIBILITY_COPY[visibility].blurb}</span>
-            </span>
-            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : visibility === "private" ? "Publish privately →" : "Publish →"}</button>
+            {/* public/private choice pulled back until it's solutioned — every publish is public (the default) for now */}
+            <button className="mk-cta" onClick={publishBespoke} disabled={!text.trim() || publishing || genBusy} type="button">{publishing ? "publishing…" : genBusy ? "composing…" : "Publish →"}</button>
           </span>
         )}
       </nav>
