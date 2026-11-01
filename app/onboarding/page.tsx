@@ -28,7 +28,11 @@ export default async function OnboardingPage({
         <Link href="/" className="back">places</Link>
         <h1 className="gate-title">Pick a name to write under.</h1>
         <p className="gate-sub">It becomes your address on the site — living.page/@you — and it&rsquo;s hard to change later, so choose one you&rsquo;d sign.</p>
-        <OnboardingForm suggestion={suggestion} next={next} />
+        <OnboardingForm
+          suggestion={suggestion}
+          next={next}
+          displayName={String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? "")}
+        />
       </div>
     </main>
   );

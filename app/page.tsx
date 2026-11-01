@@ -172,7 +172,9 @@ export default function Home() {
       </section>
 
       <footer className="lp-foot">
-        Living Page <Link href="/about" className="lp-foot-about">About</Link>
+        Living Page <Link href="/about" className="lp-foot-about">About</Link>{" "}
+        <Link href="/privacy" className="lp-foot-about">Privacy</Link>{" "}
+        <Link href="/terms" className="lp-foot-about">Terms</Link>
       </footer>
     </main>
   );

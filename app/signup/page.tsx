@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signUpAction, type AuthState } from "@/app/auth/actions";
+import { GoogleButton } from "@/app/auth/google-button";
 
 function SignupForm() {
   const [state, action, pending] = useActionState<AuthState, FormData>(signUpAction, {});
@@ -14,6 +15,8 @@ function SignupForm() {
       <Link href="/" className="back">places</Link>
       <h1 className="gate-title">Somewhere to put it.</h1>
       <p className="gate-sub">A living page is a place you write, not a template you fill. Make one.</p>
+      <GoogleButton next={next} />
+      <p className="gate-or"><span>or</span></p>
       <form action={action} className="gate-form">
         <input type="hidden" name="next" value={next} />
         <label className="lab">email

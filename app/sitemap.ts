@@ -7,8 +7,8 @@ import { absoluteUrl } from "@/lib/site";
  * unit is `/@handle/slug`, so the sitemap is: every published story, every
  * author with at least one, and the couple of real hub pages. No sample
  * stories (they aren't rows in `stories` at all — see
- * `lib/wander-samples.ts`), no drafts (`publishedFeed` already only reads
- * `status = "published"`), no utility routes, no `/explore` (it permanently
+ * `lib/wander-samples.ts`), no drafts and no private stories (`publishedFeed`
+ * only reads `status = "published" AND visibility = "public"`), no utility routes, no `/explore` (it permanently
  * redirects to `/wander` — linking the redirect target directly keeps link
  * equity from splitting, per the doc's finding #6).
  */
@@ -31,6 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Added alongside /about (SEO/GEO/AEO audit, Sept 2026) -- static,
     // rarely-changing, low-priority relative to the two real hubs above.
     { url: absoluteUrl("/about"), changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl("/privacy"), changeFrequency: "yearly", priority: 0.1 },
+    { url: absoluteUrl("/terms"), changeFrequency: "yearly", priority: 0.1 },
   ];
 
   const authorPages: MetadataRoute.Sitemap = Array.from(authors.entries()).map(([handle, lastModified]) => ({

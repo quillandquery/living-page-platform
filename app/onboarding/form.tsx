@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { createProfileAction, type AuthState } from "@/app/auth/actions";
 
-export function OnboardingForm({ suggestion, next }: { suggestion: string; next?: string }) {
+export function OnboardingForm({ suggestion, next, displayName }: { suggestion: string; next?: string; displayName?: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(createProfileAction, {});
 
   return (
@@ -16,7 +16,7 @@ export function OnboardingForm({ suggestion, next }: { suggestion: string; next?
         </span>
       </label>
       <label className="lab">display name
-        <input name="display_name" placeholder="what should readers call you" />
+        <input name="display_name" defaultValue={displayName} placeholder="what should readers call you" />
       </label>
       <label className="lab">a line about you
         <input name="bio" placeholder="optional" maxLength={160} />
