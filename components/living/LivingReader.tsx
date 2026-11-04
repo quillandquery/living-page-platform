@@ -45,17 +45,15 @@ export function LivingReader({ source, world, title, eyebrow, experience, bespok
     [source, title, eyebrow, world],
   );
 
-  // The brain composed this story's bespoke living experience at publish time —
-  // render it (the primary path). It VARIES per story (that's the point), so it
-  // wins over everything. Older stories with no saved spec fall back to the
-  // heuristic worlds (never a blank page — D4 preserve-data). The old Opus
-  // free-form HTML ("bespokeHtml") is retired — it produced the same generic
-  // page for every story; `experience` replaces it. `bespokeHtml` is accepted
-  // only as a last resort for a legacy story that has one and no experience.
-  const page = experience
-    ? <LivingExperience text={source} spec={experience} title={title || undefined} eyebrow={eyebrow || undefined} dek={scene.dek} />
-    : bespokeHtml
+  // Priority: a Bespoke (Opus) page wins when the writer published one —
+  // publishBespokeFromMake stores it alongside a spec-kit `experience`, which
+  // is only the fallback for when the bespoke is absent. Then the brain's
+  // composed `experience`, then the heuristic worlds (never a blank page —
+  // D4 preserve-data).
+  const page = bespokeHtml
     ? <iframe title="living page" sandbox="allow-scripts" srcDoc={bespokeHtml} style={{ width: "100%", height: "100vh", border: 0, display: "block", background: "#0a0912" }} />
+    : experience
+    ? <LivingExperience text={source} spec={experience} title={title || undefined} eyebrow={eyebrow || undefined} dek={scene.dek} />
     : scene.world.key === "noir-room" ? <NoirRoom {...noirRoomInput(scene)} />
     : RICH_WORLDS.has(scene.world.key) ? <CoastStorm {...coastStormInput(scene)} />
     : <LivingStory scene={scene} />;
