@@ -75,7 +75,7 @@ export async function GET(req: Request) {
     db = sb;
   }
 
-  const q = db.from("stories").select("*, author:profiles(handle)").order("created_at", { ascending: true });
+  const q = db.from("stories").select("*, author:profiles!author_id(handle)").order("created_at", { ascending: true });
   const { data, error } = mode === "session"
     ? await q.eq("author_id", (await db.auth.getUser()).data.user!.id)
     : await q;

@@ -96,7 +96,7 @@ export async function getPendingClaim(token: string): Promise<StoryWithAuthor | 
   const admin = supabaseAdmin();
   const { data } = await admin
     .from("stories")
-    .select("*, author:profiles(*)")
+    .select("*, author:profiles!author_id(*)")
     .eq("claim_token", token)
     .eq("claim_status", "pending")
     .maybeSingle();

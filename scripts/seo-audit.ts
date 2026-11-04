@@ -81,7 +81,7 @@ const warn = (where: string, message: string) => issues.push({ level: "WARN", wh
 async function main() {
   const { data, error } = await admin
     .from("stories")
-    .select("*, author:profiles(handle, display_name, bio, avatar_url)")
+    .select("*, author:profiles!author_id(handle, display_name, bio, avatar_url)")
     .eq("status", "published")
     .eq("visibility", "public") // private stories aren't indexable, so they aren't audited
     .order("published_at", { ascending: false });
@@ -193,7 +193,7 @@ async function main() {
 
   // ── drafts: informational only, never a code gap ────────────────────
   if (serviceKey) {
-    const { data: drafts } = await admin.from("stories").select("slug, author:profiles(handle)").eq("status", "draft");
+    const { data: drafts } = await admin.from("stories").select("slug, author:profiles!author_id(handle)").eq("status", "draft");
     const list = (drafts ?? []) as unknown as { slug: string; author: { handle: string } }[];
     if (list.length) {
       console.log(`${list.length} draft(s) exist and are correctly excluded from every surface this audit checks.`);

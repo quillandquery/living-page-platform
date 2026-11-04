@@ -14,7 +14,14 @@ import { canViewStory, isPrivate } from "./visibility";
  * ALSO filter `visibility = 'public'` explicitly (see the note on them).
  */
 
-const STORY_SELECT = "*, author:profiles(*)";
+// `stories` has TWO foreign keys to `profiles` (author_id, and seeded_by from
+// migration 0003). A bare `profiles(*)` embed is ambiguous to PostgREST
+// (PGRST201) and fails the whole query — so name the FK column explicitly.
+const STORY_SELECT = "*, author:profiles!author_id(*)";
+
+function logQueryError(where: string, error: { message: string } | null) {
+  if (error) console.error(`[db.${where}]`, error.message);
+}
 
 export async function currentUser() {
   const supabase = await supabaseServer();
@@ -58,13 +65,14 @@ export async function handleTaken(handle: string): Promise<boolean> {
 /** The public feed: every published, PUBLIC story, newest first. */
 export async function publishedFeed(limit = 60): Promise<StoryWithAuthor[]> {
   const supabase = await supabaseServer();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("stories")
     .select(STORY_SELECT)
     .eq("status", "published")
     .eq("visibility", "public")
     .order("published_at", { ascending: false })
     .limit(limit);
+  logQueryError("publishedFeed", error);
   return (data as StoryWithAuthor[]) ?? [];
 }
 
@@ -79,13 +87,14 @@ export async function publishedStory(handle: string, slug: string): Promise<Stor
   const author = await profileByHandle(handle);
   if (!author) return null;
   const supabase = await supabaseServer();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("stories")
     .select(STORY_SELECT)
     .eq("author_id", author.id)
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
+  logQueryError("publishedStory", error);
   const story = (data as StoryWithAuthor) ?? null;
   if (!story) return null;
   if (isPrivate(story)) {
@@ -100,7 +109,7 @@ export async function publishedStory(handle: string, slug: string): Promise<Stor
  * the reader shouldn't be handed the piece they just finished. */
 export async function otherPublishedStories(excludeId: string, limit = 200): Promise<StoryWithAuthor[]> {
   const supabase = await supabaseServer();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("stories")
     .select(STORY_SELECT)
     .eq("status", "published")
@@ -108,6 +117,7 @@ export async function otherPublishedStories(excludeId: string, limit = 200): Pro
     .neq("id", excludeId)
     .order("published_at", { ascending: false })
     .limit(limit);
+  logQueryError("otherPublishedStories", error);
   return (data as StoryWithAuthor[]) ?? [];
 }
 

@@ -115,7 +115,7 @@ async function main() {
 
   const sb = await supa();
   await ensureBucket(sb);
-  const SEL = "*, author:profiles(*)";
+  const SEL = "*, author:profiles!author_id(*)";
   let stories: StoryRow[] = [];
 
   if (has("--id")) {
